@@ -20,7 +20,7 @@ namespace MISReports {
 				Properties.Settings.Default.MisDbPassword);
 
 			string dateBegin = "01.01.2018";// DateTime.Now.AddDays(-60).ToShortDateString();
-			string dateEnd = "20.02.2018"; //DateTime.Now.AddDays(-30).ToShortDateString();
+			string dateEnd = "31.01.2018"; //DateTime.Now.AddDays(-30).ToShortDateString();
 
 			//UnclosedProtocols.CreateAndSendReport(firebirdClient, dateBegin, dateEnd);
 			MESUsage.CreateAndSendReport(firebirdClient, dateBegin, dateEnd);

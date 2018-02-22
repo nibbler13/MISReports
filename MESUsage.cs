@@ -29,12 +29,16 @@ namespace MISReports {
 					string mid = row["MID"].ToString();
 					string listMES = row["LISTMES"].ToString();
 					string listReferrals = row["LISTREFERRALS"].ToString();
+					string listAllReferrals = row["LISTALLREFERRALS"].ToString();
 					string[] arrayMES = new string[0];
 					string[] arrayReferrals = new string[0];
+					string[] arrayAllReferrals = new string[0];
 					if (!string.IsNullOrEmpty(listMES))
 						arrayMES = listMES.Split(';');
 					if (!string.IsNullOrEmpty(listReferrals))
 						arrayReferrals = listReferrals.Split(';');
+					if (!string.IsNullOrEmpty(listAllReferrals))
+						arrayAllReferrals = listAllReferrals.Split(';');
 
 					if (treatments.ContainsKey(treatcode)) {
 						treatments[treatcode].ListMES.AddRange(arrayMES);
@@ -49,7 +53,6 @@ namespace MISReports {
 							CLIENTNAME = row["CLIENTNAME"].ToString(),
 							HISTNUM = row["HISTNUM"].ToString(),
 							DOCNAME = row["DOCNAME"].ToString(),
-							DOCPOSITION = row["DOCPOSITION"].ToString(),
 							FILIAL = row["FILIAL"].ToString(),
 							DEPNAME = row["DEPNAME"].ToString(),
 							MKBCODE = row["MKBCODE"].ToString(),
@@ -62,6 +65,24 @@ namespace MISReports {
 							treatment.ListReferralsFromDoc.AddRange(arrayReferrals);
 						else
 							treatment.ListReferralsFromMes.AddRange(arrayReferrals);
+
+						foreach (string item in arrayAllReferrals) {
+							if (!item.Contains(":"))
+								continue;
+
+							try {
+								string[] referral = item.Split(':');
+								string referralName = referral[0];
+
+								if (treatment.ListAllReferrals.ContainsKey(referralName))
+									continue;
+
+								int.TryParse(referral[1], out int referralExecuted);
+								treatment.ListAllReferrals.Add(referralName, referralExecuted);
+							} catch (Exception e) {
+								Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
+							}
+						}
 
 						treatments.Add(treatcode, treatment);
 					}
@@ -100,7 +121,6 @@ namespace MISReports {
 			public string FILIAL { get; set; } = string.Empty;
 			public string DEPNAME { get; set; } = string.Empty;
 			public string DOCNAME { get; set; } = string.Empty;
-			public string DOCPOSITION { get; set; } = string.Empty;
 			public string HISTNUM { get; set; } = string.Empty;
 			public string CLIENTNAME { get; set; } = string.Empty;
 			public string MKBCODE { get; set; } = string.Empty;
@@ -108,6 +128,7 @@ namespace MISReports {
 			public List<string> ListMES { get; set; } = new List<string>();
 			public List<string> ListReferralsFromMes { get; set; } = new List<string>();
 			public List<string> ListReferralsFromDoc { get; set; } = new List<string>();
+			public Dictionary<string, int> ListAllReferrals { get; set; } = new Dictionary<string, int>();
 		}
 	}
 }

@@ -42,13 +42,40 @@ namespace MISReports {
 					(double)treat.ListReferralsFromDoc.Count) / 
 					(double)treat.ListMES.Count;
 
+				int mesReferralsExecuted = 0;
+				int docReferralsExecuted = 0;
+				int allReferralsExecuted = 0;
+				int oversizedReferral = 0;
+
+				foreach (string item in treat.ListReferralsFromMes) {
+					if (!treat.ListAllReferrals.ContainsKey(item))
+						continue;
+
+					mesReferralsExecuted += treat.ListAllReferrals[item];
+				}
+
+				foreach (string item in treat.ListReferralsFromDoc) {
+					if (!treat.ListAllReferrals.ContainsKey(item))
+						continue;
+
+					docReferralsExecuted += treat.ListAllReferrals[item];
+				}
+
+				foreach (KeyValuePair<string, int> pair in treat.ListAllReferrals) {
+					allReferralsExecuted += pair.Value;
+
+					if (!treat.ListMES.Contains(pair.Key))
+						oversizedReferral++;
+				}
+
+
 				List<object> values = new List<object>() {
 					treatment.Key,
+					1,
 					treat.TREATDATE,
 					treat.FILIAL,
 					treat.DEPNAME,
 					treat.DOCNAME,
-					treat.DOCPOSITION,
 					treat.HISTNUM,
 					treat.CLIENTNAME,
 					treat.AGE,
@@ -56,7 +83,14 @@ namespace MISReports {
 					treat.ListMES.Count,
 					treat.ListReferralsFromMes.Count > 0 ? 1 : 0,
 					treat.ListReferralsFromMes.Count,
+					mesReferralsExecuted,
+					treat.ListReferralsFromDoc.Count > 0 ? 1 : 0,
 					treat.ListReferralsFromDoc.Count,
+					docReferralsExecuted,
+					treat.ListAllReferrals.Count > 0 ? 1 : 0,
+					treat.ListAllReferrals.Count,
+					allReferralsExecuted,
+					oversizedReferral,
 					percentCompleted,
 					percentCompleted == 1 ? 1 : 0
 				};
