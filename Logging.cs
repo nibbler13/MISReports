@@ -4,11 +4,11 @@ using System.Linq;
 using System.Reflection;
 
 namespace MISReports {
-	class SystemLogging {
+	class Logging {
 		private static string LOG_FILE_NAME = Assembly.GetExecutingAssembly().GetName().Name + "_*.log";
 		private const int MAX_LOGFILES_QUANTITY = 7;
 
-		public static void LogMessageToFile(string msg) {
+		public static void ToFile(string msg) {
 			string today = DateTime.Now.ToString("yyyyMMdd");
 			string logFileName = Program.AssemblyDirectory + LOG_FILE_NAME.Replace("*", today);
 
@@ -27,7 +27,7 @@ namespace MISReports {
 		}
 
 		public static void WriteStringToFile(string text, string fileFullPath) {
-			LogMessageToFile("Запись текста в файл: " + fileFullPath + ", содержание: " + Environment.NewLine + text);
+			ToFile("Запись текста в файл: " + fileFullPath + ", содержание: " + Environment.NewLine + text);
 
 			try {
 				System.IO.File.WriteAllText(fileFullPath, text);

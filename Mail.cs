@@ -8,8 +8,8 @@ using System.Net.Mime;
 namespace MISReports {
 	public class SystemMail {
 		public static void SendMail (string subject, string body, string receiver, string attachmentPath = "") {
-			SystemLogging.LogMessageToFile("Отправка сообщения, тема: " + subject + ", текст: " + body);
-			SystemLogging.LogMessageToFile("Получатели: " + receiver);
+			Logging.ToFile("Отправка сообщения, тема: " + subject + ", текст: " + body);
+			Logging.ToFile("Получатели: " + receiver);
 
 			if (string.IsNullOrEmpty(receiver))
 				return;
@@ -83,9 +83,9 @@ namespace MISReports {
 				client.Send(message);
 				client.Dispose();
 				message.Dispose();
-				SystemLogging.LogMessageToFile("Письмо отправлено успешно");
+				Logging.ToFile("Письмо отправлено успешно");
 			} catch (Exception e) {
-				SystemLogging.LogMessageToFile("SendMail exception: " + e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToFile("SendMail exception: " + e.Message + Environment.NewLine + e.StackTrace);
 			}
 		}
 	}

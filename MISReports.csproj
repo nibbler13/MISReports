@@ -60,9 +60,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MESUsage.cs" />
-    <Compile Include="NpoiExcelMESUsage.cs" />
-    <Compile Include="NpoiExcelUnclosedProtocols.cs" />
+    <Compile Include="ItemMESUsageTreatment.cs" />
+    <Compile Include="NpoiExcelGeneral.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FirebirdClient.cs" />
