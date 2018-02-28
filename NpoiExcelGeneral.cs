@@ -199,8 +199,8 @@ namespace MISReports {
 				xlApp.Selection.NumberFormat = "0,0%";
 				xlApp.ActiveSheet.Shapes.AddChart2(201, Excel.XlChartType.xlColumnClustered).Select();
 				xlApp.ActiveChart.SetSourceData(ws.Range["A1:B" + rowsUsed]);
-				//xlApp.ActiveSheet.Shapes["Диаграмма 1"].IncrementLeft(-237);
-				xlApp.ActiveSheet.Shapes["Диаграмма 1"].IncrementTop(-174);
+				xlApp.ActiveSheet.Shapes["Диаграмма 1"].Top = 0;
+				xlApp.ActiveSheet.Shapes["Диаграмма 1"].Left = 280;
 				ws.Range["A" + (rowsUsed + 1)].Select();
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);

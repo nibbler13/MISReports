@@ -172,8 +172,8 @@ namespace MISReports {
 			
 			firebirdClient.Close();
 
-			//if (Debugger.IsAttached)
-			//	return;
+			if (Debugger.IsAttached)
+				return;
 
 			SystemMail.SendMail(subject, body, mailTo, fileResult);
 			Logging.ToFile("Завершение работы");
