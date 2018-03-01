@@ -201,7 +201,17 @@ namespace MISReports {
 				xlApp.ActiveChart.SetSourceData(ws.Range["A1:B" + rowsUsed]);
 				xlApp.ActiveSheet.Shapes["Диаграмма 1"].Top = 0;
 				xlApp.ActiveSheet.Shapes["Диаграмма 1"].Left = 280;
-				ws.Range["A" + (rowsUsed + 1)].Select();
+				rowsUsed += 2;
+				ws.Range["A" + rowsUsed].Value = "Итого:";
+				ws.Range["B" + rowsUsed].Formula = "=AVERAGE(B2:B" + (rowsUsed - 2) + ")";
+				ws.Range["A" + rowsUsed + ":B" + rowsUsed].Select();
+				xlApp.Selection.Interior.Pattern = Excel.Constants.xlSolid;
+				xlApp.Selection.Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
+				xlApp.Selection.Interior.Color = 65535;
+				xlApp.Selection.Interior.TintAndShade = 0;
+				xlApp.Selection.Font.Bold = Excel.Constants.xlSolid;
+				rowsUsed++;
+				ws.Range["A" + rowsUsed].Select();
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
