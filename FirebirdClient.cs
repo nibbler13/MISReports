@@ -43,20 +43,27 @@ namespace MISReports {
 
 		public DataTable GetDataTable(string query, Dictionary<string, object> parameters) {
 			DataTable dataTable = new DataTable();
+			//Console.WriteLine("GetDataTable");
 
 			if (!IsConnectionOpened())
 				return dataTable;
-
+			
 			try {
-				FbCommand command = new FbCommand(query, connection);
+				using (FbCommand command = new FbCommand(query, connection)) { 
+				//Console.WriteLine("command created");
 
 				if (parameters.Count > 0) {
 					foreach (KeyValuePair<string, object> parameter in parameters)
 						command.Parameters.AddWithValue(parameter.Key, parameter.Value);
+					//Console.WriteLine("parameters added");
 				}
 
-				FbDataAdapter fbDataAdapter = new FbDataAdapter(command);
-				fbDataAdapter.Fill(dataTable);
+					using (FbDataAdapter fbDataAdapter = new FbDataAdapter(command)) {
+						//Console.WriteLine("adapter created");
+						fbDataAdapter.Fill(dataTable);
+						//Console.WriteLine("datatable filled");
+					}
+				}
 			} catch (Exception e) {
 				string subject = "Ошибка выполнения запроса к БД";
 				string body = e.Message + Environment.NewLine + e.StackTrace;

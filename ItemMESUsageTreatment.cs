@@ -14,9 +14,17 @@ namespace MISReports {
 		public string CLIENTNAME { get; set; } = string.Empty;
 		public string MKBCODE { get; set; } = string.Empty;
 		public string AGE { get; set; } = string.Empty;
-		public List<string> ListMES { get; set; } = new List<string>();
+		public Dictionary<string, int> DictMES { get; set; } = new Dictionary<string, int>(); //0 - Necessary, 1 - ByIndication, 2 - Additional, 3 - ExternalLPU
 		public List<string> ListReferralsFromMes { get; set; } = new List<string>();
 		public List<string> ListReferralsFromDoc { get; set; } = new List<string>();
-		public Dictionary<string, int> ListAllReferrals { get; set; } = new Dictionary<string, int>();
+		public Dictionary<string, ReferralDetails> DictAllReferrals { get; set; } = new Dictionary<string, ReferralDetails>();
+		public string SERVICE_TYPE = string.Empty;
+		public string PAYMENT_TYPE = string.Empty;
+
+		public class ReferralDetails {
+			public string Schid { get; set; } = string.Empty;
+			public int IsCompleted { get; set; } = -1;  //0 - incompleted, 1 - completed
+			public int RefType { get; set; } = -1; //2 - Lab
+		}
 	}
 }

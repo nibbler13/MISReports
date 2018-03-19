@@ -108,63 +108,100 @@ namespace MISReports {
 
 			foreach (KeyValuePair<string, ItemMESUsageTreatment> treatment in treatments) {
 				IRow row = sheet.CreateRow(rowNumber);
-
 				ItemMESUsageTreatment treat = treatment.Value;
-				double percentCompleted =
-					((double)treat.ListReferralsFromMes.Count +
-					(double)treat.ListReferralsFromDoc.Count) /
-					(double)treat.ListMES.Count;
 
-				int mesReferralsExecuted = 0;
-				int docReferralsExecuted = 0;
-				int allReferralsExecuted = 0;
-				int oversizedReferral = 0;
+				int necessaryServicesInMes = (from x in treat.DictMES where x.Value == 0 select x).Count();
+				int hasAtLeastOneReferralByMes = treat.ListReferralsFromMes.Count > 0 ? 1 : 0;
+				int necessaryServiceReferralByMesInstrumental = 0;
+				int necessaryServiceReferralByMesLaboratory = 0;
+				int necessaryServiceReferralCompletedByMes = 0;
 
 				foreach (string item in treat.ListReferralsFromMes) {
-					if (!treat.ListAllReferrals.ContainsKey(item))
+					if (!treat.DictMES.ContainsKey(item))
 						continue;
 
-					mesReferralsExecuted += treat.ListAllReferrals[item];
+					if (treat.DictMES[item] == 0) {
+						if (!treat.DictAllReferrals.ContainsKey(item))
+							continue;
+
+						if (treat.DictAllReferrals[item].RefType == 2)
+							necessaryServiceReferralByMesLaboratory++;
+						else
+							necessaryServiceReferralByMesInstrumental++;
+						
+						if (treat.DictAllReferrals[item].IsCompleted == 1)
+							necessaryServiceReferralCompletedByMes++;
+					}
 				}
+
+				int hasAtLeastOneReferralSelfMade = (treat.DictAllReferrals.Count - treat.ListReferralsFromMes.Count) > 0 ? 1 : 0;
+				int necessaryServiceReferralSelfMadeInstrumental = 0;
+				int necessaryServiceReferralSelfMadeLaboratory = 0;
+				int necessaryServiceReferralCompletedSelfMade = 0;
 
 				foreach (string item in treat.ListReferralsFromDoc) {
-					if (!treat.ListAllReferrals.ContainsKey(item))
+					if (!treat.DictMES.ContainsKey(item))
 						continue;
 
-					docReferralsExecuted += treat.ListAllReferrals[item];
+					if (treat.DictMES[item] == 0) {
+						if (!treat.DictAllReferrals.ContainsKey(item))
+							continue;
+
+						if (treat.DictAllReferrals[item].RefType == 2)
+							necessaryServiceReferralSelfMadeLaboratory++;
+						else
+							necessaryServiceReferralSelfMadeInstrumental++;
+
+						if (treat.DictAllReferrals[item].IsCompleted == 1)
+							necessaryServiceReferralCompletedSelfMade++;
+					}
 				}
 
-				foreach (KeyValuePair<string, int> pair in treat.ListAllReferrals) {
-					allReferralsExecuted += pair.Value;
+				int servicesAllReferralsInstrumental = (from x in treat.DictAllReferrals where x.Value.RefType != 2 select x).Count();
+				int servicesAllReferralsLaboratory = treat.DictAllReferrals.Count - servicesAllReferralsInstrumental;
+				int completedServicesInReferrals = (from x in treat.DictAllReferrals where x.Value.IsCompleted == 1 select x).Count();
+				int serviceInReferralOutsideMes = 0;
+				foreach (KeyValuePair<string, ItemMESUsageTreatment.ReferralDetails> pair in treat.DictAllReferrals)
+					if (!treat.DictMES.ContainsKey(pair.Key))
+						serviceInReferralOutsideMes++;
 
-					if (!treat.ListMES.Contains(pair.Key))
-						oversizedReferral++;
-				}
+				double necessaryServiceInMesUsedPercent =
+					(double)(
+					necessaryServiceReferralByMesInstrumental + 
+					necessaryServiceReferralByMesLaboratory +
+					necessaryServiceReferralSelfMadeInstrumental +
+					necessaryServiceReferralSelfMadeLaboratory) / 
+					(double)necessaryServicesInMes;
 				
 				List<object> values = new List<object>() {
-					treatment.Key,
-					1,
-					treat.TREATDATE,
-					treat.FILIAL,
-					treat.DEPNAME,
-					treat.DOCNAME,
-					treat.HISTNUM,
-					treat.CLIENTNAME,
-					treat.AGE,
-					treat.MKBCODE,
-					treat.ListMES.Count,
-					treat.ListReferralsFromMes.Count > 0 ? 1 : 0,
-					treat.ListReferralsFromMes.Count,
-					mesReferralsExecuted,
-					treat.ListReferralsFromDoc.Count > 0 ? 1 : 0,
-					treat.ListReferralsFromDoc.Count,
-					docReferralsExecuted,
-					treat.ListAllReferrals.Count > 0 ? 1 : 0,
-					treat.ListAllReferrals.Count,
-					allReferralsExecuted,
-					oversizedReferral,
-					percentCompleted,
-					percentCompleted == 1 ? 1 : 0
+					treatment.Key, //Код лечения
+					1, //Прием
+					treat.TREATDATE, //Дата лечения
+					treat.FILIAL, //Филиал
+					treat.DEPNAME, //Подразделение
+					treat.DOCNAME, //ФИО врача
+					treat.HISTNUM, //Номер ИБ
+					treat.CLIENTNAME, //ФИО пациента
+					treat.AGE, //Возраст
+					treat.MKBCODE, //Код МКБ
+					necessaryServicesInMes, //Кол-во обязательных услуг согласно МЭС
+					treat.DictMES.Count, //Всего услуг в МЭС
+					hasAtLeastOneReferralByMes, //Есть направление, созданное с использованием МЭС
+					necessaryServiceReferralByMesInstrumental, //Кол-во обязательных услуг в направлении с использованием МЭС (инструментальных)
+					necessaryServiceReferralByMesLaboratory, //Кол-во обязательных услуг в направлении с использованием МЭС (лабораторных)
+					necessaryServiceReferralCompletedByMes, //Кол-во исполненных обязательных услуг в направлении МЭС
+					hasAtLeastOneReferralSelfMade, //Есть направление, созданное самостоятельно
+					necessaryServiceReferralSelfMadeInstrumental, //Кол-во обязательных услуг в направлении выставленных самостоятельно (инструментальных)
+					necessaryServiceReferralSelfMadeLaboratory, //Кол-во обязательных услуг в направлении выставленных самостоятельно (лабораторных)
+					necessaryServiceReferralCompletedSelfMade, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях
+					servicesAllReferralsInstrumental, //Всего услуг во всех направлениях (иснтрументальных)
+					servicesAllReferralsLaboratory, //Всего услуг во всех направлениях (лабораторных)
+					completedServicesInReferrals, //Кол-во выполненных услуг во всех направлениях
+					serviceInReferralOutsideMes, //Кол-во услуг в направлениях, не входящих в МЭС
+					necessaryServiceInMesUsedPercent, //% Соответствия обязательных услуг МЭС (обязательные во всех направлениях) / всего обязательных в мэс
+					necessaryServiceInMesUsedPercent == 1 ? 1 : 0, //Услуги из всех направлений соответсвуют обязательным услугам МЭС на 100%
+					treat.SERVICE_TYPE, //Тип приема
+					treat.PAYMENT_TYPE //Тип оплаты приема
 				};
 
 				foreach (object value in values) {
@@ -195,22 +232,38 @@ namespace MISReports {
 
 			try {
 				int rowsUsed = ws.UsedRange.Rows.Count;
-				ws.Columns["B:B"].Select();
+
+				for (int i = 2; i <= rowsUsed; i++)
+					ws.Range["F" + i].FormulaR1C1 = "=IFERROR(RC[-1]/RC[-2],0)";
+
+				ws.Columns["F:F"].Select();
 				xlApp.Selection.NumberFormat = "0,0%";
+
+				ws.Range["A" + (rowsUsed + 2)].Value = "Итого:";
+
+				foreach (string item in new string[] { "B", "C", "D", "E" }) 
+					ws.Range[item + (rowsUsed + 2)].Formula = "=SUM(" + item + "2:" + item + rowsUsed + ")";
+
+				ws.Range["F" + (rowsUsed + 2)].FormulaR1C1 = "=IFERROR(RC[-1]/RC[-2],0)";
+
+
+				//string rangeData = "A1:A" + rowsUsed + ",F1:F" + rowsUsed;
+				//Console.WriteLine("rangeData: " + rangeData);
 				xlApp.ActiveSheet.Shapes.AddChart2(201, Excel.XlChartType.xlColumnClustered).Select();
-				xlApp.ActiveChart.SetSourceData(ws.Range["A1:B" + rowsUsed]);
+				xlApp.ActiveChart.SetSourceData(ws.get_Range("A1:A2;F1:F2"));
 				xlApp.ActiveSheet.Shapes["Диаграмма 1"].Top = 0;
-				xlApp.ActiveSheet.Shapes["Диаграмма 1"].Left = 280;
-				rowsUsed += 2;
-				ws.Range["A" + rowsUsed].Value = "Итого:";
-				ws.Range["B" + rowsUsed].Formula = "=AVERAGE(B2:B" + (rowsUsed - 2) + ")";
-				ws.Range["A" + rowsUsed + ":B" + rowsUsed].Select();
-				xlApp.Selection.Interior.Pattern = Excel.Constants.xlSolid;
-				xlApp.Selection.Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
-				xlApp.Selection.Interior.Color = 65535;
-				xlApp.Selection.Interior.TintAndShade = 0;
-				xlApp.Selection.Font.Bold = Excel.Constants.xlSolid;
-				rowsUsed++;
+				xlApp.ActiveSheet.Shapes["Диаграмма 1"].Left = 480;
+
+				//rowsUsed += 2;
+				//ws.Range["A" + rowsUsed].Value = "Итого:";
+				//ws.Range["B" + rowsUsed].Formula = "=AVERAGE(B2:B" + (rowsUsed - 2) + ")";
+				//ws.Range["A" + rowsUsed + ":B" + rowsUsed].Select();
+				//xlApp.Selection.Interior.Pattern = Excel.Constants.xlSolid;
+				//xlApp.Selection.Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
+				//xlApp.Selection.Interior.Color = 65535;
+				//xlApp.Selection.Interior.TintAndShade = 0;
+				//xlApp.Selection.Font.Bold = Excel.Constants.xlSolid;
+				//rowsUsed++;
 				ws.Range["A" + rowsUsed].Select();
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);

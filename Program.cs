@@ -200,7 +200,8 @@ namespace MISReports {
 						arrayAllReferrals = listAllReferrals.Split(';');
 
 					if (treatments.ContainsKey(treatcode)) {
-						treatments[treatcode].ListMES.AddRange(arrayMES);
+						foreach (KeyValuePair<string, int> pair in ParseMes(arrayMES))
+							treatments[treatcode].DictMES.Add(pair.Key, pair.Value);
 
 						if (string.IsNullOrEmpty(mid))
 							treatments[treatcode].ListReferralsFromDoc.AddRange(arrayReferrals);
@@ -215,34 +216,18 @@ namespace MISReports {
 							FILIAL = row["FILIAL"].ToString(),
 							DEPNAME = row["DEPNAME"].ToString(),
 							MKBCODE = row["MKBCODE"].ToString(),
-							AGE = row["AGE"].ToString()
+							AGE = row["AGE"].ToString(),
+							SERVICE_TYPE = row["LISTALLSERVICES"].ToString().ToUpper().Contains("ПЕРВИЧНЫЙ") ? "Первичный" : "Повторный",
+							PAYMENT_TYPE = string.IsNullOrEmpty(row["GRNAME"].ToString()) ? "Страховая компания \\ Безнал" : "Наличный расчет" 
 						};
-
-						treatment.ListMES.AddRange(arrayMES);
-
+						
 						if (string.IsNullOrEmpty(mid))
 							treatment.ListReferralsFromDoc.AddRange(arrayReferrals);
 						else
 							treatment.ListReferralsFromMes.AddRange(arrayReferrals);
 
-						foreach (string item in arrayAllReferrals) {
-							if (!item.Contains(":"))
-								continue;
-
-							try {
-								string[] referral = item.Split(':');
-								string referralName = referral[0];
-
-								if (treatment.ListAllReferrals.ContainsKey(referralName))
-									continue;
-
-								int.TryParse(referral[1], out int referralExecuted);
-								treatment.ListAllReferrals.Add(referralName, referralExecuted);
-							} catch (Exception e) {
-								Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
-							}
-						}
-
+						treatment.DictMES = ParseMes(arrayMES);
+						treatment.DictAllReferrals = ParseAllReferrals(arrayAllReferrals);
 						treatments.Add(treatcode, treatment);
 					}
 				} catch (Exception e) {
@@ -251,6 +236,65 @@ namespace MISReports {
 			}
 
 			return treatments;
+		}
+
+		private static Dictionary<string, ItemMESUsageTreatment.ReferralDetails> ParseAllReferrals(string[] valuesArray) {
+			Dictionary<string, ItemMESUsageTreatment.ReferralDetails> keyValuePairs = 
+				new Dictionary<string, ItemMESUsageTreatment.ReferralDetails>();
+
+			foreach (string item in valuesArray) {
+				if (!item.Contains(":"))
+					continue;
+
+				try {
+					string[] referral = item.Split(':');
+					if (referral.Length < 3)
+						continue;
+
+					string referralCode = referral[0];
+
+					if (keyValuePairs.ContainsKey(referralCode))
+						continue;
+
+					int.TryParse(referral[1], out int referralStatus);
+					int.TryParse(referral[2], out int refType);
+					ItemMESUsageTreatment.ReferralDetails referralDetails = new ItemMESUsageTreatment.ReferralDetails() {
+						Schid = referralCode,
+						IsCompleted = referralStatus,
+						RefType = refType
+					};
+
+					keyValuePairs.Add(referralCode, referralDetails);
+				} catch (Exception e) {
+					Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
+				}
+			}
+
+			return keyValuePairs;
+		}
+
+		private static Dictionary<string, int> ParseMes(string[] valuesArray) {
+			Dictionary<string, int> keyValuePairs = new Dictionary<string, int>();
+
+			foreach (string item in valuesArray) {
+				if (!item.Contains(":"))
+					continue;
+
+				try {
+					string[] referral = item.Split(':');
+					string referralCode = referral[0];
+
+					if (keyValuePairs.ContainsKey(referralCode))
+						continue;
+
+					int.TryParse(referral[1], out int referralStatus);
+					keyValuePairs.Add(referralCode, referralStatus);
+				} catch (Exception e) {
+					Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
+				}
+			}
+
+			return keyValuePairs;
 		}
 
 		private static void WriteOutAcceptedParameters() {
