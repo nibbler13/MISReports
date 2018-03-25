@@ -67,29 +67,29 @@ namespace MISReports {
 				return;
 			}
 
-			DateTime? dateBegin = null;
-			DateTime? dateEnd = null;
+			DateTime? dateBeginReport = null;
+			DateTime? dateEndReport = null;
 
 			if (args.Length == 2) {
 				if (args[1].Equals("PreviousMonth")) {
-					dateBegin = DateTime.Now.AddMonths(-1).AddDays(-1 * (DateTime.Now.Day - 1));
-					dateEnd = dateBegin.Value.AddDays(DateTime.DaysInMonth(dateBegin.Value.Year, dateBegin.Value.Month) - 1);
+					dateBeginReport = DateTime.Now.AddMonths(-1).AddDays(-1 * (DateTime.Now.Day - 1));
+					dateEndReport = dateBeginReport.Value.AddDays(DateTime.DaysInMonth(dateBeginReport.Value.Year, dateBeginReport.Value.Month) - 1);
 				}
 			} else if (args.Length == 3) {
 				if (int.TryParse(args[1], out int dateBeginOffset) &&
 					int.TryParse(args[2], out int dateEndOffset)) {
-					dateBegin = DateTime.Now.AddDays(dateBeginOffset);
-					dateEnd = DateTime.Now.AddDays(dateEndOffset);
+					dateBeginReport = DateTime.Now.AddDays(dateBeginOffset);
+					dateEndReport = DateTime.Now.AddDays(dateEndOffset);
 				} else if (DateTime.TryParseExact(args[1], "dd.MM.yyyy", CultureInfo.InvariantCulture,
 					DateTimeStyles.None, out DateTime dateBeginArg) &&
 					DateTime.TryParseExact(args[2], "dd.MM.yyyy", CultureInfo.InvariantCulture,
 					DateTimeStyles.None, out DateTime dateEndArg)) {
-					dateBegin = dateBeginArg;
-					dateEnd = dateEndArg;
+					dateBeginReport = dateBeginArg;
+					dateEndReport = dateEndArg;
 				}
 			}
 
-			if (!dateBegin.HasValue || !dateEnd.HasValue) {
+			if (!dateBeginReport.HasValue || !dateEndReport.HasValue) {
 				Logging.ToFile("Не удалось распознать временные интервалы формирования отчета");
 				WriteOutAcceptedParameters();
 				return;
@@ -101,8 +101,11 @@ namespace MISReports {
 				Properties.Settings.Default.MisDbUser,
 				Properties.Settings.Default.MisDbPassword);
 
-			string dateBeginStr = dateBegin.Value.ToShortDateString();
-			string dateEndStr = dateEnd.Value.ToShortDateString();
+			DateTime? dateBeginOriginal = dateBeginReport;
+			dateBeginReport = dateBeginReport.Value.AddDays((-1 * dateBeginReport.Value.Day) + 1);
+
+			string dateBeginStr = dateBeginOriginal.Value.ToShortDateString();
+			string dateEndStr = dateEndReport.Value.ToShortDateString();
 			string subject = AcceptedParameters[reportToCreate] + " с " + dateBeginStr + " по " + dateEndStr;
 			Logging.ToFile(subject);
 
@@ -111,8 +114,33 @@ namespace MISReports {
 				{ "@dateEnd", dateEndStr }
 			};
 
-			Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginStr + " по " + dateEndStr);
-			DataTable dataTable = firebirdClient.GetDataTable(sqlQuery, parameters);
+			Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
+
+			DataTable dataTable = null;
+			if (reportToCreate == ReportType.MESUsage ||
+				reportToCreate == ReportType.FreeCells) {
+
+				for (int i = 0; dateBeginReport.Value.AddDays(i) <= dateEndReport; i++) {
+					string dayToGetData = dateBeginReport.Value.AddDays(i).ToShortDateString();
+					Logging.ToFile("Получение данных за день: " + dayToGetData);
+
+					parameters = new Dictionary<string, object>() {
+						{ "@dateBegin", dayToGetData },
+						{ "@dateEnd", dayToGetData }
+					};
+
+					DataTable dataTablePart = firebirdClient.GetDataTable(sqlQuery, parameters);
+
+					if (dataTable == null) {
+						dataTable = dataTablePart;
+					} else {
+						dataTable.Merge(dataTablePart);
+					}
+				}
+			} else {
+				dataTable = firebirdClient.GetDataTable(sqlQuery, parameters);
+			}
+
 			Logging.ToFile("Получено строк: " + dataTable.Rows.Count);
 
 			string fileResult = string.Empty;
@@ -122,6 +150,54 @@ namespace MISReports {
 
 			if (dataTable.Rows.Count > 0) {
 				Logging.ToFile("Запись данных в файл Excel");
+				
+				if (reportToCreate == ReportType.FreeCells) {
+					DataColumn dataColumn = dataTable.Columns.Add("SortingOrder", typeof(int));
+					dataColumn.SetOrdinal(0);
+
+					foreach (DataRow dataRow in dataTable.Rows) {
+						int order = 99;
+
+						switch (dataRow["SHORTNAME"].ToString().ToUpper()) {
+							case "СУЩ":
+								order = 1;
+								break;
+							case "М-СРЕТ":
+								order = 2;
+								break;
+							case "МДМ":
+								order = 3;
+								break;
+							case "С-ПБ.":
+								order = 4;
+								break;
+							case "УФА":
+								order = 5;
+								break;
+							case "КАЗАНЬ":
+								order = 6;
+								break;
+							case "КРАСН":
+								order = 7;
+								break;
+							case "К-УРАЛ":
+								order = 8;
+								break;
+							case "СОЧИ":
+								order = 9;
+								break;
+							default:
+								break;
+						}
+
+						dataRow["SortingOrder"] = order;
+					}
+				}
+
+
+
+
+
 				if (reportToCreate == ReportType.MESUsage) {
 					Dictionary<string, ItemMESUsageTreatment> treatments = ParseMESUsageDataTableToTreatments(dataTable);
 					fileResult = NpoiExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments, subject, templateFileName);
@@ -134,7 +210,7 @@ namespace MISReports {
 
 					switch (reportToCreate) {
 						case ReportType.FreeCells:
-							isPostProcessingOk = NpoiExcelGeneral.PerformFreeCells(fileResult);
+							isPostProcessingOk = NpoiExcelGeneral.PerformFreeCells(fileResult, dateBeginOriginal.Value, dateEndReport.Value);
 							break;
 						case ReportType.UnclosedProtocols:
 							isPostProcessingOk = NpoiExcelGeneral.PerformUnclosedProtocols(fileResult);
@@ -160,7 +236,7 @@ namespace MISReports {
 					hasError = true;
 				}
 			} else {
-				body = "Отсутствуют данные за период " + dateBegin + "-" + dateEnd;
+				body = "Отсутствуют данные за период " + dateBeginReport + "-" + dateEndReport;
 				hasError = true;
 			}
 
@@ -217,6 +293,8 @@ namespace MISReports {
 							DEPNAME = row["DEPNAME"].ToString(),
 							MKBCODE = row["MKBCODE"].ToString(),
 							AGE = row["AGE"].ToString(),
+							AGNAME = row["AGNAME"].ToString(),
+							AGNUM = row["AGNUM"].ToString(),
 							SERVICE_TYPE = row["LISTALLSERVICES"].ToString().ToUpper().Contains("ПЕРВИЧНЫЙ") ? "Первичный" : "Повторный",
 							PAYMENT_TYPE = string.IsNullOrEmpty(row["GRNAME"].ToString()) ? "Страховая компания \\ Безнал" : "Наличный расчет" 
 						};

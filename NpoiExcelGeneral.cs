@@ -8,6 +8,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using Excel = Microsoft.Office.Interop.Excel;
@@ -114,7 +115,8 @@ namespace MISReports {
 				int hasAtLeastOneReferralByMes = treat.ListReferralsFromMes.Count > 0 ? 1 : 0;
 				int necessaryServiceReferralByMesInstrumental = 0;
 				int necessaryServiceReferralByMesLaboratory = 0;
-				int necessaryServiceReferralCompletedByMes = 0;
+				int necessaryServiceReferralCompletedByMesInstrumental = 0;
+				int necessaryServiceReferralCompletedByMesLaboratory = 0;
 
 				foreach (string item in treat.ListReferralsFromMes) {
 					if (!treat.DictMES.ContainsKey(item))
@@ -124,20 +126,23 @@ namespace MISReports {
 						if (!treat.DictAllReferrals.ContainsKey(item))
 							continue;
 
-						if (treat.DictAllReferrals[item].RefType == 2)
+						int isCompleted = treat.DictAllReferrals[item].IsCompleted == 1 ? 1 : 0;
+
+						if (treat.DictAllReferrals[item].RefType == 2) {
 							necessaryServiceReferralByMesLaboratory++;
-						else
+							necessaryServiceReferralCompletedByMesLaboratory += isCompleted;
+						} else {
 							necessaryServiceReferralByMesInstrumental++;
-						
-						if (treat.DictAllReferrals[item].IsCompleted == 1)
-							necessaryServiceReferralCompletedByMes++;
+							necessaryServiceReferralCompletedByMesInstrumental += isCompleted;
+						}
 					}
 				}
 
 				int hasAtLeastOneReferralSelfMade = (treat.DictAllReferrals.Count - treat.ListReferralsFromMes.Count) > 0 ? 1 : 0;
 				int necessaryServiceReferralSelfMadeInstrumental = 0;
 				int necessaryServiceReferralSelfMadeLaboratory = 0;
-				int necessaryServiceReferralCompletedSelfMade = 0;
+				int necessaryServiceReferralCompletedSelfMadeInstrumental = 0;
+				int necessaryServiceReferralCompletedSelfMadeLaboratory = 0;
 
 				foreach (string item in treat.ListReferralsFromDoc) {
 					if (!treat.DictMES.ContainsKey(item))
@@ -147,13 +152,15 @@ namespace MISReports {
 						if (!treat.DictAllReferrals.ContainsKey(item))
 							continue;
 
-						if (treat.DictAllReferrals[item].RefType == 2)
-							necessaryServiceReferralSelfMadeLaboratory++;
-						else
-							necessaryServiceReferralSelfMadeInstrumental++;
+						int isCompleted = treat.DictAllReferrals[item].IsCompleted == 1 ? 1 : 0;
 
-						if (treat.DictAllReferrals[item].IsCompleted == 1)
-							necessaryServiceReferralCompletedSelfMade++;
+						if (treat.DictAllReferrals[item].RefType == 2) {
+							necessaryServiceReferralSelfMadeLaboratory++;
+							necessaryServiceReferralCompletedSelfMadeLaboratory += isCompleted;
+						} else {
+							necessaryServiceReferralSelfMadeInstrumental++;
+							necessaryServiceReferralCompletedSelfMadeInstrumental += isCompleted;
+						}
 					}
 				}
 
@@ -165,13 +172,17 @@ namespace MISReports {
 					if (!treat.DictMES.ContainsKey(pair.Key))
 						serviceInReferralOutsideMes++;
 
-				double necessaryServiceInMesUsedPercent =
+				double necessaryServiceInMesUsedPercent;
+				if (necessaryServicesInMes > 0)
+					necessaryServiceInMesUsedPercent =
 					(double)(
-					necessaryServiceReferralByMesInstrumental + 
+					necessaryServiceReferralByMesInstrumental +
 					necessaryServiceReferralByMesLaboratory +
 					necessaryServiceReferralSelfMadeInstrumental +
-					necessaryServiceReferralSelfMadeLaboratory) / 
+					necessaryServiceReferralSelfMadeLaboratory) /
 					(double)necessaryServicesInMes;
+				else
+					necessaryServiceInMesUsedPercent = 1;
 				
 				List<object> values = new List<object>() {
 					treatment.Key, //Код лечения
@@ -189,11 +200,13 @@ namespace MISReports {
 					hasAtLeastOneReferralByMes, //Есть направление, созданное с использованием МЭС
 					necessaryServiceReferralByMesInstrumental, //Кол-во обязательных услуг в направлении с использованием МЭС (инструментальных)
 					necessaryServiceReferralByMesLaboratory, //Кол-во обязательных услуг в направлении с использованием МЭС (лабораторных)
-					necessaryServiceReferralCompletedByMes, //Кол-во исполненных обязательных услуг в направлении МЭС
+					necessaryServiceReferralCompletedByMesInstrumental, //Кол-во исполненных обязательных услуг в направлении МЭС (инструментальных)
+					necessaryServiceReferralCompletedByMesLaboratory, //Кол-во исполненных обязательных услуг в направлении МЭС (лабораторных)
 					hasAtLeastOneReferralSelfMade, //Есть направление, созданное самостоятельно
 					necessaryServiceReferralSelfMadeInstrumental, //Кол-во обязательных услуг в направлении выставленных самостоятельно (инструментальных)
 					necessaryServiceReferralSelfMadeLaboratory, //Кол-во обязательных услуг в направлении выставленных самостоятельно (лабораторных)
-					necessaryServiceReferralCompletedSelfMade, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях
+					necessaryServiceReferralCompletedSelfMadeInstrumental, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (инструментальных)
+					necessaryServiceReferralCompletedSelfMadeLaboratory, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (лабораторных)
 					servicesAllReferralsInstrumental, //Всего услуг во всех направлениях (иснтрументальных)
 					servicesAllReferralsLaboratory, //Всего услуг во всех направлениях (лабораторных)
 					completedServicesInReferrals, //Кол-во выполненных услуг во всех направлениях
@@ -201,7 +214,9 @@ namespace MISReports {
 					necessaryServiceInMesUsedPercent, //% Соответствия обязательных услуг МЭС (обязательные во всех направлениях) / всего обязательных в мэс
 					necessaryServiceInMesUsedPercent == 1 ? 1 : 0, //Услуги из всех направлений соответсвуют обязательным услугам МЭС на 100%
 					treat.SERVICE_TYPE, //Тип приема
-					treat.PAYMENT_TYPE //Тип оплаты приема
+					treat.PAYMENT_TYPE, //Тип оплаты приема
+					treat.AGNAME, //Наименование организации
+					treat.AGNUM //Номер договора
 				};
 
 				foreach (object value in values) {
@@ -273,37 +288,44 @@ namespace MISReports {
 
 			return true;
 		}
-		
-		public static bool PerformFreeCells(string resultFile) {
+
+		public static bool PerformFreeCells(string resultFile, DateTime dateBeginOriginal, DateTime dateEnd) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, 
 				out Excel.Worksheet ws))
 				return false;
 
 			try {
-				ws.Columns["B:B"].Select();
+				ws.Columns["C:C"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
-				ws.Columns["B:B"].EntireColumn.AutoFit();
+				ws.Columns["C:C"].EntireColumn.AutoFit();
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			try {
-				AddPivotTableFreeCells(wb, ws, xlApp);
+				AddPivotTableFreeCells(wb, ws, xlApp, false, dateBeginOriginal);
+				wb.Sheets["Данные"].Activate();
+				AddPivotTableFreeCells(wb, ws, xlApp, true, dateBeginOriginal, dateEnd);
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
-			wb.Sheets["Сводная таблица"].Activate();
+			wb.Sheets["Сводная таблица текущая неделя"].Activate();
 			SaveAndCloseWorkbook(xlApp, wb);
 
 			return true;
 		}
 
-		private static void AddPivotTableFreeCells(Excel.Workbook wb, Excel.Worksheet ws, Excel.Application xlApp) {
+		private static void AddPivotTableFreeCells(Excel.Workbook wb, Excel.Worksheet ws, Excel.Application xlApp, 
+			bool isMonth, DateTime date, DateTime? dateMonthEnd = null) {
 			ws.Cells[1, 1].Select();
 
+			string sheetName;
+			if (isMonth) sheetName = "Сводная таблица текущий месяц";
+			else sheetName = "Сводная таблица текущая неделя";
+
 			string pivotTableName = @"PivotTable";
-			Excel.Worksheet wsPivote = wb.Sheets["Сводная таблица"];
+			Excel.Worksheet wsPivote = wb.Sheets[sheetName];
 			wsPivote.Activate();
 
 			Excel.PivotCache pivotCache = wb.PivotCaches().Create(Excel.XlPivotTableSourceType.xlDatabase, ws.UsedRange, 6);
@@ -323,28 +345,35 @@ namespace MISReports {
 			pivotTable.PivotFields("Врач").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
 			pivotTable.PivotFields("Врач").Position = 4;
 
-
 			pivotTable.AddDataField(pivotTable.PivotFields("Всего"), "(Всего)", Excel.XlConsolidationFunction.xlSum);
 			pivotTable.AddDataField(pivotTable.PivotFields("Занято"), "(Занято)", Excel.XlConsolidationFunction.xlSum);
-			pivotTable.AddDataField(pivotTable.PivotFields("Загрузка"), "(Загрузка)", Excel.XlConsolidationFunction.xlAverage);
+			pivotTable.AddDataField(pivotTable.PivotFields("% занятых слотов"), "(% занятых слотов)", Excel.XlConsolidationFunction.xlAverage);
 
-			pivotTable.PivotFields("Дата").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
-			pivotTable.PivotFields("Дата").Position = 1;
-
-			pivotTable.PivotFields("Дата").AutoGroup();
-
-			pivotTable.PivotFields("Филиал").PivotItems("Call-центр").Visible = false;
-			pivotTable.PivotFields("Филиал").PivotItems("КУТУЗ").Visible = false;
-			pivotTable.PivotFields("Филиал").PivotItems("СКОРАЯ").Visible = false;
+			if (isMonth) {
+				CultureInfo cultureInfoOriginal = Thread.CurrentThread.CurrentCulture;
+				Thread.CurrentThread.CurrentCulture = new CultureInfo("en-US");
+				for (DateTime dateToHide = date; dateToHide.Date <= dateMonthEnd.Value.Date; dateToHide = dateToHide.AddDays(1)) {
+					string pivotItem = dateToHide.ToShortDateString();
+					Console.WriteLine("pivotItem: " + pivotItem);
+					pivotTable.PivotFields("Дата").PivotItems(pivotItem).Visible = false;
+				}
+				Thread.CurrentThread.CurrentCulture = cultureInfoOriginal;
+			} else {
+				pivotTable.PivotFields("Дата").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
+				pivotTable.PivotFields("Дата").Position = 1;
+				pivotTable.PivotFields("Дата").AutoGroup();
+				pivotTable.PivotFields("Дата").PivotFilters.Add2(Excel.XlPivotFilterType.xlAfter, null, 
+					date.AddDays(-1).ToShortDateString(), null, null, null, null, null, true);
+				try { pivotTable.PivotFields("Месяцы").Orientation = Excel.XlPivotFieldOrientation.xlHidden; } catch (Exception) { }
+			}
 
 			pivotTable.RowGrand = false;
 			pivotTable.ColumnGrand = false;
 			pivotTable.DisplayFieldCaptions = false;
 
 			pivotTable.PivotFields("(Занято)").NumberFormat = "0,00";
-			pivotTable.PivotFields("(Загрузка)").NumberFormat = "0,0%";
-			
-			pivotTable.PivotSelect("'(Загрузка)'", Excel.XlPTSelectionMode.xlDataAndLabel, true);
+			pivotTable.PivotFields("(% занятых слотов)").NumberFormat = "0,0%";
+			pivotTable.PivotSelect("'(% занятых слотов)'", Excel.XlPTSelectionMode.xlDataAndLabel, true);
 
 			xlApp.Selection.FormatConditions.AddColorScale(3);
 			xlApp.Selection.FormatConditions(xlApp.Selection.FormatConditions.Count).SetFirstPriority();
@@ -367,18 +396,16 @@ namespace MISReports {
 			xlApp.Selection.FormatConditions[1].ColorScaleCriteria[3].FormatColor.TintAndShade = 0;
 
 			xlApp.Selection.FormatConditions[1].ScopeType = Excel.XlPivotConditionScope.xlDataFieldScope;
-			
-			
-			pivotTable.PivotFields("Филиал").AutoSort(Excel.XlSortOrder.xlAscending, "(Загрузка)");
+
+			pivotTable.PivotFields("Порядок сортировки").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Порядок сортировки").Position = 1;
+			pivotTable.PivotFields("Порядок сортировки").Subtotals = 
+				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+			pivotTable.PivotFields("Порядок сортировки").LayoutForm = Excel.XlLayoutFormType.xlTabular;
 
 			pivotTable.PivotFields("Отделение").ShowDetail = false;
 			pivotTable.PivotFields("Пересечение").ShowDetail = false;
 			pivotTable.PivotFields("Филиал").ShowDetail = false;
-
-			try {
-				pivotTable.PivotFields("Месяцы").Orientation = Excel.XlPivotFieldOrientation.xlHidden;
-			} catch (Exception) {
-			}
 
 			wsPivote.Range["A1"].Select();
 			wb.ShowPivotTableFieldList = false;

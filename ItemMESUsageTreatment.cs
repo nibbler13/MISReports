@@ -18,8 +18,10 @@ namespace MISReports {
 		public List<string> ListReferralsFromMes { get; set; } = new List<string>();
 		public List<string> ListReferralsFromDoc { get; set; } = new List<string>();
 		public Dictionary<string, ReferralDetails> DictAllReferrals { get; set; } = new Dictionary<string, ReferralDetails>();
-		public string SERVICE_TYPE = string.Empty;
-		public string PAYMENT_TYPE = string.Empty;
+		public string SERVICE_TYPE { get; set; } = string.Empty;
+		public string PAYMENT_TYPE { get; set; } = string.Empty;
+		public string AGNAME { get; set; } = string.Empty;
+		public string AGNUM { get; set; } = string.Empty;
 
 		public class ReferralDetails {
 			public string Schid { get; set; } = string.Empty;
