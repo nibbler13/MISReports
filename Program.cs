@@ -18,7 +18,8 @@ namespace MISReports {
 			UnclosedProtocols,
 			MESUsage,
 			OnlineAccountsUsage,
-			Telemedicine
+			Telemedicine,
+			NonAppearance
 		};
 
 		public static Dictionary<ReportType, string> AcceptedParameters = new Dictionary<ReportType, string> {
@@ -26,7 +27,8 @@ namespace MISReports {
 			{ ReportType.UnclosedProtocols, "Отчет по неподписанным протоколам" },
 			{ ReportType.MESUsage, "Отчет по использованию МЭС" },
 			{ ReportType.OnlineAccountsUsage, "Отчет по записи на прием через личный кабинет" },
-			{ ReportType.Telemedicine, "Отчет по приемам телемедицины" }
+			{ ReportType.Telemedicine, "Отчет по приемам телемедицины" },
+			{ ReportType.NonAppearance, "Отчет по неявкам - Казань" }
 		};
 
 		static void Main(string[] args) {
@@ -68,6 +70,11 @@ namespace MISReports {
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
 				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
 				mailTo = Properties.Settings.Default.MailToTelemedicine;
+			} else if (reportName.Equals(ReportType.NonAppearance.ToString())) {
+				reportToCreate = ReportType.NonAppearance;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetNonAppearance;
+				templateFileName = Properties.Settings.Default.TemplateNonAppearance;
+				mailTo = Properties.Settings.Default.MailToNonAppearance;
 			} else {
 				Logging.ToFile("Неизвестное название отчета: " + reportName);
 				WriteOutAcceptedParameters();
@@ -225,6 +232,9 @@ namespace MISReports {
 							break;
 						case ReportType.Telemedicine:
 							isPostProcessingOk = NpoiExcelGeneral.PerformTelemedicine(fileResult);
+							break;
+						case ReportType.NonAppearance:
+							isPostProcessingOk = NpoiExcelGeneral.PerformNonAppearance(fileResult);
 							break;
 						default:
 							break;

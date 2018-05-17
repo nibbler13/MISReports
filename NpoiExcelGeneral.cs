@@ -99,6 +99,146 @@ namespace MISReports {
 		}
 
 
+		public static bool PerformNonAppearance(string resultFile) {
+			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
+				return false;
+
+			try {
+				ws.Columns["A:A"].Select();
+				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
+				ws.Range["A1"].Select();
+
+				//Columns("A:A").Select
+				//Selection.NumberFormat = "m/d/yyyy"
+				//Range("A1").Select
+			} catch (Exception e) {
+				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			try {
+				NonAppearanceAddPivotTable(wb, ws, xlApp);
+				
+				ws = wb.Sheets["Сводная таблица"];
+				ws.Activate();
+				ws.Columns["B:E"].ColumnWidth = 15;
+				ws.Range["B1:E1"].Select();
+				xlApp.Selection.WrapText = true;
+				ws.Range["A1"].Select();
+			} catch (Exception e) {
+				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+			}
+			
+			SaveAndCloseWorkbook(xlApp, wb);
+
+			return true;
+		}
+
+		private static void NonAppearanceAddPivotTable(Excel.Workbook wb, Excel.Worksheet ws, Excel.Application xlApp) {
+			ws.Cells[1, 1].Select();
+
+			string pivotTableName = @"NonAppearancePivotTable";
+			Excel.Worksheet wsPivote = wb.Sheets["Сводная Таблица"];
+
+			Excel.PivotCache pivotCache = wb.PivotCaches().Create(Excel.XlPivotTableSourceType.xlDatabase, ws.UsedRange, 6);
+			Excel.PivotTable pivotTable = pivotCache.CreatePivotTable(wsPivote.Cells[1, 1], pivotTableName, true, 6);
+
+			pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
+
+			pivotTable.PivotFields("Подразделение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Подразделение").Position = 1;
+
+			pivotTable.PivotFields("ФИО доктора").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("ФИО доктора").Position = 2;
+
+			pivotTable.PivotFields("Дата лечения").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Дата лечения").Position = 3;
+
+			pivotTable.AddDataField(pivotTable.PivotFields("Записано пациентов"),
+				"Сумма по полю Записано пациентов", Excel.XlConsolidationFunction.xlSum);
+			pivotTable.AddDataField(pivotTable.PivotFields("Отметки без лечений"), 
+				"Сумма по полю Отметки без лечений", Excel.XlConsolidationFunction.xlSum);
+			pivotTable.AddDataField(pivotTable.PivotFields("Без отметок и без лечений"),
+				"Сумма по полю Без отметок и без лечений", Excel.XlConsolidationFunction.xlSum);
+
+			pivotTable.CalculatedFields().Add("% Неявки",
+				"= ('Отметки без лечений' +'Без отметок и без лечений' )/'Записано пациентов'", true);
+			pivotTable.PivotFields("% Неявки").Orientation = Excel.XlPivotFieldOrientation.xlDataField;
+			pivotTable.PivotFields("Сумма по полю % Неявки").NumberFormat = "0,00%";
+			
+			pivotTable.HasAutoFormat = false;
+
+			pivotTable.PivotFields("ФИО доктора").ShowDetail = false;
+			pivotTable.PivotFields("Подразделение").ShowDetail = false;
+			
+			pivotTable.DisplayFieldCaptions = false;
+			wb.ShowPivotTableFieldList = false;
+			//pivotTable.ShowDrillIndicators = false;
+
+			//ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:= _
+			//    "Данные!R1C1:R170C6", Version:=6).CreatePivotTable TableDestination:= _
+			//    "Сводная таблица!R1C1", TableName:="Сводная таблица1", DefaultVersion:=6
+			//Sheets("Сводная таблица").Select
+			//Cells(1, 1).Select
+			//With ActiveSheet.PivotTables("Сводная таблица1").PivotFields("Подразделение")
+			//    .Orientation = xlRowField
+			//    .Position = 1
+			//End With
+			//With ActiveSheet.PivotTables("Сводная таблица1").PivotFields("ФИО доктора")
+			//    .Orientation = xlRowField
+			//    .Position = 2
+			//End With
+			//With ActiveSheet.PivotTables("Сводная таблица1").PivotFields("Дата лечения")
+			//    .Orientation = xlRowField
+			//    .Position = 3
+			//End With
+			//ActiveSheet.PivotTables("Сводная таблица1").AddDataField ActiveSheet. _
+			//    PivotTables("Сводная таблица1").PivotFields("Записано пациентов"), _
+			//    "Сумма по полю Записано пациентов", xlSum
+			//ActiveSheet.PivotTables("Сводная таблица1").AddDataField ActiveSheet. _
+			//    PivotTables("Сводная таблица1").PivotFields("Отметки без лечений"), _
+			//    "Сумма по полю Отметки без лечений", xlSum
+			//ActiveSheet.PivotTables("Сводная таблица1").AddDataField ActiveSheet. _
+			//    PivotTables("Сводная таблица1").PivotFields("Без отметок и без лечений"), _
+			//    "Сумма по полю Без отметок и без лечений", xlSum
+			//ActiveSheet.PivotTables("Сводная таблица1").CalculatedFields.Add "% Неявки", _
+			//    "= ('Отметки без лечений' +'Без отметок и без лечений' )/'Записано пациентов'" _
+			//    , True
+			//ActiveSheet.PivotTables("Сводная таблица1").PivotFields("% Неявки"). _
+			//    Orientation = xlDataField
+			//With ActiveSheet.PivotTables("Сводная таблица1").PivotFields( _
+			//    "Сумма по полю % Неявки")
+			//    .NumberFormat = "0,00%"
+			//End With
+			//ActiveSheet.PivotTables("Сводная таблица1").HasAutoFormat = False
+			//Columns("B:E").Select
+			//Selection.ColumnWidth = 15
+			//Range("B1:E1").Select
+			//With Selection
+			//    .HorizontalAlignment = xlGeneral
+			//    .VerticalAlignment = xlBottom
+			//    .WrapText = True
+			//    .Orientation = 0
+			//    .AddIndent = False
+			//    .IndentLevel = 0
+			//    .ShrinkToFit = False
+			//    .ReadingOrder = xlContext
+			//    .MergeCells = False
+			//End With
+			//Range("A3").Select
+			//ActiveSheet.PivotTables("Сводная таблица1").PivotFields("ФИО доктора"). _
+			//    PivotItems("Будяк Юрий Витальевич").DrillTo "ФИО доктора"
+			//ActiveSheet.PivotTables("Сводная таблица1").PivotFields("ФИО доктора"). _
+			//    ShowDetail = False
+			//Range("A2").Select
+			//ActiveSheet.PivotTables("Сводная таблица1").PivotFields("Подразделение"). _
+			//    ShowDetail = False
+			//Range("A1").Select
+			//ActiveWorkbook.ShowPivotTableFieldList = False
+			//ActiveSheet.PivotTables("Сводная таблица1").ShowDrillIndicators = False
+			//ActiveSheet.PivotTables("Сводная таблица1").DisplayFieldCaptions = False
+		}
+
+
 
 		public static string WriteMesUsageTreatmentsToExcel(Dictionary<string, ItemMESUsageTreatment> treatments, string resultFilePrefix, string templateFileName) {
 			if (!CreateNewIWorkbook(resultFilePrefix, templateFileName, out IWorkbook workbook, out ISheet sheet, out string resultFile))
