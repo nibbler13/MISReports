@@ -17,14 +17,16 @@ namespace MISReports {
 			FreeCells,
 			UnclosedProtocols,
 			MESUsage,
-			OnlineAccountsUsage
+			OnlineAccountsUsage,
+			Telemedicine
 		};
 
 		public static Dictionary<ReportType, string> AcceptedParameters = new Dictionary<ReportType, string> {
 			{ ReportType.FreeCells, "Отчет по свободным слотам" },
 			{ ReportType.UnclosedProtocols, "Отчет по неподписанным протоколам" },
 			{ ReportType.MESUsage, "Отчет по использованию МЭС" },
-			{ ReportType.OnlineAccountsUsage, "Отчет по записи на прием через личный кабинет" }
+			{ ReportType.OnlineAccountsUsage, "Отчет по записи на прием через личный кабинет" },
+			{ ReportType.Telemedicine, "Отчет по приемам телемедицины" }
 		};
 
 		static void Main(string[] args) {
@@ -61,6 +63,11 @@ namespace MISReports {
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetOnlineAccountsUsage;
 				mailTo = Properties.Settings.Default.MailToOnlineAccountsUsage;
 				templateFileName = Properties.Settings.Default.TemplateOnlineAccountsUsage;
+			} else if (reportName.Equals(ReportType.Telemedicine.ToString())) {
+				reportToCreate = ReportType.Telemedicine;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
+				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
+				mailTo = Properties.Settings.Default.MailToTelemedicine;
 			} else {
 				Logging.ToFile("Неизвестное название отчета: " + reportName);
 				WriteOutAcceptedParameters();
@@ -193,11 +200,7 @@ namespace MISReports {
 						dataRow["SortingOrder"] = order;
 					}
 				}
-
-
-
-
-
+				
 				if (reportToCreate == ReportType.MESUsage) {
 					Dictionary<string, ItemMESUsageTreatment> treatments = ParseMESUsageDataTableToTreatments(dataTable);
 					fileResult = NpoiExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments, subject, templateFileName);
@@ -219,6 +222,9 @@ namespace MISReports {
 							break;
 						case ReportType.OnlineAccountsUsage:
 							isPostProcessingOk = NpoiExcelGeneral.PerformOnlineAccountsUsage(fileResult);
+							break;
+						case ReportType.Telemedicine:
+							isPostProcessingOk = NpoiExcelGeneral.PerformTelemedicine(fileResult);
 							break;
 						default:
 							break;
@@ -248,8 +254,8 @@ namespace MISReports {
 			
 			firebirdClient.Close();
 
-			if (Debugger.IsAttached)
-				return;
+			//if (Debugger.IsAttached)
+			//	return;
 
 			SystemMail.SendMail(subject, body, mailTo, fileResult);
 			Logging.ToFile("Завершение работы");
