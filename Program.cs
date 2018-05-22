@@ -28,7 +28,7 @@ namespace MISReports {
 			{ ReportType.MESUsage, "Отчет по использованию МЭС" },
 			{ ReportType.OnlineAccountsUsage, "Отчет по записи на прием через личный кабинет" },
 			{ ReportType.Telemedicine, "Отчет по приемам телемедицины" },
-			{ ReportType.NonAppearance, "Отчет по неявкам - Казань" }
+			{ ReportType.NonAppearance, "Отчет по неявкам" }
 		};
 
 		static void Main(string[] args) {
@@ -264,8 +264,8 @@ namespace MISReports {
 			
 			firebirdClient.Close();
 
-			//if (Debugger.IsAttached)
-			//	return;
+			if (Debugger.IsAttached)
+				return;
 
 			SystemMail.SendMail(subject, body, mailTo, fileResult);
 			Logging.ToFile("Завершение работы");

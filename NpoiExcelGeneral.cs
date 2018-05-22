@@ -104,13 +104,10 @@ namespace MISReports {
 				return false;
 
 			try {
-				ws.Columns["A:A"].Select();
-				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
+				ws.Columns["B:B"].NumberFormat = "ДД.ММ.ГГГГ";
 				ws.Range["A1"].Select();
-
-				//Columns("A:A").Select
-				//Selection.NumberFormat = "m/d/yyyy"
-				//Range("A1").Select
+				ws.Columns["G:G"].NumberFormat = "0,00%";
+				ws.Columns["I:I"].NumberFormat = "0,00%";
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
@@ -120,8 +117,8 @@ namespace MISReports {
 				
 				ws = wb.Sheets["Сводная таблица"];
 				ws.Activate();
-				ws.Columns["B:E"].ColumnWidth = 15;
-				ws.Range["B1:E1"].Select();
+				ws.Columns["B:G"].ColumnWidth = 15;
+				ws.Range["B1:G1"].Select();
 				xlApp.Selection.WrapText = true;
 				ws.Range["A1"].Select();
 			} catch (Exception e) {
@@ -144,98 +141,53 @@ namespace MISReports {
 
 			pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
 
+			pivotTable.PivotFields("Филиал").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Филиал").Position = 1;
+
 			pivotTable.PivotFields("Подразделение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Подразделение").Position = 1;
+			pivotTable.PivotFields("Подразделение").Position = 2;
 
 			pivotTable.PivotFields("ФИО доктора").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("ФИО доктора").Position = 2;
+			pivotTable.PivotFields("ФИО доктора").Position = 3;
 
 			pivotTable.PivotFields("Дата лечения").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Дата лечения").Position = 3;
+			pivotTable.PivotFields("Дата лечения").Position = 4;
 
 			pivotTable.AddDataField(pivotTable.PivotFields("Записано пациентов"),
-				"Сумма по полю Записано пациентов", Excel.XlConsolidationFunction.xlSum);
-			pivotTable.AddDataField(pivotTable.PivotFields("Отметки без лечений"), 
-				"Сумма по полю Отметки без лечений", Excel.XlConsolidationFunction.xlSum);
-			pivotTable.AddDataField(pivotTable.PivotFields("Без отметок и без лечений"),
-				"Сумма по полю Без отметок и без лечений", Excel.XlConsolidationFunction.xlSum);
+				"Всего записано пациентов", Excel.XlConsolidationFunction.xlSum);
 
-			pivotTable.CalculatedFields().Add("% Неявки",
+			pivotTable.AddDataField(pivotTable.PivotFields("Отметки без лечений"),
+				"Отметки без лечения (регистратура +, врач – )", Excel.XlConsolidationFunction.xlSum);
+			pivotTable.CalculatedFields().Add("Общий % Неявок - Отметки без лечений",
+				"= 'Отметки без лечений'/'Записано пациентов'", true);
+			pivotTable.PivotFields("Общий % Неявок - Отметки без лечений").Orientation = Excel.XlPivotFieldOrientation.xlDataField;
+			pivotTable.PivotFields("Сумма по полю Общий % Неявок - Отметки без лечений").NumberFormat = "0,00%";
+			pivotTable.PivotFields("Сумма по полю Общий % Неявок - Отметки без лечений").Caption = 
+				"% Неявок - Отметки без лечений (регистратура +, врач – )";
+			
+			pivotTable.AddDataField(pivotTable.PivotFields("Без отметок и без лечений"),
+				"Без отметок и лечения (регистратура -, врач -)", Excel.XlConsolidationFunction.xlSum);
+			pivotTable.CalculatedFields().Add("Общий % Неявок - Без отметок и без лечений",
+				"= 'Без отметок и без лечений'/'Записано пациентов'", true);
+			pivotTable.PivotFields("Общий % Неявок - Без отметок и без лечений").Orientation = Excel.XlPivotFieldOrientation.xlDataField;
+			pivotTable.PivotFields("Сумма по полю Общий % Неявок - Без отметок и без лечений").NumberFormat = "0,00%";
+			pivotTable.PivotFields("Сумма по полю Общий % Неявок - Без отметок и без лечений").Caption =
+				"% Неявок - Без отметок и без лечений (регистратура -, врач -)";
+
+			pivotTable.CalculatedFields().Add("Общий % Неявки",
 				"= ('Отметки без лечений' +'Без отметок и без лечений' )/'Записано пациентов'", true);
-			pivotTable.PivotFields("% Неявки").Orientation = Excel.XlPivotFieldOrientation.xlDataField;
-			pivotTable.PivotFields("Сумма по полю % Неявки").NumberFormat = "0,00%";
+			pivotTable.PivotFields("Общий % Неявки").Orientation = Excel.XlPivotFieldOrientation.xlDataField;
+			pivotTable.PivotFields("Сумма по полю Общий % Неявки").NumberFormat = "0,00%";
+			pivotTable.PivotFields("Сумма по полю Общий % Неявки").Caption = "% Неявки";
 			
 			pivotTable.HasAutoFormat = false;
 
 			pivotTable.PivotFields("ФИО доктора").ShowDetail = false;
 			pivotTable.PivotFields("Подразделение").ShowDetail = false;
-			
+			pivotTable.PivotFields("Филиал").ShowDetail = false;
+
 			pivotTable.DisplayFieldCaptions = false;
 			wb.ShowPivotTableFieldList = false;
-			//pivotTable.ShowDrillIndicators = false;
-
-			//ActiveWorkbook.PivotCaches.Create(SourceType:=xlDatabase, SourceData:= _
-			//    "Данные!R1C1:R170C6", Version:=6).CreatePivotTable TableDestination:= _
-			//    "Сводная таблица!R1C1", TableName:="Сводная таблица1", DefaultVersion:=6
-			//Sheets("Сводная таблица").Select
-			//Cells(1, 1).Select
-			//With ActiveSheet.PivotTables("Сводная таблица1").PivotFields("Подразделение")
-			//    .Orientation = xlRowField
-			//    .Position = 1
-			//End With
-			//With ActiveSheet.PivotTables("Сводная таблица1").PivotFields("ФИО доктора")
-			//    .Orientation = xlRowField
-			//    .Position = 2
-			//End With
-			//With ActiveSheet.PivotTables("Сводная таблица1").PivotFields("Дата лечения")
-			//    .Orientation = xlRowField
-			//    .Position = 3
-			//End With
-			//ActiveSheet.PivotTables("Сводная таблица1").AddDataField ActiveSheet. _
-			//    PivotTables("Сводная таблица1").PivotFields("Записано пациентов"), _
-			//    "Сумма по полю Записано пациентов", xlSum
-			//ActiveSheet.PivotTables("Сводная таблица1").AddDataField ActiveSheet. _
-			//    PivotTables("Сводная таблица1").PivotFields("Отметки без лечений"), _
-			//    "Сумма по полю Отметки без лечений", xlSum
-			//ActiveSheet.PivotTables("Сводная таблица1").AddDataField ActiveSheet. _
-			//    PivotTables("Сводная таблица1").PivotFields("Без отметок и без лечений"), _
-			//    "Сумма по полю Без отметок и без лечений", xlSum
-			//ActiveSheet.PivotTables("Сводная таблица1").CalculatedFields.Add "% Неявки", _
-			//    "= ('Отметки без лечений' +'Без отметок и без лечений' )/'Записано пациентов'" _
-			//    , True
-			//ActiveSheet.PivotTables("Сводная таблица1").PivotFields("% Неявки"). _
-			//    Orientation = xlDataField
-			//With ActiveSheet.PivotTables("Сводная таблица1").PivotFields( _
-			//    "Сумма по полю % Неявки")
-			//    .NumberFormat = "0,00%"
-			//End With
-			//ActiveSheet.PivotTables("Сводная таблица1").HasAutoFormat = False
-			//Columns("B:E").Select
-			//Selection.ColumnWidth = 15
-			//Range("B1:E1").Select
-			//With Selection
-			//    .HorizontalAlignment = xlGeneral
-			//    .VerticalAlignment = xlBottom
-			//    .WrapText = True
-			//    .Orientation = 0
-			//    .AddIndent = False
-			//    .IndentLevel = 0
-			//    .ShrinkToFit = False
-			//    .ReadingOrder = xlContext
-			//    .MergeCells = False
-			//End With
-			//Range("A3").Select
-			//ActiveSheet.PivotTables("Сводная таблица1").PivotFields("ФИО доктора"). _
-			//    PivotItems("Будяк Юрий Витальевич").DrillTo "ФИО доктора"
-			//ActiveSheet.PivotTables("Сводная таблица1").PivotFields("ФИО доктора"). _
-			//    ShowDetail = False
-			//Range("A2").Select
-			//ActiveSheet.PivotTables("Сводная таблица1").PivotFields("Подразделение"). _
-			//    ShowDetail = False
-			//Range("A1").Select
-			//ActiveWorkbook.ShowPivotTableFieldList = False
-			//ActiveSheet.PivotTables("Сводная таблица1").ShowDrillIndicators = False
-			//ActiveSheet.PivotTables("Сводная таблица1").DisplayFieldCaptions = False
 		}
 
 
