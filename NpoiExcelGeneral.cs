@@ -63,7 +63,7 @@ namespace MISReports {
 		}
 
 
-		public static string WriteDataTableToExcel(DataTable dataTable, string resultFilePrefix, string templateFileName) {
+		public static string WriteDataTableToExcel(DataTable dataTable, string resultFilePrefix, string templateFileName, bool telemedicineOnlyIngosstrakh = false) {
 			if (!CreateNewIWorkbook(resultFilePrefix, templateFileName, out IWorkbook workbook, out ISheet sheet, out string resultFile))
 				return string.Empty;
 
@@ -72,6 +72,14 @@ namespace MISReports {
 
 			foreach (DataRow dataRow in dataTable.Rows) {
 				IRow row = sheet.CreateRow(rowNumber);
+
+				if (telemedicineOnlyIngosstrakh) {
+					try {
+						string paymentType = dataRow["JNAME"].ToString();
+						if (!paymentType.ToLower().Contains("ингосстрах"))
+							continue;
+					} catch (Exception) { }
+				}
 
 				foreach (DataColumn column in dataTable.Columns) {
 					ICell cell = row.CreateCell(columnNumber);
@@ -371,8 +379,11 @@ namespace MISReports {
 
 			pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
 
+			pivotTable.PivotFields("FILIAL_SHORTNAME").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("FILIAL_SHORTNAME").Position = 1;
+
 			pivotTable.PivotFields("SERVICE_TYPE").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("SERVICE_TYPE").Position = 1;
+			pivotTable.PivotFields("SERVICE_TYPE").Position = 2;
 
 			pivotTable.PivotFields("CLIENT_CATEGORY").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
 			pivotTable.PivotFields("CLIENT_CATEGORY").Position = 1;

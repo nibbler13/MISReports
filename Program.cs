@@ -18,7 +18,8 @@ namespace MISReports {
 			UnclosedProtocols,
 			MESUsage,
 			OnlineAccountsUsage,
-			Telemedicine,
+			TelemedicineOnlyIngosstrakh,
+			TelemedicineAll,
 			NonAppearance
 		};
 
@@ -27,7 +28,8 @@ namespace MISReports {
 			{ ReportType.UnclosedProtocols, "Отчет по неподписанным протоколам" },
 			{ ReportType.MESUsage, "Отчет по использованию МЭС" },
 			{ ReportType.OnlineAccountsUsage, "Отчет по записи на прием через личный кабинет" },
-			{ ReportType.Telemedicine, "Отчет по приемам телемедицины" },
+			{ ReportType.TelemedicineOnlyIngosstrakh, "Отчет по приемам телемедицины - только Ингосстрах" },
+			{ ReportType.TelemedicineAll, "Отчет по приемам телемедицины - все типы оплаты" },
 			{ ReportType.NonAppearance, "Отчет по неявкам" }
 		};
 
@@ -65,11 +67,16 @@ namespace MISReports {
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetOnlineAccountsUsage;
 				mailTo = Properties.Settings.Default.MailToOnlineAccountsUsage;
 				templateFileName = Properties.Settings.Default.TemplateOnlineAccountsUsage;
-			} else if (reportName.Equals(ReportType.Telemedicine.ToString())) {
-				reportToCreate = ReportType.Telemedicine;
+			} else if (reportName.Equals(ReportType.TelemedicineOnlyIngosstrakh.ToString())) {
+				reportToCreate = ReportType.TelemedicineOnlyIngosstrakh;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
 				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
-				mailTo = Properties.Settings.Default.MailToTelemedicine;
+				mailTo = Properties.Settings.Default.MailToTelemedicineOnlyIngosstrakh;
+			} else if (reportName.Equals(ReportType.TelemedicineAll.ToString())) {
+				reportToCreate = ReportType.TelemedicineAll;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
+				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
+				mailTo = Properties.Settings.Default.MailToTelemedicineAll;
 			} else if (reportName.Equals(ReportType.NonAppearance.ToString())) {
 				reportToCreate = ReportType.NonAppearance;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetNonAppearance;
@@ -207,10 +214,12 @@ namespace MISReports {
 						dataRow["SortingOrder"] = order;
 					}
 				}
-				
+
 				if (reportToCreate == ReportType.MESUsage) {
 					Dictionary<string, ItemMESUsageTreatment> treatments = ParseMESUsageDataTableToTreatments(dataTable);
 					fileResult = NpoiExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments, subject, templateFileName);
+				} else if (reportToCreate == ReportType.TelemedicineOnlyIngosstrakh) {
+					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable, subject, templateFileName, true);
 				} else {
 					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable, subject, templateFileName);
 				}
@@ -230,7 +239,8 @@ namespace MISReports {
 						case ReportType.OnlineAccountsUsage:
 							isPostProcessingOk = NpoiExcelGeneral.PerformOnlineAccountsUsage(fileResult);
 							break;
-						case ReportType.Telemedicine:
+						case ReportType.TelemedicineOnlyIngosstrakh:
+						case ReportType.TelemedicineAll:
 							isPostProcessingOk = NpoiExcelGeneral.PerformTelemedicine(fileResult);
 							break;
 						case ReportType.NonAppearance:
