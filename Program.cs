@@ -20,7 +20,10 @@ namespace MISReports {
 			OnlineAccountsUsage,
 			TelemedicineOnlyIngosstrakh,
 			TelemedicineAll,
-			NonAppearance
+			NonAppearance,
+			VIP_MSSU,
+			VIP_MSPO,
+			VIP_MSKM
 		};
 
 		public static Dictionary<ReportType, string> AcceptedParameters = new Dictionary<ReportType, string> {
@@ -30,7 +33,10 @@ namespace MISReports {
 			{ ReportType.OnlineAccountsUsage, "Отчет по записи на прием через личный кабинет" },
 			{ ReportType.TelemedicineOnlyIngosstrakh, "Отчет по приемам телемедицины - только Ингосстрах" },
 			{ ReportType.TelemedicineAll, "Отчет по приемам телемедицины - все типы оплаты" },
-			{ ReportType.NonAppearance, "Отчет по неявкам" }
+			{ ReportType.NonAppearance, "Отчет по неявкам" },
+			{ ReportType.VIP_MSSU, "Отчет по ВИП-пациентам Сущевка" },
+			{ ReportType.VIP_MSPO, "Отчет по ВИП-пациентам Сретенка" },
+			{ ReportType.VIP_MSKM, "Отчет по ВИП-пациентам Фрунзенская" }
 		};
 
 		static void Main(string[] args) {
@@ -45,6 +51,7 @@ namespace MISReports {
 			string sqlQuery = string.Empty;
 			string mailTo = string.Empty;
 			string templateFileName = string.Empty;
+			int vipFilial = -1;
 			ReportType reportToCreate;
 			string reportName = args[0];
 			if (reportName.Equals(ReportType.FreeCells.ToString())) {
@@ -82,6 +89,24 @@ namespace MISReports {
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetNonAppearance;
 				templateFileName = Properties.Settings.Default.TemplateNonAppearance;
 				mailTo = Properties.Settings.Default.MailToNonAppearance;
+			} else if (reportName.Equals(ReportType.VIP_MSSU.ToString())) {
+				reportToCreate = ReportType.VIP_MSSU;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP;
+				templateFileName = Properties.Settings.Default.TemplateVIP;
+				mailTo = Properties.Settings.Default.MailToVIP_MSSU;
+				vipFilial = 12;
+			} else if (reportName.Equals(ReportType.VIP_MSPO.ToString())) {
+				reportToCreate = ReportType.VIP_MSPO;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP;
+				templateFileName = Properties.Settings.Default.TemplateVIP;
+				mailTo = Properties.Settings.Default.MailToVIP_MSPO;
+				vipFilial = 5;
+			} else if (reportName.Equals(ReportType.VIP_MSKM.ToString())) {
+				reportToCreate = ReportType.VIP_MSKM;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP;
+				templateFileName = Properties.Settings.Default.TemplateVIP;
+				mailTo = Properties.Settings.Default.MailToVIP_MSKM;
+				vipFilial = 1;
 			} else {
 				Logging.ToFile("Неизвестное название отчета: " + reportName);
 				WriteOutAcceptedParameters();
@@ -130,26 +155,20 @@ namespace MISReports {
 			string subject = AcceptedParameters[reportToCreate] + " с " + dateBeginStr + " по " + dateEndStr;
 			Logging.ToFile(subject);
 
-			Dictionary<string, object> parameters = new Dictionary<string, object>() {
-				{ "@dateBegin", dateBeginStr },
-				{ "@dateEnd", dateEndStr }
-			};
-
-			Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
-
 			DataTable dataTable = null;
-			if (reportToCreate == ReportType.MESUsage ||
-				reportToCreate == ReportType.FreeCells) {
+			if (reportToCreate == ReportType.MESUsage) {// ||
+														//reportToCreate == ReportType.FreeCells) {
 
+				Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
 				for (int i = 0; dateBeginReport.Value.AddDays(i) <= dateEndReport; i++) {
 					string dayToGetData = dateBeginReport.Value.AddDays(i).ToShortDateString();
 					Logging.ToFile("Получение данных за день: " + dayToGetData);
 
-					parameters = new Dictionary<string, object>() {
+					Dictionary<string, object> parameters = new Dictionary<string, object>() {
 						{ "@dateBegin", dayToGetData },
 						{ "@dateEnd", dayToGetData }
 					};
-
+					
 					DataTable dataTablePart = firebirdClient.GetDataTable(sqlQuery, parameters);
 
 					if (dataTable == null) {
@@ -159,6 +178,17 @@ namespace MISReports {
 					}
 				}
 			} else {
+				Dictionary<string, object> parameters = new Dictionary<string, object>() {
+					{ "@dateBegin", dateBeginStr },
+					{ "@dateEnd", dateEndStr }
+				};
+
+				if (reportToCreate == ReportType.VIP_MSPO ||
+					reportToCreate == ReportType.VIP_MSSU ||
+					reportToCreate == ReportType.VIP_MSKM)
+					parameters = new Dictionary<string, object>() { { "@vipFilial", vipFilial } };
+
+				Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginStr + " по " + dateEndStr);
 				dataTable = firebirdClient.GetDataTable(sqlQuery, parameters);
 			}
 
@@ -169,7 +199,10 @@ namespace MISReports {
 			string mailCopy = Properties.Settings.Default.MailCopy;
 			bool hasError = false;
 
-			if (dataTable.Rows.Count > 0) {
+			if (dataTable.Rows.Count > 0 || 
+				(reportToCreate == ReportType.VIP_MSKM) || 
+				(reportToCreate == ReportType.VIP_MSPO) || 
+				(reportToCreate == ReportType.VIP_MSSU)) {
 				Logging.ToFile("Запись данных в файл Excel");
 				
 				if (reportToCreate == ReportType.FreeCells) {
@@ -245,6 +278,11 @@ namespace MISReports {
 							break;
 						case ReportType.NonAppearance:
 							isPostProcessingOk = NpoiExcelGeneral.PerformNonAppearance(fileResult);
+							break;
+						case ReportType.VIP_MSSU:
+						case ReportType.VIP_MSPO:
+						case ReportType.VIP_MSKM:
+							isPostProcessingOk = NpoiExcelGeneral.PerformVIP(fileResult);
 							break;
 						default:
 							break;

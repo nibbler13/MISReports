@@ -112,16 +112,33 @@ namespace MISReports {
 				return false;
 
 			try {
+				int usedRows = ws.UsedRange.Rows.Count;
 				ws.Columns["B:B"].NumberFormat = "ДД.ММ.ГГГГ";
 				ws.Range["A1"].Select();
-				ws.Columns["G:G"].NumberFormat = "0,00%";
-				ws.Columns["I:I"].NumberFormat = "0,00%";
+				ws.Columns["J:J"].NumberFormat = "0,00%";
+				ws.Columns["L:L"].NumberFormat = "0,00%";
+				ws.Range["M2"].Select();
+				xlApp.ActiveCell.FormulaR1C1 = "=RC[-4]+RC[-2]";
+				xlApp.Selection.AutoFill(ws.Range["M2:M" + usedRows]);
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			try {
-				NonAppearanceAddPivotTable(wb, ws, xlApp);
+				NonAppearanceAddPivotTablePatientsWithProblem(wb, ws, xlApp);
+
+				//ws = wb.Sheets["Пациенты с неявками"];
+				//ws.Activate();
+				//ws.Columns["B:G"].ColumnWidth = 15;
+				//ws.Range["B1:G1"].Select();
+				//xlApp.Selection.WrapText = true;
+				//ws.Range["A1"].Select();
+			} catch (Exception e) {
+				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			try {
+				NonAppearanceAddPivotTableGeneral(wb, ws, xlApp);
 				
 				ws = wb.Sheets["Сводная таблица"];
 				ws.Activate();
@@ -132,13 +149,13 @@ namespace MISReports {
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
-			
+
 			SaveAndCloseWorkbook(xlApp, wb);
 
 			return true;
 		}
 
-		private static void NonAppearanceAddPivotTable(Excel.Workbook wb, Excel.Worksheet ws, Excel.Application xlApp) {
+		private static void NonAppearanceAddPivotTableGeneral(Excel.Workbook wb, Excel.Worksheet ws, Excel.Application xlApp) {
 			ws.Cells[1, 1].Select();
 
 			string pivotTableName = @"NonAppearancePivotTable";
@@ -195,6 +212,75 @@ namespace MISReports {
 			pivotTable.PivotFields("Филиал").ShowDetail = false;
 
 			pivotTable.DisplayFieldCaptions = false;
+			wb.ShowPivotTableFieldList = false;
+		}
+
+		private static void NonAppearanceAddPivotTablePatientsWithProblem(Excel.Workbook wb, Excel.Worksheet ws, Excel.Application xlApp) {
+			ws.Cells[1, 1].Select();
+
+			string pivotTableName = @"PatientsWithProblem";
+			Excel.Worksheet wsPivote = wb.Sheets["Пациенты с неявками"];
+
+			Excel.PivotCache pivotCache = wb.PivotCaches().Create(Excel.XlPivotTableSourceType.xlDatabase, ws.UsedRange, 6);
+			Excel.PivotTable pivotTable = pivotCache.CreatePivotTable(wsPivote.Cells[1, 1], pivotTableName, true, 6);
+
+			pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
+
+			pivotTable.PivotFields("Филиал").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Филиал").Position = 1;
+
+			pivotTable.PivotFields("Подразделение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Подразделение").Position = 2;
+
+			pivotTable.PivotFields("ФИО доктора").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("ФИО доктора").Position = 3;
+
+			pivotTable.PivotFields("Дата лечения").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Дата лечения").Position = 4;
+			pivotTable.PivotFields("Дата лечения").Subtotals =
+				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+			pivotTable.PivotFields("Дата лечения").LayoutForm = Excel.XlLayoutFormType.xlTabular;
+
+			pivotTable.PivotFields("ФИО пациента").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("ФИО пациента").Position = 5;
+			pivotTable.PivotFields("ФИО пациента").Subtotals =
+				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+			pivotTable.PivotFields("ФИО пациента").LayoutForm = Excel.XlLayoutFormType.xlTabular;
+
+			pivotTable.PivotFields("История болезни пациента").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("История болезни пациента").Position = 6;
+			pivotTable.PivotFields("История болезни пациента").Subtotals =
+				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+			pivotTable.PivotFields("История болезни пациента").LayoutForm = Excel.XlLayoutFormType.xlTabular;
+
+			pivotTable.PivotFields("Номер телефона пациента").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Номер телефона пациента").Position = 7;
+			pivotTable.PivotFields("Номер телефона пациента").Subtotals =
+				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+			pivotTable.PivotFields("Номер телефона пациента").LayoutForm = Excel.XlLayoutFormType.xlTabular;
+
+			pivotTable.PivotFields("Отметки без лечений + Без отметок и без лечений").Orientation = 
+				Excel.XlPivotFieldOrientation.xlPageField;
+			pivotTable.PivotFields("Отметки без лечений + Без отметок и без лечений").Position = 1;
+
+			pivotTable.PivotFields("Отметки без лечений + Без отметок и без лечений").CurrentPage = "(ALL)";
+			pivotTable.PivotFields("Отметки без лечений + Без отметок и без лечений").PivotItems("0").Visible = false;
+			pivotTable.PivotFields("Отметки без лечений + Без отметок и без лечений").EnableMultiplePageItems = true;
+
+
+
+
+
+
+
+
+			pivotTable.HasAutoFormat = false;
+
+			//pivotTable.PivotFields("ФИО доктора").ShowDetail = false;
+			//pivotTable.PivotFields("Подразделение").ShowDetail = false;
+			pivotTable.PivotFields("Филиал").ShowDetail = false;
+
+			//pivotTable.DisplayFieldCaptions = false;
 			wb.ShowPivotTableFieldList = false;
 		}
 
@@ -340,6 +426,8 @@ namespace MISReports {
 			return resultFile;
 		}
 
+
+
 		public static bool PerformTelemedicine(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
 				return false;
@@ -420,6 +508,27 @@ namespace MISReports {
 			//ActiveSheet.PivotTables("Сводная таблица1").ShowDrillIndicators = False
 		}
 
+
+		public static bool PerformVIP(string resultFile) {
+			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb,
+				out Excel.Worksheet ws))
+				return false;
+
+			try {
+				ws.Columns["B:B"].Select();
+				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
+				ws.Columns["H:H"].Select();
+				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
+				ws.Cells[1, 1].Select();
+			} catch (Exception e) {
+				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			SaveAndCloseWorkbook(xlApp, wb);
+
+			return true;
+		}
+
 		public static bool PerformOnlineAccountsUsage(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, 
 				out Excel.Worksheet ws))
@@ -469,6 +578,8 @@ namespace MISReports {
 			return true;
 		}
 
+
+
 		public static bool PerformFreeCells(string resultFile, DateTime dateBeginOriginal, DateTime dateEnd) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, 
 				out Excel.Worksheet ws))
@@ -484,13 +595,13 @@ namespace MISReports {
 
 			try {
 				AddPivotTableFreeCells(wb, ws, xlApp, false, dateBeginOriginal);
-				wb.Sheets["Данные"].Activate();
-				AddPivotTableFreeCells(wb, ws, xlApp, true, dateBeginOriginal, dateEnd);
+				//wb.Sheets["Данные"].Activate();
+				//AddPivotTableFreeCells(wb, ws, xlApp, true, dateBeginOriginal, dateEnd);
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
-			wb.Sheets["Сводная таблица текущая неделя"].Activate();
+			wb.Sheets["Сводная таблица"].Activate();
 			SaveAndCloseWorkbook(xlApp, wb);
 
 			return true;
@@ -502,7 +613,7 @@ namespace MISReports {
 
 			string sheetName;
 			if (isMonth) sheetName = "Сводная таблица текущий месяц";
-			else sheetName = "Сводная таблица текущая неделя";
+			else sheetName = "Сводная таблица";
 
 			string pivotTableName = @"PivotTable";
 			Excel.Worksheet wsPivote = wb.Sheets[sheetName];
@@ -524,6 +635,9 @@ namespace MISReports {
 
 			pivotTable.PivotFields("Врач").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
 			pivotTable.PivotFields("Врач").Position = 4;
+
+			pivotTable.PivotFields("Должность").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Должность").Position = 5;
 
 			pivotTable.AddDataField(pivotTable.PivotFields("Всего"), "(Всего)", Excel.XlConsolidationFunction.xlSum);
 			pivotTable.AddDataField(pivotTable.PivotFields("Занято"), "(Занято)", Excel.XlConsolidationFunction.xlSum);
@@ -591,6 +705,8 @@ namespace MISReports {
 			wb.ShowPivotTableFieldList = false;
 		}
 		
+
+
 		private static bool OpenWorkbook(string workbook, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws) {
 			xlApp = null;
 			wb = null;
@@ -629,6 +745,8 @@ namespace MISReports {
 			xlApp.Quit();
 		}
 		
+
+
 		public static bool PerformUnclosedProtocols(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
 				return false;
@@ -643,7 +761,7 @@ namespace MISReports {
 				ws.Range["B2"].Select();
 				xlApp.ActiveCell.FormulaR1C1 = "=IF(RC[-1]=R[1]C[-1],0,1)";
 				xlApp.Selection.AutoFill(ws.Range["B2:B" + usedRows]);
-				ws.Columns["F:F"].Select();
+				ws.Columns["G:G"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
@@ -680,21 +798,24 @@ namespace MISReports {
 
 			pivotTable.PivotFields("ФИО врача").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
 			pivotTable.PivotFields("ФИО врача").Position = 1;
-
-			pivotTable.PivotFields("Филиал").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Филиал").Position = 2;
-
-			pivotTable.PivotFields("Подразделение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Подразделение").Position = 3;
-
-			pivotTable.PivotFields("ФИО врача").Subtotals = 
+			pivotTable.PivotFields("ФИО врача").Subtotals =
 				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
 			pivotTable.PivotFields("ФИО врача").LayoutForm = Excel.XlLayoutFormType.xlTabular;
 
+			pivotTable.PivotFields("DCODE").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("DCODE").Position = 2;
+			pivotTable.PivotFields("DCODE").Subtotals =
+				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+			pivotTable.PivotFields("DCODE").LayoutForm = Excel.XlLayoutFormType.xlTabular;
+
+			pivotTable.PivotFields("Филиал").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Филиал").Position = 3;
 			pivotTable.PivotFields("Филиал").Subtotals =
 				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
 			pivotTable.PivotFields("Филиал").LayoutForm = Excel.XlLayoutFormType.xlTabular;
 
+			pivotTable.PivotFields("Подразделение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Подразделение").Position = 4;
 			pivotTable.PivotFields("Подразделение").Subtotals =
 				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
 			pivotTable.PivotFields("Подразделение").LayoutForm = Excel.XlLayoutFormType.xlTabular;
@@ -714,6 +835,22 @@ namespace MISReports {
 			
 			pivotTable.PivotFields("ФИО врача").AutoSort(Excel.XlSortOrder.xlDescending,
 				"Доля неподписанных протоколов");
+
+			pivotTable.PivotFields("Статус сотрудника").Orientation = Excel.XlPivotFieldOrientation.xlPageField;
+			pivotTable.PivotFields("Статус сотрудника").Position = 1;
+
+			wsPivote.Columns[2].ColumnWidth = 12;
+
+			/*
+			With ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE")
+				.Orientation = xlRowField
+				.Position = 2
+			End With
+			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE").Subtotals = _
+				Array(False, False, False, False, False, False, False, False, False, False, False, False)
+			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE").LayoutForm _
+				= xlTabular
+			 */
 
 			pivotTable.HasAutoFormat = false;
 			wb.ShowPivotTableFieldList = false;
@@ -738,6 +875,31 @@ namespace MISReports {
 
 			pivotTable.PivotFields("ФИО врача").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
 			pivotTable.PivotFields("ФИО врача").Position = 3;
+			pivotTable.PivotFields("ФИО врача").Subtotals =
+				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+			pivotTable.PivotFields("ФИО врача").LayoutForm = Excel.XlLayoutFormType.xlTabular;
+
+			pivotTable.PivotFields("DCODE").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("DCODE").Position = 4;
+			pivotTable.PivotFields("DCODE").Subtotals =
+				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+			pivotTable.PivotFields("DCODE").LayoutForm = Excel.XlLayoutFormType.xlTabular;
+
+			/*
+			 With ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE")
+				.Orientation = xlRowField
+				.Position = 4
+			End With
+			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE").Subtotals = _
+				Array(False, False, False, False, False, False, False, False, False, False, False, False)
+			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE").LayoutForm _
+				= xlTabular
+			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("ФИО врача"). _
+				Subtotals = Array(False, False, False, False, False, False, False, False, False, False, _
+				False, False)
+			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("ФИО врача"). _
+				LayoutForm = xlTabular
+			 */
 
 			pivotTable.AddDataField(pivotTable.PivotFields("Уникальное лечение"), "Кол-во лечений", Excel.XlConsolidationFunction.xlSum);
 
@@ -756,12 +918,22 @@ namespace MISReports {
 			pivotTable.PivotFields("Подразделение").AutoSort(Excel.XlSortOrder.xlDescending, "Доля неподписанных протоколов");
 			pivotTable.PivotFields("ФИО врача").AutoSort(Excel.XlSortOrder.xlDescending, "Доля неподписанных протоколов");
 
+			pivotTable.PivotFields("Статус сотрудника").Orientation = Excel.XlPivotFieldOrientation.xlPageField;
+			pivotTable.PivotFields("Статус сотрудника").Position = 1;
+
+			//With ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields( _
+			//	"Статус сотрудника")
+			//	.Orientation = xlPageField
+			//	.Position = 1
+			//End With
+
 			pivotTable.PivotFields("Подразделение").ShowDetail = false;
 			pivotTable.PivotFields("Филиал").ShowDetail = false;
 
 			pivotTable.HasAutoFormat = false;
 
 			wsPivote.Columns[1].ColumnWidth = 60;
+			wsPivote.Columns[2].ColumnWidth = 12;
 			wb.ShowPivotTableFieldList = false;
 		}
 	}
