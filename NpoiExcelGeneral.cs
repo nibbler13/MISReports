@@ -517,7 +517,7 @@ namespace MISReports {
 			try {
 				ws.Columns["B:B"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
-				ws.Columns["H:H"].Select();
+				ws.Columns["K:K"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
 				ws.Cells[1, 1].Select();
 			} catch (Exception e) {

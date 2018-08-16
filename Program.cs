@@ -22,7 +22,7 @@ namespace MISReports {
 			TelemedicineAll,
 			NonAppearance,
 			VIP_MSSU,
-			VIP_MSPO,
+			VIP_Moscow,
 			VIP_MSKM
 		};
 
@@ -35,7 +35,7 @@ namespace MISReports {
 			{ ReportType.TelemedicineAll, "Отчет по приемам телемедицины - все типы оплаты" },
 			{ ReportType.NonAppearance, "Отчет по неявкам" },
 			{ ReportType.VIP_MSSU, "Отчет по ВИП-пациентам Сущевка" },
-			{ ReportType.VIP_MSPO, "Отчет по ВИП-пациентам Сретенка" },
+			{ ReportType.VIP_Moscow, "Отчет по ВИП-пациентам Москва" },
 			{ ReportType.VIP_MSKM, "Отчет по ВИП-пациентам Фрунзенская" }
 		};
 
@@ -51,7 +51,6 @@ namespace MISReports {
 			string sqlQuery = string.Empty;
 			string mailTo = string.Empty;
 			string templateFileName = string.Empty;
-			int vipFilial = -1;
 			ReportType reportToCreate;
 			string reportName = args[0];
 			if (reportName.Equals(ReportType.FreeCells.ToString())) {
@@ -91,22 +90,19 @@ namespace MISReports {
 				mailTo = Properties.Settings.Default.MailToNonAppearance;
 			} else if (reportName.Equals(ReportType.VIP_MSSU.ToString())) {
 				reportToCreate = ReportType.VIP_MSSU;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "12");
 				templateFileName = Properties.Settings.Default.TemplateVIP;
 				mailTo = Properties.Settings.Default.MailToVIP_MSSU;
-				vipFilial = 12;
-			} else if (reportName.Equals(ReportType.VIP_MSPO.ToString())) {
-				reportToCreate = ReportType.VIP_MSPO;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP;
+			} else if (reportName.Equals(ReportType.VIP_Moscow.ToString())) {
+				reportToCreate = ReportType.VIP_Moscow;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1,5,12");
 				templateFileName = Properties.Settings.Default.TemplateVIP;
-				mailTo = Properties.Settings.Default.MailToVIP_MSPO;
-				vipFilial = 5;
+				mailTo = Properties.Settings.Default.MailToVIP_Moscow;
 			} else if (reportName.Equals(ReportType.VIP_MSKM.ToString())) {
 				reportToCreate = ReportType.VIP_MSKM;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1");
 				templateFileName = Properties.Settings.Default.TemplateVIP;
 				mailTo = Properties.Settings.Default.MailToVIP_MSKM;
-				vipFilial = 1;
 			} else {
 				Logging.ToFile("Неизвестное название отчета: " + reportName);
 				WriteOutAcceptedParameters();
@@ -183,11 +179,6 @@ namespace MISReports {
 					{ "@dateEnd", dateEndStr }
 				};
 
-				if (reportToCreate == ReportType.VIP_MSPO ||
-					reportToCreate == ReportType.VIP_MSSU ||
-					reportToCreate == ReportType.VIP_MSKM)
-					parameters = new Dictionary<string, object>() { { "@vipFilial", vipFilial } };
-
 				Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginStr + " по " + dateEndStr);
 				dataTable = firebirdClient.GetDataTable(sqlQuery, parameters);
 			}
@@ -201,7 +192,7 @@ namespace MISReports {
 
 			if (dataTable.Rows.Count > 0 || 
 				(reportToCreate == ReportType.VIP_MSKM) || 
-				(reportToCreate == ReportType.VIP_MSPO) || 
+				(reportToCreate == ReportType.VIP_Moscow) || 
 				(reportToCreate == ReportType.VIP_MSSU)) {
 				Logging.ToFile("Запись данных в файл Excel");
 				
@@ -280,7 +271,7 @@ namespace MISReports {
 							isPostProcessingOk = NpoiExcelGeneral.PerformNonAppearance(fileResult);
 							break;
 						case ReportType.VIP_MSSU:
-						case ReportType.VIP_MSPO:
+						case ReportType.VIP_Moscow:
 						case ReportType.VIP_MSKM:
 							isPostProcessingOk = NpoiExcelGeneral.PerformVIP(fileResult);
 							break;
