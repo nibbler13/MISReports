@@ -15,7 +15,8 @@ namespace MISReports {
 
 		public enum ReportType {
 			FreeCells,
-			UnclosedProtocols,
+			UnclosedProtocolsWeek,
+			UnclosedProtocolsMonth,
 			MESUsage,
 			OnlineAccountsUsage,
 			TelemedicineOnlyIngosstrakh,
@@ -23,12 +24,14 @@ namespace MISReports {
 			NonAppearance,
 			VIP_MSSU,
 			VIP_Moscow,
-			VIP_MSKM
+			VIP_MSKM,
+			VIP_PND
 		};
 
 		public static Dictionary<ReportType, string> AcceptedParameters = new Dictionary<ReportType, string> {
 			{ ReportType.FreeCells, "Отчет по свободным слотам" },
-			{ ReportType.UnclosedProtocols, "Отчет по неподписанным протоколам" },
+			{ ReportType.UnclosedProtocolsWeek, "Отчет по неподписанным протоколам" },
+			{ ReportType.UnclosedProtocolsMonth, "Отчет по неподписанным протоколам" },
 			{ ReportType.MESUsage, "Отчет по использованию МЭС" },
 			{ ReportType.OnlineAccountsUsage, "Отчет по записи на прием через личный кабинет" },
 			{ ReportType.TelemedicineOnlyIngosstrakh, "Отчет по приемам телемедицины - только Ингосстрах" },
@@ -36,7 +39,8 @@ namespace MISReports {
 			{ ReportType.NonAppearance, "Отчет по неявкам" },
 			{ ReportType.VIP_MSSU, "Отчет по ВИП-пациентам Сущевка" },
 			{ ReportType.VIP_Moscow, "Отчет по ВИП-пациентам Москва" },
-			{ ReportType.VIP_MSKM, "Отчет по ВИП-пациентам Фрунзенская" }
+			{ ReportType.VIP_MSKM, "Отчет по ВИП-пациентам Фрунзенская" },
+			{ ReportType.VIP_PND, "Отчет по ВИП-пациентам ПНД" }
 		};
 
 		static void Main(string[] args) {
@@ -51,58 +55,84 @@ namespace MISReports {
 			string sqlQuery = string.Empty;
 			string mailTo = string.Empty;
 			string templateFileName = string.Empty;
+			string folderToSave = string.Empty;
 			ReportType reportToCreate;
 			string reportName = args[0];
+
 			if (reportName.Equals(ReportType.FreeCells.ToString())) {
 				reportToCreate = ReportType.FreeCells;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
 				mailTo = Properties.Settings.Default.MailToFreeCells;
 				templateFileName = Properties.Settings.Default.TemplateFreeCells;
-			} else if (reportName.Equals(ReportType.UnclosedProtocols.ToString())) {
-				reportToCreate = ReportType.UnclosedProtocols;
+
+			} else if (reportName.Equals(ReportType.UnclosedProtocolsWeek.ToString())) {
+				reportToCreate = ReportType.UnclosedProtocolsWeek;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
-				mailTo = Properties.Settings.Default.MailToUnclosedProtocols;
+				mailTo = Properties.Settings.Default.MailToUnclosedProtocolsWeek;
 				templateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
+				folderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
+
+			} else if (reportName.Equals(ReportType.UnclosedProtocolsMonth.ToString())) {
+				reportToCreate = ReportType.UnclosedProtocolsMonth;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
+				mailTo = Properties.Settings.Default.MailToUnclosedProtocolsMonth;
+				templateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
+				folderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
+
 			} else if (reportName.Equals(ReportType.MESUsage.ToString())) {
 				reportToCreate = ReportType.MESUsage;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetMESUsage;
 				mailTo = Properties.Settings.Default.MailToMESUsage;
 				templateFileName = Properties.Settings.Default.TemplateMESUsage;
+
 			} else if (reportName.Equals(ReportType.OnlineAccountsUsage.ToString())) {
 				reportToCreate = ReportType.OnlineAccountsUsage;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetOnlineAccountsUsage;
 				mailTo = Properties.Settings.Default.MailToOnlineAccountsUsage;
 				templateFileName = Properties.Settings.Default.TemplateOnlineAccountsUsage;
+
 			} else if (reportName.Equals(ReportType.TelemedicineOnlyIngosstrakh.ToString())) {
 				reportToCreate = ReportType.TelemedicineOnlyIngosstrakh;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
 				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
 				mailTo = Properties.Settings.Default.MailToTelemedicineOnlyIngosstrakh;
+
 			} else if (reportName.Equals(ReportType.TelemedicineAll.ToString())) {
 				reportToCreate = ReportType.TelemedicineAll;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
 				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
 				mailTo = Properties.Settings.Default.MailToTelemedicineAll;
+
 			} else if (reportName.Equals(ReportType.NonAppearance.ToString())) {
 				reportToCreate = ReportType.NonAppearance;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetNonAppearance;
 				templateFileName = Properties.Settings.Default.TemplateNonAppearance;
 				mailTo = Properties.Settings.Default.MailToNonAppearance;
+
 			} else if (reportName.Equals(ReportType.VIP_MSSU.ToString())) {
 				reportToCreate = ReportType.VIP_MSSU;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "12");
 				templateFileName = Properties.Settings.Default.TemplateVIP;
 				mailTo = Properties.Settings.Default.MailToVIP_MSSU;
+
 			} else if (reportName.Equals(ReportType.VIP_Moscow.ToString())) {
 				reportToCreate = ReportType.VIP_Moscow;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1,5,12");
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1,5,12,6");
 				templateFileName = Properties.Settings.Default.TemplateVIP;
 				mailTo = Properties.Settings.Default.MailToVIP_Moscow;
+
 			} else if (reportName.Equals(ReportType.VIP_MSKM.ToString())) {
 				reportToCreate = ReportType.VIP_MSKM;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1");
 				templateFileName = Properties.Settings.Default.TemplateVIP;
 				mailTo = Properties.Settings.Default.MailToVIP_MSKM;
+
+			} else if (reportName.Equals(ReportType.VIP_PND.ToString())) {
+				reportToCreate = ReportType.VIP_PND;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "6");
+				templateFileName = Properties.Settings.Default.TemplateVIP;
+				mailTo = Properties.Settings.Default.MailToVIP_PND;
+
 			} else {
 				Logging.ToFile("Неизвестное название отчета: " + reportName);
 				WriteOutAcceptedParameters();
@@ -152,7 +182,8 @@ namespace MISReports {
 			Logging.ToFile(subject);
 
 			DataTable dataTable = null;
-			if (reportToCreate == ReportType.MESUsage) {// ||
+			if (reportToCreate == ReportType.MESUsage ||
+				reportToCreate == ReportType.FreeCells) {// ||
 														//reportToCreate == ReportType.FreeCells) {
 
 				Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
@@ -191,9 +222,7 @@ namespace MISReports {
 			bool hasError = false;
 
 			if (dataTable.Rows.Count > 0 || 
-				(reportToCreate == ReportType.VIP_MSKM) || 
-				(reportToCreate == ReportType.VIP_Moscow) || 
-				(reportToCreate == ReportType.VIP_MSSU)) {
+				reportToCreate.ToString().StartsWith("VIP_")) {
 				Logging.ToFile("Запись данных в файл Excel");
 				
 				if (reportToCreate == ReportType.FreeCells) {
@@ -255,7 +284,7 @@ namespace MISReports {
 						case ReportType.FreeCells:
 							isPostProcessingOk = NpoiExcelGeneral.PerformFreeCells(fileResult, dateBeginOriginal.Value, dateEndReport.Value);
 							break;
-						case ReportType.UnclosedProtocols:
+						case ReportType.UnclosedProtocolsWeek:
 							isPostProcessingOk = NpoiExcelGeneral.PerformUnclosedProtocols(fileResult);
 							break;
 						case ReportType.MESUsage:
@@ -268,11 +297,12 @@ namespace MISReports {
 							isPostProcessingOk = NpoiExcelGeneral.PerformTelemedicine(fileResult);
 							break;
 						case ReportType.NonAppearance:
-							isPostProcessingOk = NpoiExcelGeneral.PerformNonAppearance(fileResult);
+							isPostProcessingOk = NpoiExcelGeneral.PerformNonAppearance(fileResult, dataTable);
 							break;
 						case ReportType.VIP_MSSU:
 						case ReportType.VIP_Moscow:
 						case ReportType.VIP_MSKM:
+						case ReportType.VIP_PND:
 							isPostProcessingOk = NpoiExcelGeneral.PerformVIP(fileResult);
 							break;
 						default:
@@ -302,6 +332,23 @@ namespace MISReports {
 			}
 			
 			firebirdClient.Close();
+
+			if (!string.IsNullOrEmpty(folderToSave)) {
+				try {
+					string fileName = Path.GetFileName(fileResult);
+					string destFile = Path.Combine(folderToSave, fileName);
+					File.Copy(fileResult, destFile, true);
+					body = "Файл с отчетом сохранен по адресу: " +
+						Environment.NewLine + "<a href=\"" + destFile + "\">" + destFile + "</a>";
+				} catch (Exception e) {
+					Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
+					body = "Не удалось сохранить отчет в папку " + folderToSave +
+						Environment.NewLine + e.Message + Environment.NewLine + e.StackTrace;
+					mailTo = mailCopy;
+				}
+
+				fileResult = string.Empty;
+			}
 
 			if (Debugger.IsAttached)
 				return;
