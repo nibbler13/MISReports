@@ -4,9 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.OleDb;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,7 +36,7 @@ namespace MISReports {
 				if (!Directory.Exists(resultPath))
 					Directory.CreateDirectory(resultPath);
 
-				resultFile = Path.Combine(resultPath, resultFilePrefix + ".xlsx");
+				resultFile = Path.Combine(resultPath, resultFilePrefix + " " + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xlsx");
 
 				using (FileStream stream = new FileStream(templateFile, FileMode.Open, FileAccess.Read))
 					workbook = new XSSFWorkbook(stream);
@@ -149,7 +151,7 @@ namespace MISReports {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
-			SaveAndCloseWorkbook(xlApp, wb);
+			SaveAndCloseWorkbook(xlApp, wb, ws);
 
 			return true;
 		}
@@ -534,7 +536,7 @@ namespace MISReports {
 			}
 
 			wb.Sheets["Сводная таблица"].Activate();
-			SaveAndCloseWorkbook(xlApp, wb);
+			SaveAndCloseWorkbook(xlApp, wb, ws);
 
 			return true;
 		}
@@ -592,10 +594,14 @@ namespace MISReports {
 		}
 
 
-		public static bool PerformVIP(string resultFile) {
+		public static bool PerformVIP(string resultFile, string previousFile) {
+			Logging.ToFile("Подготовка файла с отчетом по VIP-пациентам: " + resultFile);
+			Logging.ToFile("Предыдущий файл: " + previousFile);
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb,
-				out Excel.Worksheet ws))
+				out Excel.Worksheet ws)) {
+				Logging.ToFile("Не удалось открыть книгу: " + resultFile);
 				return false;
+			}
 
 			try {
 				ws.Columns["B:B"].Select();
@@ -606,11 +612,93 @@ namespace MISReports {
 			} catch (Exception e) {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
+			
+			SaveAndCloseWorkbook(xlApp, wb, ws);
 
-			SaveAndCloseWorkbook(xlApp, wb);
+			if (string.IsNullOrEmpty(previousFile) || !File.Exists(previousFile)) {
+				Logging.ToFile("Пропуск сравнения с предыдущей версией, файл не существует");
+				return true;
+			}
+
+			if (!OpenWorkbook(resultFile, out xlApp, out wb, out ws)) {
+				Logging.ToFile("Не удалось открыть книгу: " + resultFile);
+				return false;
+			}
+
+			Logging.ToFile("Считывание содержимого файлов");
+
+			DataTable dataTableCurrent = ReadExcelFile(resultFile, "Данные");
+			Logging.ToFile("Текущий файл, строк: " + dataTableCurrent.Rows.Count);
+
+			DataTable dataTablePrevious = ReadExcelFile(previousFile, "Данные");
+			Logging.ToFile("Предыдущий файл, строк: " + dataTablePrevious.Rows.Count);
+
+			if (dataTablePrevious.Columns.Count == 14)
+				dataTablePrevious.Columns.RemoveAt(13);
+
+			for (int i = 1; i < dataTableCurrent.Rows.Count; i++) {
+				DataRow dataRowLeft = dataTableCurrent.Rows[i];
+				bool existedBefore = false;
+
+				for (int k = 1; k < dataTablePrevious.Rows.Count; k++) {
+					DataRow dataRowRight = dataTablePrevious.Rows[k];
+					if (DataRowComparer.Default.Equals(dataRowLeft, dataRowRight)) {
+						existedBefore = true;
+						break;
+					}
+				}
+
+				if (!existedBefore) {
+					int rowNumber = i + 1;
+					ws.Range["A" + rowNumber + ":N" + rowNumber].Interior.ColorIndex = 35;
+					ws.Range["N" + rowNumber + ":N" + rowNumber].Value2 = "Новая запись";
+				}
+			}
+
+			SaveAndCloseWorkbook(xlApp, wb, ws);
 
 			return true;
 		}
+
+		private static DataTable ReadExcelFile(string fileName, string sheetName) {
+			DataTable dataTable = new DataTable();
+
+			if (!File.Exists(fileName))
+				return dataTable;
+
+			try {
+				using (OleDbConnection conn = new OleDbConnection()) {
+					conn.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileName + ";Mode=Read;" +
+						"Extended Properties='Excel 12.0 Xml;HDR=NO;'";
+
+					using (OleDbCommand comm = new OleDbCommand()) {
+						if (string.IsNullOrEmpty(sheetName)) {
+							conn.Open();
+							DataTable dtSchema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
+								new object[] { null, null, null, "TABLE" });
+							sheetName = dtSchema.Rows[0].Field<string>("TABLE_NAME");
+							conn.Close();
+						} else
+							sheetName += "$";
+
+						comm.CommandText = "Select * from [" + sheetName + "]";
+						comm.Connection = conn;
+
+						using (OleDbDataAdapter oleDbDataAdapter = new OleDbDataAdapter()) {
+							oleDbDataAdapter.SelectCommand = comm;
+							oleDbDataAdapter.Fill(dataTable);
+						}
+					}
+				}
+			} catch (Exception e) {
+				Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			return dataTable;
+		}
+
+
+
 
 		public static bool PerformOnlineAccountsUsage(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, 
@@ -656,7 +744,7 @@ namespace MISReports {
 				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
 			
-			SaveAndCloseWorkbook(xlApp, wb);
+			SaveAndCloseWorkbook(xlApp, wb, ws);
 
 			return true;
 		}
@@ -685,7 +773,7 @@ namespace MISReports {
 			}
 
 			wb.Sheets["Сводная таблица"].Activate();
-			SaveAndCloseWorkbook(xlApp, wb);
+			SaveAndCloseWorkbook(xlApp, wb, ws);
 
 			return true;
 		}
@@ -821,11 +909,20 @@ namespace MISReports {
 			return true;
 		}
 
-		private static void SaveAndCloseWorkbook(Excel.Application xlApp, Excel.Workbook wb) {
-			wb.Save();
-			wb.Close();
+		private static void SaveAndCloseWorkbook(Excel.Application xlApp, Excel.Workbook wb, Excel.Worksheet ws) {
+			if (ws != null)
+				Marshal.ReleaseComObject(ws);
 
-			xlApp.Quit();
+			if (wb != null) {
+				wb.Save();
+				wb.Close();
+				Marshal.ReleaseComObject(wb);
+			}
+
+			if (xlApp != null) {
+				xlApp.Quit();
+				Marshal.ReleaseComObject(xlApp);
+			}
 		}
 		
 
@@ -863,7 +960,7 @@ namespace MISReports {
 			}
 
 			wb.Sheets["Сводная по отделениям"].Activate();
-			SaveAndCloseWorkbook(xlApp, wb);
+			SaveAndCloseWorkbook(xlApp, wb, ws);
 
 			return true;
 		}

@@ -56,6 +56,7 @@ namespace MISReports {
 			string mailTo = string.Empty;
 			string templateFileName = string.Empty;
 			string folderToSave = string.Empty;
+			string previousFile = string.Empty;
 			ReportType reportToCreate;
 			string reportName = args[0];
 
@@ -114,24 +115,28 @@ namespace MISReports {
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "12");
 				templateFileName = Properties.Settings.Default.TemplateVIP;
 				mailTo = Properties.Settings.Default.MailToVIP_MSSU;
+				previousFile = Properties.Settings.Default.PreviousFileVIP_MSSU;
 
 			} else if (reportName.Equals(ReportType.VIP_Moscow.ToString())) {
 				reportToCreate = ReportType.VIP_Moscow;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1,5,12,6");
 				templateFileName = Properties.Settings.Default.TemplateVIP;
 				mailTo = Properties.Settings.Default.MailToVIP_Moscow;
+				previousFile = Properties.Settings.Default.PreviousFileVIP_Moscow;
 
 			} else if (reportName.Equals(ReportType.VIP_MSKM.ToString())) {
 				reportToCreate = ReportType.VIP_MSKM;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1");
 				templateFileName = Properties.Settings.Default.TemplateVIP;
 				mailTo = Properties.Settings.Default.MailToVIP_MSKM;
+				previousFile = Properties.Settings.Default.PreviousFileVIP_MSKM;
 
 			} else if (reportName.Equals(ReportType.VIP_PND.ToString())) {
 				reportToCreate = ReportType.VIP_PND;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "6");
 				templateFileName = Properties.Settings.Default.TemplateVIP;
 				mailTo = Properties.Settings.Default.MailToVIP_PND;
+				previousFile = Properties.Settings.Default.PreviousFileVIP_PND;
 
 			} else {
 				Logging.ToFile("Неизвестное название отчета: " + reportName);
@@ -303,7 +308,7 @@ namespace MISReports {
 						case ReportType.VIP_Moscow:
 						case ReportType.VIP_MSKM:
 						case ReportType.VIP_PND:
-							isPostProcessingOk = NpoiExcelGeneral.PerformVIP(fileResult);
+							isPostProcessingOk = NpoiExcelGeneral.PerformVIP(fileResult, previousFile);
 							break;
 						default:
 							break;
@@ -333,6 +338,23 @@ namespace MISReports {
 			
 			firebirdClient.Close();
 
+			switch (reportToCreate) {
+				case ReportType.VIP_MSSU:
+					Properties.Settings.Default.PreviousFileVIP_MSSU = fileResult;
+					break;
+				case ReportType.VIP_Moscow:
+					Properties.Settings.Default.PreviousFileVIP_Moscow = fileResult;
+					break;
+				case ReportType.VIP_MSKM:
+					Properties.Settings.Default.PreviousFileVIP_MSKM = fileResult;
+					break;
+				case ReportType.VIP_PND:
+					Properties.Settings.Default.PreviousFileVIP_PND = fileResult;
+					break;
+				default:
+					break;
+			}
+
 			if (!string.IsNullOrEmpty(folderToSave)) {
 				try {
 					string fileName = Path.GetFileName(fileResult);
@@ -349,6 +371,8 @@ namespace MISReports {
 
 				fileResult = string.Empty;
 			}
+
+			Properties.Settings.Default.Save();
 
 			if (Debugger.IsAttached)
 				return;
