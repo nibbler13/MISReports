@@ -14,7 +14,8 @@ namespace MISReports {
 		public static string AssemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\";
 
 		public enum ReportType {
-			FreeCells,
+			FreeCellsDay,
+			FreeCellsWeek,
 			UnclosedProtocolsWeek,
 			UnclosedProtocolsMonth,
 			MESUsage,
@@ -29,7 +30,8 @@ namespace MISReports {
 		};
 
 		public static Dictionary<ReportType, string> AcceptedParameters = new Dictionary<ReportType, string> {
-			{ ReportType.FreeCells, "Отчет по свободным слотам" },
+			{ ReportType.FreeCellsDay, "Отчет по свободным слотам" },
+			{ ReportType.FreeCellsWeek, "Отчет по свободным слотам" },
 			{ ReportType.UnclosedProtocolsWeek, "Отчет по неподписанным протоколам" },
 			{ ReportType.UnclosedProtocolsMonth, "Отчет по неподписанным протоколам" },
 			{ ReportType.MESUsage, "Отчет по использованию МЭС" },
@@ -60,10 +62,16 @@ namespace MISReports {
 			ReportType reportToCreate;
 			string reportName = args[0];
 
-			if (reportName.Equals(ReportType.FreeCells.ToString())) {
-				reportToCreate = ReportType.FreeCells;
+			if (reportName.Equals(ReportType.FreeCellsDay.ToString())) {
+				reportToCreate = ReportType.FreeCellsDay;
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
-				mailTo = Properties.Settings.Default.MailToFreeCells;
+				mailTo = Properties.Settings.Default.MailToFreeCellsDay;
+				templateFileName = Properties.Settings.Default.TemplateFreeCells;
+
+			} else if (reportName.Equals(ReportType.FreeCellsWeek.ToString())) {
+				reportToCreate = ReportType.FreeCellsWeek;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
+				mailTo = Properties.Settings.Default.MailToFreeCellsWeek;
 				templateFileName = Properties.Settings.Default.TemplateFreeCells;
 
 			} else if (reportName.Equals(ReportType.UnclosedProtocolsWeek.ToString())) {
@@ -188,8 +196,8 @@ namespace MISReports {
 
 			DataTable dataTable = null;
 			if (reportToCreate == ReportType.MESUsage ||
-				reportToCreate == ReportType.FreeCells) {// ||
-														//reportToCreate == ReportType.FreeCells) {
+				reportToCreate == ReportType.FreeCellsDay ||
+				reportToCreate == ReportType.FreeCellsWeek) {
 
 				Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
 				for (int i = 0; dateBeginReport.Value.AddDays(i) <= dateEndReport; i++) {
@@ -230,7 +238,8 @@ namespace MISReports {
 				reportToCreate.ToString().StartsWith("VIP_")) {
 				Logging.ToFile("Запись данных в файл Excel");
 				
-				if (reportToCreate == ReportType.FreeCells) {
+				if (reportToCreate == ReportType.FreeCellsDay ||
+					reportToCreate == ReportType.FreeCellsWeek) {
 					DataColumn dataColumn = dataTable.Columns.Add("SortingOrder", typeof(int));
 					dataColumn.SetOrdinal(0);
 
@@ -286,10 +295,12 @@ namespace MISReports {
 					bool isPostProcessingOk = true;
 
 					switch (reportToCreate) {
-						case ReportType.FreeCells:
+						case ReportType.FreeCellsDay:
+						case ReportType.FreeCellsWeek:
 							isPostProcessingOk = NpoiExcelGeneral.PerformFreeCells(fileResult, dateBeginOriginal.Value, dateEndReport.Value);
 							break;
 						case ReportType.UnclosedProtocolsWeek:
+						case ReportType.UnclosedProtocolsMonth:
 							isPostProcessingOk = NpoiExcelGeneral.PerformUnclosedProtocols(fileResult);
 							break;
 						case ReportType.MESUsage:

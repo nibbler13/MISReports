@@ -620,11 +620,6 @@ namespace MISReports {
 				return true;
 			}
 
-			if (!OpenWorkbook(resultFile, out xlApp, out wb, out ws)) {
-				Logging.ToFile("Не удалось открыть книгу: " + resultFile);
-				return false;
-			}
-
 			Logging.ToFile("Считывание содержимого файлов");
 
 			DataTable dataTableCurrent = ReadExcelFile(resultFile, "Данные");
@@ -635,6 +630,11 @@ namespace MISReports {
 
 			if (dataTablePrevious.Columns.Count == 14)
 				dataTablePrevious.Columns.RemoveAt(13);
+
+			if (!OpenWorkbook(resultFile, out xlApp, out wb, out ws)) {
+				Logging.ToFile("Не удалось открыть книгу: " + resultFile);
+				return false;
+			}
 
 			for (int i = 1; i < dataTableCurrent.Rows.Count; i++) {
 				DataRow dataRowLeft = dataTableCurrent.Rows[i];
@@ -661,6 +661,7 @@ namespace MISReports {
 		}
 
 		private static DataTable ReadExcelFile(string fileName, string sheetName) {
+			Logging.ToFile("Считывание файла: " + fileName + ", лист: " + sheetName);
 			DataTable dataTable = new DataTable();
 
 			if (!File.Exists(fileName))
@@ -691,7 +692,7 @@ namespace MISReports {
 					}
 				}
 			} catch (Exception e) {
-				Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			return dataTable;
