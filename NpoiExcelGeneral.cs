@@ -89,7 +89,7 @@ namespace MISReports {
 
 					if (double.TryParse(value, out double result)) {
 						cell.SetCellValue(result);
-					} else if (DateTime.TryParseExact(value, "dd.MM.yyyy h:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date)) {
+					} else if (DateTime.TryParse(value, out DateTime date)) {
 						cell.SetCellValue(date);
 					} else {
 						cell.SetCellValue(value);
@@ -383,7 +383,7 @@ namespace MISReports {
 				ItemMESUsageTreatment treat = treatment.Value;
 
 				int necessaryServicesInMes = (from x in treat.DictMES where x.Value == 0 select x).Count();
-				int hasAtLeastOneReferralByMes = treat.ListReferralsFromMes.Count > 0 ? 1 : 0;
+				string hasAtLeastOneReferralByMes = treat.ListReferralsFromMes.Count > 0 ? "Да" : "Нет";
 				int necessaryServiceReferralByMesInstrumental = 0;
 				int necessaryServiceReferralByMesLaboratory = 0;
 				int necessaryServiceReferralCompletedByMesInstrumental = 0;
@@ -399,7 +399,8 @@ namespace MISReports {
 
 						int isCompleted = treat.DictAllReferrals[item].IsCompleted == 1 ? 1 : 0;
 
-						if (treat.DictAllReferrals[item].RefType == 2) {
+						int refType = treat.DictAllReferrals[item].RefType;
+						if (refType == 2 || refType == 992140066) {
 							necessaryServiceReferralByMesLaboratory++;
 							necessaryServiceReferralCompletedByMesLaboratory += isCompleted;
 						} else {
@@ -409,7 +410,7 @@ namespace MISReports {
 					}
 				}
 
-				int hasAtLeastOneReferralSelfMade = (treat.DictAllReferrals.Count - treat.ListReferralsFromMes.Count) > 0 ? 1 : 0;
+				string hasAtLeastOneReferralSelfMade = (treat.DictAllReferrals.Count - treat.ListReferralsFromMes.Count) > 0 ? "Да" : "Нет";
 				int necessaryServiceReferralSelfMadeInstrumental = 0;
 				int necessaryServiceReferralSelfMadeLaboratory = 0;
 				int necessaryServiceReferralCompletedSelfMadeInstrumental = 0;
@@ -425,7 +426,8 @@ namespace MISReports {
 
 						int isCompleted = treat.DictAllReferrals[item].IsCompleted == 1 ? 1 : 0;
 
-						if (treat.DictAllReferrals[item].RefType == 2) {
+						int refType = treat.DictAllReferrals[item].RefType;
+						if (refType == 2 || refType == 992140066) {
 							necessaryServiceReferralSelfMadeLaboratory++;
 							necessaryServiceReferralCompletedSelfMadeLaboratory += isCompleted;
 						} else {
@@ -483,7 +485,7 @@ namespace MISReports {
 					completedServicesInReferrals, //Кол-во выполненных услуг во всех направлениях
 					serviceInReferralOutsideMes, //Кол-во услуг в направлениях, не входящих в МЭС
 					necessaryServiceInMesUsedPercent, //% Соответствия обязательных услуг МЭС (обязательные во всех направлениях) / всего обязательных в мэс
-					necessaryServiceInMesUsedPercent == 1 ? 1 : 0, //Услуги из всех направлений соответсвуют обязательным услугам МЭС на 100%
+					necessaryServiceInMesUsedPercent == 1 ? "Да" : "Нет", //Услуги из всех направлений соответсвуют обязательным услугам МЭС на 100%
 					treat.SERVICE_TYPE, //Тип приема
 					treat.PAYMENT_TYPE, //Тип оплаты приема
 					treat.AGNAME, //Наименование организации
@@ -495,6 +497,8 @@ namespace MISReports {
 
 					if (double.TryParse(value.ToString(), out double result))
 						cell.SetCellValue(result);
+					else if (DateTime.TryParseExact(value.ToString(), "dd.MM.yyyy h:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
+						cell.SetCellValue(date);
 					else
 						cell.SetCellValue(value.ToString());
 
@@ -1116,6 +1120,166 @@ namespace MISReports {
 			wsPivote.Columns[1].ColumnWidth = 60;
 			wsPivote.Columns[2].ColumnWidth = 12;
 			wb.ShowPivotTableFieldList = false;
+		}
+
+
+		public static bool PerformRegistryMarks(string resultFile, DataTable dataTable) {
+			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
+				return false;
+
+			try {
+				ws.Columns["C:C"].Select();
+				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ Ч:мм;@";
+				ws.Range["A2"].Select();
+				xlApp.Selection.Autofilter();
+				ws.UsedRange.AutoFilter(4, "Плохо");
+				ws.Range["A1"].Select();
+			} catch (Exception e) {
+				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			try {
+				ws = wb.Sheets["Сводная таблица"];
+				ws.Activate();
+				RegistryMarksAddPivotTable(ws, xlApp, dataTable);
+			} catch (Exception e) {
+				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			wb.Sheets[1].Name = "Негативные отзывы";
+			wb.Sheets["Сводная таблица"].Activate();
+			SaveAndCloseWorkbook(xlApp, wb, ws);
+
+			return true;
+		}
+
+		private static void RegistryMarksAddPivotTable(Excel.Worksheet ws, Excel.Application xlApp, DataTable dataTable) {
+			SortedDictionary<string, ItemRegistryMark> marks = new SortedDictionary<string, ItemRegistryMark>();
+
+			foreach (DataRow dataRow in dataTable.Rows) {
+				try {
+					string shortname = dataRow["SHORTNAME"].ToString();
+					string department = dataRow["DEPARTMENT"].ToString();
+					string mark = dataRow["MARK"].ToString();
+
+					ItemRegistryMark itemRegistryMark = new ItemRegistryMark(shortname, department);
+
+					if (!marks.ContainsKey(itemRegistryMark.ID))
+						marks.Add(itemRegistryMark.ID, itemRegistryMark);
+
+					if (mark.Contains("Плохо")) {
+						marks[itemRegistryMark.ID].MarkBad++;
+						marks[itemRegistryMark.ID].MarkTotal++;
+					} else if (mark.Contains("Средне")) {
+						marks[itemRegistryMark.ID].MarkMedium++;
+						marks[itemRegistryMark.ID].MarkTotal++;
+					} else if (mark.Contains("Хорошо")) {
+						marks[itemRegistryMark.ID].MarkGood++;
+						marks[itemRegistryMark.ID].MarkTotal++;
+					} else if (mark.Contains("Дубль")) {
+						marks[itemRegistryMark.ID].MarkDuplicate++;
+					} else { 
+						Logging.ToFile("Неизвестная оценка - " + mark);
+					}
+				} catch (Exception e) {
+					Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				}
+			}
+
+			int row = 2;
+			int markBadTotal = 0;
+			int markMediumTotal = 0;
+			int markGoogTotal = 0;
+			int markDuplicateTotal = 0;
+
+			foreach (ItemRegistryMark item in marks.Values) {
+				ws.Range["A" + row].Value = item.FilialName;
+				ws.Range["B" + row].Value = item.Department;
+				ws.Range["C" + row].Value = item.MarkBad;
+				ws.Range["D" + row].Value = item.MarkMedium;
+				ws.Range["E" + row].Value = item.MarkGood;
+				ws.Range["F" + row].Value = item.MarkTotal;
+				ws.Range["G" + row].Value = (item.MarkTotal > 0) ? (double)item.MarkBad / (double)item.MarkTotal : 0;
+				ws.Range["H" + row].Value = (item.MarkTotal > 0) ? (double)item.MarkMedium / (double)item.MarkTotal : 0;
+				ws.Range["I" + row].Value = (item.MarkTotal > 0) ? (double)item.MarkGood / (double)item.MarkTotal : 0;
+				ws.Range["J" + row].Value = item.MarkDuplicate;
+
+				markBadTotal += item.MarkBad;
+				markMediumTotal += item.MarkMedium;
+				markGoogTotal += item.MarkGood;
+				markDuplicateTotal += item.MarkDuplicate;
+
+				row++;
+			}
+
+			int totalMarks = markBadTotal + markMediumTotal + markGoogTotal;
+			ws.Range["A" + row].Value = "Итого";
+			ws.Range["C" + row].Value = markBadTotal;
+			ws.Range["D" + row].Value = markMediumTotal;
+			ws.Range["E" + row].Value = markGoogTotal;
+			ws.Range["F" + row].Value = totalMarks;
+			ws.Range["G" + row].Value = (totalMarks > 0) ? (double)markBadTotal / (double)totalMarks : 0;
+			ws.Range["H" + row].Value = (totalMarks > 0) ? (double)markMediumTotal / (double)totalMarks : 0;
+			ws.Range["I" + row].Value = (totalMarks > 0) ? (double)markGoogTotal / (double)totalMarks : 0;
+			ws.Range["J" + row].Value = markDuplicateTotal;
+
+			ws.Columns["G:I"].Style = "Percent";
+
+			AddBoldBorder(ws.Range["A" + row + ":J" + row]);
+			AddBoldBorder(ws.Range["A2:B" + row]);
+			AddBoldBorder(ws.Range["C2:E" + row]);
+			AddBoldBorder(ws.Range["F2:F" + row]);
+			AddBoldBorder(ws.Range["G2:I" + row]);
+			AddBoldBorder(ws.Range["J2:J" + row]);
+
+			ws.Range["A" + row].Font.Bold = true;
+
+			row += 2;
+			ws.Range["A" + row].Value = "* попытки повторного голосования в течении 60 секунд";
+			ws.Range["A" + row].Font.Italic = true;
+			ws.Range["A1"].Select();
+
+		}
+
+		private class ItemRegistryMark {
+			public string ID { get; private set; }
+			public string FilialName { get; private set; }
+			public string Department { get; private set; }
+			public int MarkBad { get; set; }
+			public int MarkMedium { get; set; }
+			public int MarkGood { get; set; }
+			public int MarkTotal { get; set; }
+			public int MarkDuplicate { get; set; }
+
+			public ItemRegistryMark(string filialName, string department) {
+				FilialName = filialName;
+				Department = department;
+				ID = filialName + " | " + department;
+			}
+		}
+
+		private static void AddBoldBorder(Excel.Range range) {
+			try {
+				//foreach (Excel.XlBordersIndex item in new Excel.XlBordersIndex[] {
+				//	Excel.XlBordersIndex.xlDiagonalDown,
+				//	Excel.XlBordersIndex.xlDiagonalUp,
+				//	Excel.XlBordersIndex.xlInsideHorizontal,
+				//	Excel.XlBordersIndex.xlInsideVertical}) 
+				//	range.Borders[item].LineStyle = Excel.Constants.xlNone;
+
+				foreach (Excel.XlBordersIndex item in new Excel.XlBordersIndex[] {
+					Excel.XlBordersIndex.xlEdgeBottom,
+					Excel.XlBordersIndex.xlEdgeLeft,
+					Excel.XlBordersIndex.xlEdgeRight,
+					Excel.XlBordersIndex.xlEdgeTop}) {
+					range.Borders[item].LineStyle = Excel.XlLineStyle.xlContinuous;
+					range.Borders[item].ColorIndex = 0;
+					range.Borders[item].TintAndShade = 0;
+					range.Borders[item].Weight = Excel.XlBorderWeight.xlMedium;
+				}
+			} catch (Exception e) {
+				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+			}
 		}
 	}
 }

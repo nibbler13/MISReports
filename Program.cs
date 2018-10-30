@@ -26,7 +26,8 @@ namespace MISReports {
 			VIP_MSSU,
 			VIP_Moscow,
 			VIP_MSKM,
-			VIP_PND
+			VIP_PND,
+			RegistryMarks
 		};
 
 		public static Dictionary<ReportType, string> AcceptedParameters = new Dictionary<ReportType, string> {
@@ -42,7 +43,8 @@ namespace MISReports {
 			{ ReportType.VIP_MSSU, "Отчет по ВИП-пациентам Сущевка" },
 			{ ReportType.VIP_Moscow, "Отчет по ВИП-пациентам Москва" },
 			{ ReportType.VIP_MSKM, "Отчет по ВИП-пациентам Фрунзенская" },
-			{ ReportType.VIP_PND, "Отчет по ВИП-пациентам ПНД" }
+			{ ReportType.VIP_PND, "Отчет по ВИП-пациентам ПНД" },
+			{ ReportType.RegistryMarks, "Отчет по оценкам регистратуры" }
 		};
 
 		static void Main(string[] args) {
@@ -117,6 +119,7 @@ namespace MISReports {
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetNonAppearance;
 				templateFileName = Properties.Settings.Default.TemplateNonAppearance;
 				mailTo = Properties.Settings.Default.MailToNonAppearance;
+				folderToSave = Properties.Settings.Default.FolderToSaveNonAppearance;
 
 			} else if (reportName.Equals(ReportType.VIP_MSSU.ToString())) {
 				reportToCreate = ReportType.VIP_MSSU;
@@ -145,6 +148,12 @@ namespace MISReports {
 				templateFileName = Properties.Settings.Default.TemplateVIP;
 				mailTo = Properties.Settings.Default.MailToVIP_PND;
 				previousFile = Properties.Settings.Default.PreviousFileVIP_PND;
+
+			} else if (reportName.Equals(ReportType.RegistryMarks.ToString())) {
+				reportToCreate = ReportType.RegistryMarks;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetRegistryMarks;
+				templateFileName = Properties.Settings.Default.TemplateRegistryMarks;
+				mailTo = Properties.Settings.Default.MailToRegistryMarks;
 
 			} else {
 				Logging.ToFile("Неизвестное название отчета: " + reportName);
@@ -195,9 +204,9 @@ namespace MISReports {
 			Logging.ToFile(subject);
 
 			DataTable dataTable = null;
-			if (reportToCreate == ReportType.MESUsage ||
+			if (reportToCreate == ReportType.MESUsage/* ||
 				reportToCreate == ReportType.FreeCellsDay ||
-				reportToCreate == ReportType.FreeCellsWeek) {
+				reportToCreate == ReportType.FreeCellsWeek*/) {
 
 				Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
 				for (int i = 0; dateBeginReport.Value.AddDays(i) <= dateEndReport; i++) {
@@ -320,6 +329,9 @@ namespace MISReports {
 						case ReportType.VIP_MSKM:
 						case ReportType.VIP_PND:
 							isPostProcessingOk = NpoiExcelGeneral.PerformVIP(fileResult, previousFile);
+							break;
+						case ReportType.RegistryMarks:
+							isPostProcessingOk = NpoiExcelGeneral.PerformRegistryMarks(fileResult, dataTable);
 							break;
 						default:
 							break;
