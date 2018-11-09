@@ -17,7 +17,8 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace MISReports {
 	class NpoiExcelGeneral {
-		private static bool CreateNewIWorkbook(string resultFilePrefix, string templateFileName, out IWorkbook workbook, out ISheet sheet, out string resultFile) {
+		private static bool CreateNewIWorkbook(string resultFilePrefix, string templateFileName,
+			out IWorkbook workbook, out ISheet sheet, out string resultFile, string sheetName) {
 			workbook = null;
 			sheet = null;
 			resultFile = string.Empty;
@@ -41,7 +42,10 @@ namespace MISReports {
 				using (FileStream stream = new FileStream(templateFile, FileMode.Open, FileAccess.Read))
 					workbook = new XSSFWorkbook(stream);
 
-				sheet = workbook.GetSheet("Данные");
+				if (string.IsNullOrEmpty(sheetName))
+					sheetName = "Данные";
+
+				sheet = workbook.GetSheet(sheetName);
 
 				return true;
 			} catch (Exception e) {
@@ -65,15 +69,38 @@ namespace MISReports {
 		}
 
 
-		public static string WriteDataTableToExcel(DataTable dataTable, string resultFilePrefix, string templateFileName, bool telemedicineOnlyIngosstrakh = false) {
-			if (!CreateNewIWorkbook(resultFilePrefix, templateFileName, out IWorkbook workbook, out ISheet sheet, out string resultFile))
-				return string.Empty;
+		public static string WriteDataTableToExcel(DataTable dataTable, string resultFilePrefix, string templateFileName,
+			bool telemedicineOnlyIngosstrakh = false, string sheetName = "", bool createNew = true) {
+			IWorkbook workbook = null;
+			ISheet sheet = null;
+			string resultFile = string.Empty;
+
+			if (createNew) {
+				if (!CreateNewIWorkbook(resultFilePrefix, templateFileName,
+					out workbook, out sheet, out resultFile, sheetName))
+					return string.Empty;
+			} else {
+				try {
+					using (FileStream stream = new FileStream(templateFileName, FileMode.Open, FileAccess.Read))
+						workbook = new XSSFWorkbook(stream);
+
+					sheet = workbook.GetSheet(sheetName);
+					resultFile = templateFileName;
+				} catch (Exception e) {
+					Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+					return string.Empty;
+				}
+			}
 
 			int rowNumber = 1;
 			int columnNumber = 0;
 
 			foreach (DataRow dataRow in dataTable.Rows) {
-				IRow row = sheet.CreateRow(rowNumber);
+				IRow row = null;
+				try { row = sheet.GetRow(rowNumber); } catch (Exception) { }
+
+				if (row == null)
+					row = sheet.CreateRow(rowNumber);
 
 				if (telemedicineOnlyIngosstrakh) {
 					try {
@@ -84,7 +111,12 @@ namespace MISReports {
 				}
 
 				foreach (DataColumn column in dataTable.Columns) {
-					ICell cell = row.CreateCell(columnNumber);
+					ICell cell = null;
+					try { cell = row.GetCell(columnNumber); } catch (Exception) { }
+
+					if (cell == null)
+						cell = row.CreateCell(columnNumber);
+
 					string value = dataRow[column].ToString();
 
 					if (double.TryParse(value, out double result)) {
@@ -107,6 +139,84 @@ namespace MISReports {
 
 			return resultFile;
 		}
+
+
+		public static bool PerformWorkload(string resultFile) {
+			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws, "Услуги УЗИ"))
+				return false;
+
+			try {
+				ws.Activate();
+				ws.Range["CC2:CE2"].Select();
+				xlApp.Selection.AutoFill(ws.Range["CC2:CE" + ws.UsedRange.Rows.Count]);
+				ws.Range["CC3:CE3"].Select();
+				xlApp.Selection.AutoFill(ws.Range["CC2:CE3"]);
+				ws.Range["A2:CB2"].Select();
+				xlApp.Selection.Copy();
+				ws.Range["A3:CB" + ws.UsedRange.Rows.Count].Select();
+				xlApp.Selection.PasteSpecial(Excel.XlPasteType.xlPasteFormats);
+				ws.Range["A1"].Select();
+
+				ws = wb.Sheets["Искл.услуги (интенсив)"];
+				ws.Activate();
+				ws.Range["A2:K2"].Select();
+				xlApp.Selection.Copy();
+				ws.Range["A3:K" + ws.UsedRange.Rows.Count].Select();
+				xlApp.Selection.PasteSpecial(Excel.XlPasteType.xlPasteFormats);
+				ws.Range["A1"].Select();
+
+				ws = wb.Sheets["Интенсив (расчет)"];
+				ws.Activate();
+				ws.Range["AA2:AM2"].Select();
+				xlApp.Selection.AutoFill(ws.Range["AA2:AM" + ws.UsedRange.Rows.Count]);
+				ws.Range["AA3:AM3"].Select();
+				xlApp.Selection.AutoFill(ws.Range["AA2:AM3"]);
+				ws.Range["A2:Z2"].Select();
+				xlApp.Selection.Copy();
+				ws.Range["A3:Z" + ws.UsedRange.Rows.Count].Select();
+				xlApp.Selection.PasteSpecial(Excel.XlPasteType.xlPasteFormats);
+				ws.Range["Y2:Y2"].Select();
+				xlApp.Selection.AutoFill(ws.Range["Y2:Y" + ws.UsedRange.Rows.Count]);
+
+				for (int row = 2; row < ws.UsedRange.Rows.Count; row++) {
+					try {
+						string department = ws.Range["F" + row].Value;
+						if (!department.ToLower().Equals("рефлексотерапия"))
+							continue;
+
+						double filID = ws.Range["C" + row].Value;
+						if (filID != 1 && filID != 5 && filID != 12)
+							continue;
+
+						double chairsCount = 2;
+						if (filID == 5) {
+							chairsCount = 3;
+							ws.Range["Y" + row].Value2 = "4";
+							ws.Range["Y" + row].Interior.ColorIndex = 45;
+						}
+
+						double timeDS = ws.Range["L" + row].Value2;
+						ws.Range["L" + row].FormulaLocal = "=" + timeDS + "/" + chairsCount;
+						ws.Range["L" + row].Interior.ColorIndex = 45;
+
+						//double timeSchRez = ws.Range["N" + row].Value2;
+						//ws.Range["N" + row].FormulaLocal = "=" + timeSchRez + "/" + chairsCount;
+						//ws.Range["N" + row].Interior.ColorIndex = 45;
+					} catch (Exception e) {
+						Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+					}
+				}
+
+				ws.Range["A1"].Select();
+			} catch (Exception e) {
+				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+			}
+			
+			SaveAndCloseWorkbook(xlApp, wb, ws);
+
+			return true;
+		}
+
 
 
 		public static bool PerformNonAppearance(string resultFile, DataTable dataTable) {
@@ -372,7 +482,7 @@ namespace MISReports {
 
 
 		public static string WriteMesUsageTreatmentsToExcel(Dictionary<string, ItemMESUsageTreatment> treatments, string resultFilePrefix, string templateFileName) {
-			if (!CreateNewIWorkbook(resultFilePrefix, templateFileName, out IWorkbook workbook, out ISheet sheet, out string resultFile))
+			if (!CreateNewIWorkbook(resultFilePrefix, templateFileName, out IWorkbook workbook, out ISheet sheet, out string resultFile, string.Empty))
 				return string.Empty;
 
 			int rowNumber = 1;
@@ -883,7 +993,7 @@ namespace MISReports {
 		
 
 
-		private static bool OpenWorkbook(string workbook, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws) {
+		private static bool OpenWorkbook(string workbook, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws, string sheetName = "") {
 			xlApp = null;
 			wb = null;
 			ws = null;
@@ -904,7 +1014,10 @@ namespace MISReports {
 				return false;
 			}
 
-			ws = wb.Sheets["Данные"];
+			if (string.IsNullOrEmpty(sheetName))
+				sheetName = "Данные";
+
+			ws = wb.Sheets[sheetName];
 
 			if (ws == null) {
 				Logging.ToFile("Не удалось открыть лист Данные");

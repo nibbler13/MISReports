@@ -27,7 +27,8 @@ namespace MISReports {
 			VIP_Moscow,
 			VIP_MSKM,
 			VIP_PND,
-			RegistryMarks
+			RegistryMarks,
+			Workload
 		};
 
 		public static Dictionary<ReportType, string> AcceptedParameters = new Dictionary<ReportType, string> {
@@ -44,7 +45,8 @@ namespace MISReports {
 			{ ReportType.VIP_Moscow, "Отчет по ВИП-пациентам Москва" },
 			{ ReportType.VIP_MSKM, "Отчет по ВИП-пациентам Фрунзенская" },
 			{ ReportType.VIP_PND, "Отчет по ВИП-пациентам ПНД" },
-			{ ReportType.RegistryMarks, "Отчет по оценкам регистратуры" }
+			{ ReportType.RegistryMarks, "Отчет по оценкам регистратуры" },
+			{ ReportType.Workload, "Отчет по загрузке сотрудников" }
 		};
 
 		static void Main(string[] args) {
@@ -155,6 +157,11 @@ namespace MISReports {
 				templateFileName = Properties.Settings.Default.TemplateRegistryMarks;
 				mailTo = Properties.Settings.Default.MailToRegistryMarks;
 
+			} else if (reportName.Equals(ReportType.Workload.ToString())) {
+				reportToCreate = ReportType.Workload;
+				templateFileName = Properties.Settings.Default.TemplateWorkload;
+				mailTo = Properties.Settings.Default.MailToWorkload;
+
 			} else {
 				Logging.ToFile("Неизвестное название отчета: " + reportName);
 				WriteOutAcceptedParameters();
@@ -204,6 +211,8 @@ namespace MISReports {
 			Logging.ToFile(subject);
 
 			DataTable dataTable = null;
+			DataTable dataTableWorkLoadA6 = null;
+			DataTable dataTableWorkloadA11_10 = null;
 			if (reportToCreate == ReportType.MESUsage/* ||
 				reportToCreate == ReportType.FreeCellsDay ||
 				reportToCreate == ReportType.FreeCellsWeek*/) {
@@ -233,7 +242,31 @@ namespace MISReports {
 				};
 
 				Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginStr + " по " + dateEndStr);
-				dataTable = firebirdClient.GetDataTable(sqlQuery, parameters);
+
+				if (reportToCreate == ReportType.Workload) {
+					parameters = new Dictionary<string, object>();
+
+					string queryA6 = Path.Combine(AssemblyDirectory, Properties.Settings.Default.QueryWorkloadA6);
+					string queryA8_2 = Path.Combine(AssemblyDirectory, Properties.Settings.Default.QueryWorkloadA8_2);
+					string queryA11_10 = Path.Combine(AssemblyDirectory, Properties.Settings.Default.QueryWorkloadA11_10);
+
+					if (File.Exists(queryA6) && File.Exists(queryA8_2) && File.Exists(queryA11_10)) {
+						try {
+							queryA6 = File.ReadAllText(queryA6).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
+							queryA8_2 = File.ReadAllText(queryA8_2).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
+							queryA11_10 = File.ReadAllText(queryA11_10).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
+
+							dataTable = firebirdClient.GetDataTable(queryA8_2, parameters);
+							dataTableWorkLoadA6 = firebirdClient.GetDataTable(queryA6, parameters);
+							Logging.ToFile("Получено строк A6: " + dataTableWorkLoadA6.Rows.Count);
+							dataTableWorkloadA11_10 = firebirdClient.GetDataTable(queryA11_10, parameters);
+							Logging.ToFile("Получено строк A11_10: " + dataTableWorkloadA11_10.Rows.Count);
+						} catch (Exception e) {
+							Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+						}
+					}
+				} else
+					dataTable = firebirdClient.GetDataTable(sqlQuery, parameters);
 			}
 
 			Logging.ToFile("Получено строк: " + dataTable.Rows.Count);
@@ -296,6 +329,10 @@ namespace MISReports {
 					fileResult = NpoiExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments, subject, templateFileName);
 				} else if (reportToCreate == ReportType.TelemedicineOnlyIngosstrakh) {
 					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable, subject, templateFileName, true);
+				} else if (reportToCreate == ReportType.Workload) {
+					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6, subject, templateFileName, false, "Услуги УЗИ");
+					NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10, subject, fileResult, false, "Искл.услуги (интенсив)", false);
+					NpoiExcelGeneral.WriteDataTableToExcel(dataTable, subject, fileResult, false, "Интенсив (расчет)", false);
 				} else {
 					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable, subject, templateFileName);
 				}
@@ -332,6 +369,9 @@ namespace MISReports {
 							break;
 						case ReportType.RegistryMarks:
 							isPostProcessingOk = NpoiExcelGeneral.PerformRegistryMarks(fileResult, dataTable);
+							break;
+						case ReportType.Workload:
+							isPostProcessingOk = NpoiExcelGeneral.PerformWorkload(fileResult);
 							break;
 						default:
 							break;
