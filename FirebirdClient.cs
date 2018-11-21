@@ -34,7 +34,7 @@ namespace MISReports {
 					string subject = "Ошибка подключения к БД";
 					string body = e.Message + Environment.NewLine + e.StackTrace;
 					SystemMail.SendMail(subject, body, Properties.Settings.Default.MailCopy);
-					Logging.ToFile(subject + " " + body);
+					Logging.ToLog(subject + " " + body);
 				}
 			}
 
@@ -68,7 +68,7 @@ namespace MISReports {
 				string subject = "Ошибка выполнения запроса к БД";
 				string body = e.Message + Environment.NewLine + e.StackTrace;
 				SystemMail.SendMail(subject, body, Properties.Settings.Default.MailCopy);
-				Logging.ToFile(subject + " " + body);
+				Logging.ToLog(subject + " " + body);
 				connection.Close();
 			}
 
@@ -94,7 +94,7 @@ namespace MISReports {
 				string subject = "Ошибка выполнения запроса к БД";
 				string body = e.Message + Environment.NewLine + e.StackTrace;
 				SystemMail.SendMail(subject, body, Properties.Settings.Default.MailCopy);
-				Logging.ToFile(subject + " " + body);
+				Logging.ToLog(subject + " " + body);
 				connection.Close();
 			}
 

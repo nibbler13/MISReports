@@ -24,34 +24,55 @@ namespace MISReports {
 			resultFile = string.Empty;
 
 			try {
-				string templateFile = Program.AssemblyDirectory + templateFileName;
-				foreach (char item in Path.GetInvalidFileNameChars())
-					resultFilePrefix = resultFilePrefix.Replace(item, '-');
-
-				if (!File.Exists(templateFile)) {
-					Logging.ToFile("Не удалось найти файл шаблона: " + templateFile);
+				if (!GetTemplateFilePath(ref templateFileName))
 					return false;
-				}
 
-				string resultPath = Path.Combine(Program.AssemblyDirectory, "Results");
-				if (!Directory.Exists(resultPath))
-					Directory.CreateDirectory(resultPath);
+				string resultPath = GetResultFilePath(resultFilePrefix, templateFileName);
 
-				resultFile = Path.Combine(resultPath, resultFilePrefix + " " + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xlsx");
-
-				using (FileStream stream = new FileStream(templateFile, FileMode.Open, FileAccess.Read))
+				using (FileStream stream = new FileStream(templateFileName, FileMode.Open, FileAccess.Read))
 					workbook = new XSSFWorkbook(stream);
 
 				if (string.IsNullOrEmpty(sheetName))
 					sheetName = "Данные";
 
 				sheet = workbook.GetSheet(sheetName);
+				resultFile = resultPath;
 
 				return true;
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 				return false;
 			}
+		}
+
+		private static bool GetTemplateFilePath(ref string templateFileName) {
+			templateFileName = Path.Combine(Program.AssemblyDirectory, templateFileName);
+
+			if (!File.Exists(templateFileName)) {
+				Logging.ToLog("Не удалось найти файл шаблона: " + templateFileName);
+				return false;
+			}
+
+			return true;
+		}
+
+		private static string GetResultFilePath(string resultFilePrefix, string templateFileName, bool isPlainText = false) {
+			string resultPath = Path.Combine(Program.AssemblyDirectory, "Results");
+			if (!Directory.Exists(resultPath))
+				Directory.CreateDirectory(resultPath);
+
+			foreach (char item in Path.GetInvalidFileNameChars())
+				resultFilePrefix = resultFilePrefix.Replace(item, '-');
+
+			string fileEnding = ".xlsx";
+			if (isPlainText)
+				fileEnding = ".txt";
+
+			string resultFile = Path.Combine(resultPath, resultFilePrefix + " " + DateTime.Now.ToString("yyyyMMdd_HHmmss") + fileEnding);
+			if (isPlainText)
+				File.Copy(templateFileName, resultFile, true);
+
+			return resultFile;
 		}
 
 		private static bool SaveAndCloseIWorkbook(IWorkbook workbook, string resultFile) {
@@ -63,10 +84,63 @@ namespace MISReports {
 
 				return true;
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 				return false;
 			}
 		}
+
+
+
+		private static bool OpenWorkbook(string workbook, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws, string sheetName = "") {
+			xlApp = null;
+			wb = null;
+			ws = null;
+
+			xlApp = new Excel.Application();
+
+			if (xlApp == null) {
+				Logging.ToLog("Не удалось открыть приложение Excel");
+				return false;
+			}
+
+			xlApp.Visible = false;
+
+			wb = xlApp.Workbooks.Open(workbook);
+
+			if (wb == null) {
+				Logging.ToLog("Не удалось открыть книгу " + workbook);
+				return false;
+			}
+
+			if (string.IsNullOrEmpty(sheetName))
+				sheetName = "Данные";
+
+			ws = wb.Sheets[sheetName];
+
+			if (ws == null) {
+				Logging.ToLog("Не удалось открыть лист Данные");
+				return false;
+			}
+
+			return true;
+		}
+
+		private static void SaveAndCloseWorkbook(Excel.Application xlApp, Excel.Workbook wb, Excel.Worksheet ws) {
+			if (ws != null)
+				Marshal.ReleaseComObject(ws);
+
+			if (wb != null) {
+				wb.Save();
+				wb.Close();
+				Marshal.ReleaseComObject(wb);
+			}
+
+			if (xlApp != null) {
+				xlApp.Quit();
+				Marshal.ReleaseComObject(xlApp);
+			}
+		}
+
 
 
 		public static string WriteDataTableToExcel(DataTable dataTable, string resultFilePrefix, string templateFileName,
@@ -87,7 +161,7 @@ namespace MISReports {
 					sheet = workbook.GetSheet(sheetName);
 					resultFile = templateFileName;
 				} catch (Exception e) {
-					Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 					return string.Empty;
 				}
 			}
@@ -139,6 +213,314 @@ namespace MISReports {
 
 			return resultFile;
 		}
+		
+		public static string WriteDataTableToTextFile(DataTable dataTable, string resultFilePrefix, string templateFileName) {
+			string resultFile = string.Empty;
+
+			try {
+				if (!GetTemplateFilePath(ref templateFileName))
+					return resultFile;
+
+				resultFile = GetResultFilePath(resultFilePrefix, templateFileName, true);
+
+				using (System.IO.StreamWriter sw = System.IO.File.AppendText(resultFile)) {
+					foreach (DataRow dataRow in dataTable.Rows) {
+						object[] values = dataRow.ItemArray;
+						List<string> valuesToWrite = new List<string>();
+						foreach (object value in values)
+							valuesToWrite.Add(value.ToString().Replace(" 0:00:00", ""));
+
+						string logLine = string.Join("	", valuesToWrite.ToArray());
+						sw.WriteLine(logLine);
+					}
+				}
+			} catch (Exception e) {
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			return resultFile;
+		}
+			   		 
+		public static string WriteMesUsageTreatmentsToExcel(Dictionary<string, ItemMESUsageTreatment> treatments, string resultFilePrefix, string templateFileName) {
+			if (!CreateNewIWorkbook(resultFilePrefix, templateFileName, out IWorkbook workbook, out ISheet sheet, out string resultFile, string.Empty))
+				return string.Empty;
+
+			int rowNumber = 1;
+			int columnNumber = 0;
+
+			foreach (KeyValuePair<string, ItemMESUsageTreatment> treatment in treatments) {
+				IRow row = sheet.CreateRow(rowNumber);
+				ItemMESUsageTreatment treat = treatment.Value;
+
+				int necessaryServicesInMes = (from x in treat.DictMES where x.Value == 0 select x).Count();
+
+				if (necessaryServicesInMes == 0)
+					continue;
+
+				int hasAtLeastOneReferralByMes = treat.ListReferralsFromMes.Count > 0 ? 1 : 0;
+				int necessaryServiceReferralByMesInstrumental = 0;
+				int necessaryServiceReferralByMesLaboratory = 0;
+				int necessaryServiceReferralCompletedByMesInstrumental = 0;
+				int necessaryServiceReferralCompletedByMesLaboratory = 0;
+
+				foreach (string item in treat.ListReferralsFromMes) {
+					if (!treat.DictMES.ContainsKey(item))
+						continue;
+
+					if (treat.DictMES[item] == 0) {
+						if (!treat.DictAllReferrals.ContainsKey(item))
+							continue;
+
+						int isCompleted = treat.DictAllReferrals[item].IsCompleted == 1 ? 1 : 0;
+
+						int refType = treat.DictAllReferrals[item].RefType;
+						if (refType == 2 || refType == 992140066) {
+							necessaryServiceReferralByMesLaboratory++;
+							necessaryServiceReferralCompletedByMesLaboratory += isCompleted;
+						} else {
+							necessaryServiceReferralByMesInstrumental++;
+							necessaryServiceReferralCompletedByMesInstrumental += isCompleted;
+						}
+					}
+				}
+
+				int hasAtLeastOneReferralSelfMade = (treat.DictAllReferrals.Count - treat.ListReferralsFromMes.Count) > 0 ? 1 : 0;
+				int necessaryServiceReferralSelfMadeInstrumental = 0;
+				int necessaryServiceReferralSelfMadeLaboratory = 0;
+				int necessaryServiceReferralCompletedSelfMadeInstrumental = 0;
+				int necessaryServiceReferralCompletedSelfMadeLaboratory = 0;
+
+				foreach (string item in treat.ListReferralsFromDoc) {
+					if (!treat.DictMES.ContainsKey(item))
+						continue;
+
+					if (treat.DictMES[item] == 0) {
+						if (!treat.DictAllReferrals.ContainsKey(item))
+							continue;
+
+						int isCompleted = treat.DictAllReferrals[item].IsCompleted == 1 ? 1 : 0;
+
+						int refType = treat.DictAllReferrals[item].RefType;
+						if (refType == 2 || refType == 992140066) {
+							necessaryServiceReferralSelfMadeLaboratory++;
+							necessaryServiceReferralCompletedSelfMadeLaboratory += isCompleted;
+						} else {
+							necessaryServiceReferralSelfMadeInstrumental++;
+							necessaryServiceReferralCompletedSelfMadeInstrumental += isCompleted;
+						}
+					}
+				}
+
+				int servicesAllReferralsInstrumental = (from x in treat.DictAllReferrals where x.Value.RefType != 2 select x).Count();
+				int servicesAllReferralsLaboratory = treat.DictAllReferrals.Count - servicesAllReferralsInstrumental;
+				int completedServicesInReferrals = (from x in treat.DictAllReferrals where x.Value.IsCompleted == 1 select x).Count();
+				int serviceInReferralOutsideMes = 0;
+				foreach (KeyValuePair<string, ItemMESUsageTreatment.ReferralDetails> pair in treat.DictAllReferrals)
+					if (!treat.DictMES.ContainsKey(pair.Key))
+						serviceInReferralOutsideMes++;
+
+				double necessaryServiceInMesUsedPercent;
+				if (necessaryServicesInMes > 0)
+					necessaryServiceInMesUsedPercent =
+					(double)(
+					necessaryServiceReferralByMesInstrumental +
+					necessaryServiceReferralByMesLaboratory +
+					necessaryServiceReferralSelfMadeInstrumental +
+					necessaryServiceReferralSelfMadeLaboratory) /
+					(double)necessaryServicesInMes;
+				else
+					necessaryServiceInMesUsedPercent = 1;
+
+				List<object> values = new List<object>() {
+					treatment.Key, //Код лечения
+					1, //Прием
+					treat.TREATDATE, //Дата лечения
+					treat.FILIAL, //Филиал
+					treat.DEPNAME, //Подразделение
+					treat.DOCNAME, //ФИО врача
+					treat.HISTNUM, //Номер ИБ
+					treat.CLIENTNAME, //ФИО пациента
+					treat.AGE, //Возраст
+					treat.MKBCODE, //Код МКБ
+					necessaryServicesInMes, //Кол-во обязательных услуг согласно МЭС
+					//treat.DictMES.Count, //Всего услуг в МЭС
+					hasAtLeastOneReferralByMes, //Есть направление, созданное с использованием МЭС
+					necessaryServiceReferralByMesInstrumental + necessaryServiceReferralByMesLaboratory, //Кол-во услуг в направлении с использованием МЭС
+					//necessaryServiceReferralByMesInstrumental, //Кол-во обязательных услуг в направлении с использованием МЭС (инструментальных)
+					//necessaryServiceReferralByMesLaboratory, //Кол-во обязательных услуг в направлении с использованием МЭС (лабораторных)
+					//necessaryServiceReferralCompletedByMesInstrumental, //Кол-во исполненных обязательных услуг в направлении МЭС (инструментальных)
+					//necessaryServiceReferralCompletedByMesLaboratory, //Кол-во исполненных обязательных услуг в направлении МЭС (лабораторных)
+					hasAtLeastOneReferralSelfMade, //Есть направление, созданное самостоятельно
+					necessaryServiceReferralSelfMadeInstrumental + necessaryServiceReferralSelfMadeLaboratory, //Кол-во услуг в направлении выставленных самостоятельно
+					//necessaryServiceReferralSelfMadeInstrumental, //Кол-во обязательных услуг в направлении выставленных самостоятельно (инструментальных)
+					//necessaryServiceReferralSelfMadeLaboratory, //Кол-во обязательных услуг в направлении выставленных самостоятельно (лабораторных)
+					//necessaryServiceReferralCompletedSelfMadeInstrumental, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (инструментальных)
+					//necessaryServiceReferralCompletedSelfMadeLaboratory, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (лабораторных)
+					//servicesAllReferralsInstrumental, //Всего услуг во всех направлениях (иснтрументальных)
+					//servicesAllReferralsLaboratory, //Всего услуг во всех направлениях (лабораторных)
+					//completedServicesInReferrals, //Кол-во выполненных услуг во всех направлениях
+					//serviceInReferralOutsideMes, //Кол-во услуг в направлениях, не входящих в МЭС
+					necessaryServiceInMesUsedPercent, //% Соответствия обязательных услуг МЭС (обязательные во всех направлениях) / всего обязательных в мэс
+					necessaryServiceInMesUsedPercent == 1 ? 1 : 0, //Услуги из всех направлений соответсвуют обязательным услугам МЭС на 100%
+					treat.SERVICE_TYPE, //Тип приема
+					treat.PAYMENT_TYPE//, //Тип оплаты приема
+					//treat.AGNAME, //Наименование организации
+					//treat.AGNUM //Номер договора
+				};
+
+				foreach (object value in values) {
+					ICell cell = row.CreateCell(columnNumber);
+
+					if (double.TryParse(value.ToString(), out double result))
+						cell.SetCellValue(result);
+					else if (DateTime.TryParseExact(value.ToString(), "dd.MM.yyyy h:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
+						cell.SetCellValue(date);
+					else
+						cell.SetCellValue(value.ToString());
+
+					columnNumber++;
+				}
+
+				columnNumber = 0;
+				rowNumber++;
+			}
+
+			if (!SaveAndCloseIWorkbook(workbook, resultFile))
+				return string.Empty;
+
+			return resultFile;
+		}
+
+
+
+		public static bool PerformMesUsage(string resultFile) {
+			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
+				return false;
+
+			try {
+				ws.Activate();
+				ws.Columns["C:C"].Select();
+				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
+				ws.Columns["P:P"].Select();
+				xlApp.Selection.NumberFormat = "0%";
+				ws.Range["A1"].Select();
+			} catch (Exception e) {
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			try {
+				MesUsageAddPivotTable(wb, ws, xlApp);
+			} catch (Exception e) {
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			SaveAndCloseWorkbook(xlApp, wb, ws);
+
+			return true;
+		}
+
+		private static void MesUsageAddPivotTable(Excel.Workbook wb, Excel.Worksheet ws, Excel.Application xlApp) {
+			ws.Cells[1, 1].Select();
+
+			string pivotTableName = @"MesUsagePivotTable";
+			Excel.Worksheet wsPivote = wb.Sheets["Сводная таблица"];
+
+			Excel.PivotCache pivotCache = wb.PivotCaches().Create(Excel.XlPivotTableSourceType.xlDatabase, ws.UsedRange, 6);
+			Excel.PivotTable pivotTable = pivotCache.CreatePivotTable(wsPivote.Cells[1, 1], pivotTableName, true, 6);
+
+			pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
+
+			pivotTable.PivotFields("Тип приема").Orientation = Excel.XlPivotFieldOrientation.xlPageField;
+			pivotTable.PivotFields("Тип приема").Position = 1;
+
+			pivotTable.PivotFields("Тип оплаты приема").Orientation = Excel.XlPivotFieldOrientation.xlPageField;
+			pivotTable.PivotFields("Тип оплаты приема").Position = 2;
+
+			pivotTable.PivotFields("Филиал").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Филиал").Position = 1;
+
+			pivotTable.PivotFields("Подразделение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("Подразделение").Position = 2;
+
+			pivotTable.PivotFields("ФИО врача").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			pivotTable.PivotFields("ФИО врача").Position = 3;
+
+			pivotTable.AddDataField(pivotTable.PivotFields("Прием"), 
+				"Кол-во приемов, для которых загружен список МЭС", Excel.XlConsolidationFunction.xlSum);
+			pivotTable.AddDataField(pivotTable.PivotFields("Есть направление, созданное с использованием МЭС"),
+				"Кол-во приемов с направлением, созданным с использованием МЭС", Excel.XlConsolidationFunction.xlSum);
+
+			pivotTable.CalculatedFields().Add("% приемов с направлением, созданным с использованием МЭС",
+				"='Есть направление, созданное с использованием МЭС' /Прием", true);
+			pivotTable.PivotFields("% приемов с направлением, созданным с использованием МЭС").Orientation = 
+				Excel.XlPivotFieldOrientation.xlDataField;
+			pivotTable.PivotFields("Сумма по полю % приемов с направлением, созданным с использованием МЭС").Caption = 
+				" % приемов с направлением, созданным с использованием МЭС";
+			pivotTable.PivotFields(" % приемов с направлением, созданным с использованием МЭС").NumberFormat = "0,00%";
+
+			pivotTable.AddDataField(pivotTable.PivotFields("Есть направление, созданное самостоятельно"),
+				"Кол-во приемов с направлениями, созданными самостоятельно", Excel.XlConsolidationFunction.xlSum);
+
+			pivotTable.CalculatedFields().Add("% приемов с направлениями, соответствующими МЭС, но созданных самостоятельно",
+				"='Есть направление, созданное самостоятельно' /Прием", true);
+			pivotTable.PivotFields("% приемов с направлениями, соответствующими МЭС, но созданных самостоятельно").Orientation =
+				Excel.XlPivotFieldOrientation.xlDataField;
+			pivotTable.PivotFields("Сумма по полю % приемов с направлениями, соответствующими МЭС, но созданных самостоятельно").Caption =
+				" % приемов с направлениями, соответствующими МЭС, но созданных самостоятельно";
+			pivotTable.PivotFields(" % приемов с направлениями, соответствующими МЭС, но созданных самостоятельно").NumberFormat = "0,00%";
+			
+			pivotTable.AddDataField(pivotTable.PivotFields("Услуги из всех направлений соответсвуют МЭС на 100%"),
+				"Кол-во приемов, обязательные услуги МЭС соответствуют в направлениях на 100%", Excel.XlConsolidationFunction.xlSum);
+
+			pivotTable.CalculatedFields().Add("% приемов, обязательные услуги МЭС в направлениях соответствуют на 100%",
+				"='Услуги из всех направлений соответсвуют МЭС на 100%' /Прием", true);
+			pivotTable.PivotFields("% приемов, обязательные услуги МЭС в направлениях соответствуют на 100%").Orientation =
+				Excel.XlPivotFieldOrientation.xlDataField;
+			pivotTable.PivotFields("Сумма по полю % приемов, обязательные услуги МЭС в направлениях соответствуют на 100%").Caption =
+				" % приемов, обязательные услуги МЭС в направлениях соответствуют на 100%";
+			pivotTable.PivotFields(" % приемов, обязательные услуги МЭС в направлениях соответствуют на 100%").NumberFormat = "0,00%";
+			
+			pivotTable.AddDataField(pivotTable.PivotFields("% Соответствия МЭС"),
+				"Средний % соответствия обязательных услуг МЭС услугам в направлениях", Excel.XlConsolidationFunction.xlAverage);
+			pivotTable.PivotFields("Средний % соответствия обязательных услуг МЭС услугам в направлениях").NumberFormat = "0,00%";
+
+			wsPivote.Activate();
+			wsPivote.Columns["B:I"].Select();
+			xlApp.Selection.ColumnWidth = 20;
+			wsPivote.Range["B4:I4"].Select();
+			xlApp.Selection.VerticalAlignment = Excel.Constants.xlTop;
+			xlApp.Selection.WrapText = true;
+
+			pivotTable.PivotFields("ФИО врача").AutoSort(Excel.XlSortOrder.xlDescending,
+				"Средний % соответствия обязательных услуг МЭС услугам в направлениях");
+			pivotTable.PivotFields("Подразделение").AutoSort(Excel.XlSortOrder.xlDescending,
+				"Средний % соответствия обязательных услуг МЭС услугам в направлениях");
+			pivotTable.PivotFields("Филиал").AutoSort(Excel.XlSortOrder.xlDescending,
+				"Средний % соответствия обязательных услуг МЭС услугам в направлениях");
+
+			int rowCount = wsPivote.UsedRange.Rows.Count;
+			AddInteriorColor(wsPivote.Range["C4:D" + rowCount], Excel.XlThemeColor.xlThemeColorAccent4);
+			AddInteriorColor(wsPivote.Range["E4:F" + rowCount], Excel.XlThemeColor.xlThemeColorAccent5);
+			AddInteriorColor(wsPivote.Range["G4:H" + rowCount], Excel.XlThemeColor.xlThemeColorAccent6);
+
+			wsPivote.Range["A1"].Select();
+
+			pivotTable.HasAutoFormat = false;
+			
+			pivotTable.PivotFields("Подразделение").ShowDetail = false;
+			pivotTable.PivotFields("Филиал").ShowDetail = false;
+			
+			wb.ShowPivotTableFieldList = false;
+		}
+
+		private static void AddInteriorColor(Excel.Range range, Excel.XlThemeColor xlThemeColor) {
+			range.Interior.Pattern = Excel.Constants.xlSolid;
+			range.Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
+			range.Interior.ThemeColor = xlThemeColor;
+			range.Interior.TintAndShade = 0.799981688894314;
+			range.Interior.PatternTintAndShade = 0;
+		}
+
 
 
 		public static bool PerformWorkload(string resultFile) {
@@ -203,13 +585,13 @@ namespace MISReports {
 						//ws.Range["N" + row].FormulaLocal = "=" + timeSchRez + "/" + chairsCount;
 						//ws.Range["N" + row].Interior.ColorIndex = 45;
 					} catch (Exception e) {
-						Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+						Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 					}
 				}
 
 				ws.Range["A1"].Select();
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 			
 			SaveAndCloseWorkbook(xlApp, wb, ws);
@@ -233,19 +615,19 @@ namespace MISReports {
 				xlApp.ActiveCell.FormulaR1C1 = "=RC[-4]+RC[-2]";
 				xlApp.Selection.AutoFill(ws.Range["N2:N" + usedRows]);
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			try {
 				NonAppearanceAddPivotTablePatientsWithProblem(wb, ws, xlApp);
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			try {
 				NonAppearanceAddStatistics(wb, xlApp, dataTable);
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			try {
@@ -258,7 +640,7 @@ namespace MISReports {
 				xlApp.Selection.WrapText = true;
 				ws.Range["A1"].Select();
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			SaveAndCloseWorkbook(xlApp, wb, ws);
@@ -481,152 +863,6 @@ namespace MISReports {
 
 
 
-		public static string WriteMesUsageTreatmentsToExcel(Dictionary<string, ItemMESUsageTreatment> treatments, string resultFilePrefix, string templateFileName) {
-			if (!CreateNewIWorkbook(resultFilePrefix, templateFileName, out IWorkbook workbook, out ISheet sheet, out string resultFile, string.Empty))
-				return string.Empty;
-
-			int rowNumber = 1;
-			int columnNumber = 0;
-
-			foreach (KeyValuePair<string, ItemMESUsageTreatment> treatment in treatments) {
-				IRow row = sheet.CreateRow(rowNumber);
-				ItemMESUsageTreatment treat = treatment.Value;
-
-				int necessaryServicesInMes = (from x in treat.DictMES where x.Value == 0 select x).Count();
-				string hasAtLeastOneReferralByMes = treat.ListReferralsFromMes.Count > 0 ? "Да" : "Нет";
-				int necessaryServiceReferralByMesInstrumental = 0;
-				int necessaryServiceReferralByMesLaboratory = 0;
-				int necessaryServiceReferralCompletedByMesInstrumental = 0;
-				int necessaryServiceReferralCompletedByMesLaboratory = 0;
-
-				foreach (string item in treat.ListReferralsFromMes) {
-					if (!treat.DictMES.ContainsKey(item))
-						continue;
-
-					if (treat.DictMES[item] == 0) {
-						if (!treat.DictAllReferrals.ContainsKey(item))
-							continue;
-
-						int isCompleted = treat.DictAllReferrals[item].IsCompleted == 1 ? 1 : 0;
-
-						int refType = treat.DictAllReferrals[item].RefType;
-						if (refType == 2 || refType == 992140066) {
-							necessaryServiceReferralByMesLaboratory++;
-							necessaryServiceReferralCompletedByMesLaboratory += isCompleted;
-						} else {
-							necessaryServiceReferralByMesInstrumental++;
-							necessaryServiceReferralCompletedByMesInstrumental += isCompleted;
-						}
-					}
-				}
-
-				string hasAtLeastOneReferralSelfMade = (treat.DictAllReferrals.Count - treat.ListReferralsFromMes.Count) > 0 ? "Да" : "Нет";
-				int necessaryServiceReferralSelfMadeInstrumental = 0;
-				int necessaryServiceReferralSelfMadeLaboratory = 0;
-				int necessaryServiceReferralCompletedSelfMadeInstrumental = 0;
-				int necessaryServiceReferralCompletedSelfMadeLaboratory = 0;
-
-				foreach (string item in treat.ListReferralsFromDoc) {
-					if (!treat.DictMES.ContainsKey(item))
-						continue;
-
-					if (treat.DictMES[item] == 0) {
-						if (!treat.DictAllReferrals.ContainsKey(item))
-							continue;
-
-						int isCompleted = treat.DictAllReferrals[item].IsCompleted == 1 ? 1 : 0;
-
-						int refType = treat.DictAllReferrals[item].RefType;
-						if (refType == 2 || refType == 992140066) {
-							necessaryServiceReferralSelfMadeLaboratory++;
-							necessaryServiceReferralCompletedSelfMadeLaboratory += isCompleted;
-						} else {
-							necessaryServiceReferralSelfMadeInstrumental++;
-							necessaryServiceReferralCompletedSelfMadeInstrumental += isCompleted;
-						}
-					}
-				}
-
-				int servicesAllReferralsInstrumental = (from x in treat.DictAllReferrals where x.Value.RefType != 2 select x).Count();
-				int servicesAllReferralsLaboratory = treat.DictAllReferrals.Count - servicesAllReferralsInstrumental;
-				int completedServicesInReferrals = (from x in treat.DictAllReferrals where x.Value.IsCompleted == 1 select x).Count();
-				int serviceInReferralOutsideMes = 0;
-				foreach (KeyValuePair<string, ItemMESUsageTreatment.ReferralDetails> pair in treat.DictAllReferrals)
-					if (!treat.DictMES.ContainsKey(pair.Key))
-						serviceInReferralOutsideMes++;
-
-				double necessaryServiceInMesUsedPercent;
-				if (necessaryServicesInMes > 0)
-					necessaryServiceInMesUsedPercent =
-					(double)(
-					necessaryServiceReferralByMesInstrumental +
-					necessaryServiceReferralByMesLaboratory +
-					necessaryServiceReferralSelfMadeInstrumental +
-					necessaryServiceReferralSelfMadeLaboratory) /
-					(double)necessaryServicesInMes;
-				else
-					necessaryServiceInMesUsedPercent = 1;
-				
-				List<object> values = new List<object>() {
-					treatment.Key, //Код лечения
-					1, //Прием
-					treat.TREATDATE, //Дата лечения
-					treat.FILIAL, //Филиал
-					treat.DEPNAME, //Подразделение
-					treat.DOCNAME, //ФИО врача
-					treat.HISTNUM, //Номер ИБ
-					treat.CLIENTNAME, //ФИО пациента
-					treat.AGE, //Возраст
-					treat.MKBCODE, //Код МКБ
-					necessaryServicesInMes, //Кол-во обязательных услуг согласно МЭС
-					treat.DictMES.Count, //Всего услуг в МЭС
-					hasAtLeastOneReferralByMes, //Есть направление, созданное с использованием МЭС
-					necessaryServiceReferralByMesInstrumental, //Кол-во обязательных услуг в направлении с использованием МЭС (инструментальных)
-					necessaryServiceReferralByMesLaboratory, //Кол-во обязательных услуг в направлении с использованием МЭС (лабораторных)
-					necessaryServiceReferralCompletedByMesInstrumental, //Кол-во исполненных обязательных услуг в направлении МЭС (инструментальных)
-					necessaryServiceReferralCompletedByMesLaboratory, //Кол-во исполненных обязательных услуг в направлении МЭС (лабораторных)
-					hasAtLeastOneReferralSelfMade, //Есть направление, созданное самостоятельно
-					necessaryServiceReferralSelfMadeInstrumental, //Кол-во обязательных услуг в направлении выставленных самостоятельно (инструментальных)
-					necessaryServiceReferralSelfMadeLaboratory, //Кол-во обязательных услуг в направлении выставленных самостоятельно (лабораторных)
-					necessaryServiceReferralCompletedSelfMadeInstrumental, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (инструментальных)
-					necessaryServiceReferralCompletedSelfMadeLaboratory, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (лабораторных)
-					servicesAllReferralsInstrumental, //Всего услуг во всех направлениях (иснтрументальных)
-					servicesAllReferralsLaboratory, //Всего услуг во всех направлениях (лабораторных)
-					completedServicesInReferrals, //Кол-во выполненных услуг во всех направлениях
-					serviceInReferralOutsideMes, //Кол-во услуг в направлениях, не входящих в МЭС
-					necessaryServiceInMesUsedPercent, //% Соответствия обязательных услуг МЭС (обязательные во всех направлениях) / всего обязательных в мэс
-					necessaryServiceInMesUsedPercent == 1 ? "Да" : "Нет", //Услуги из всех направлений соответсвуют обязательным услугам МЭС на 100%
-					treat.SERVICE_TYPE, //Тип приема
-					treat.PAYMENT_TYPE, //Тип оплаты приема
-					treat.AGNAME, //Наименование организации
-					treat.AGNUM //Номер договора
-				};
-
-				foreach (object value in values) {
-					ICell cell = row.CreateCell(columnNumber);
-
-					if (double.TryParse(value.ToString(), out double result))
-						cell.SetCellValue(result);
-					else if (DateTime.TryParseExact(value.ToString(), "dd.MM.yyyy h:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime date))
-						cell.SetCellValue(date);
-					else
-						cell.SetCellValue(value.ToString());
-
-					columnNumber++;
-				}
-
-				columnNumber = 0;
-				rowNumber++;
-			}
-			
-			if (!SaveAndCloseIWorkbook(workbook, resultFile))
-				return string.Empty;
-
-			return resultFile;
-		}
-
-
-
 		public static bool PerformTelemedicine(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
 				return false;
@@ -640,13 +876,13 @@ namespace MISReports {
 				ws.Columns["I:I"].ColumnWidth = 10;
 				ws.Range["A1"].Select();
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			try {
 				TelemedicineAddPivotTable(wb, ws, xlApp);
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			wb.Sheets["Сводная таблица"].Activate();
@@ -708,12 +944,13 @@ namespace MISReports {
 		}
 
 
+
 		public static bool PerformVIP(string resultFile, string previousFile) {
-			Logging.ToFile("Подготовка файла с отчетом по VIP-пациентам: " + resultFile);
-			Logging.ToFile("Предыдущий файл: " + previousFile);
+			Logging.ToLog("Подготовка файла с отчетом по VIP-пациентам: " + resultFile);
+			Logging.ToLog("Предыдущий файл: " + previousFile);
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb,
 				out Excel.Worksheet ws)) {
-				Logging.ToFile("Не удалось открыть книгу: " + resultFile);
+				Logging.ToLog("Не удалось открыть книгу: " + resultFile);
 				return false;
 			}
 
@@ -724,29 +961,29 @@ namespace MISReports {
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
 				ws.Cells[1, 1].Select();
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 			
 			SaveAndCloseWorkbook(xlApp, wb, ws);
 
 			if (string.IsNullOrEmpty(previousFile) || !File.Exists(previousFile)) {
-				Logging.ToFile("Пропуск сравнения с предыдущей версией, файл не существует");
+				Logging.ToLog("Пропуск сравнения с предыдущей версией, файл не существует");
 				return true;
 			}
 
-			Logging.ToFile("Считывание содержимого файлов");
+			Logging.ToLog("Считывание содержимого файлов");
 
 			DataTable dataTableCurrent = ReadExcelFile(resultFile, "Данные");
-			Logging.ToFile("Текущий файл, строк: " + dataTableCurrent.Rows.Count);
+			Logging.ToLog("Текущий файл, строк: " + dataTableCurrent.Rows.Count);
 
 			DataTable dataTablePrevious = ReadExcelFile(previousFile, "Данные");
-			Logging.ToFile("Предыдущий файл, строк: " + dataTablePrevious.Rows.Count);
+			Logging.ToLog("Предыдущий файл, строк: " + dataTablePrevious.Rows.Count);
 
 			if (dataTablePrevious.Columns.Count == 14)
 				dataTablePrevious.Columns.RemoveAt(13);
 
 			if (!OpenWorkbook(resultFile, out xlApp, out wb, out ws)) {
-				Logging.ToFile("Не удалось открыть книгу: " + resultFile);
+				Logging.ToLog("Не удалось открыть книгу: " + resultFile);
 				return false;
 			}
 
@@ -775,7 +1012,7 @@ namespace MISReports {
 		}
 
 		private static DataTable ReadExcelFile(string fileName, string sheetName) {
-			Logging.ToFile("Считывание файла: " + fileName + ", лист: " + sheetName);
+			Logging.ToLog("Считывание файла: " + fileName + ", лист: " + sheetName);
 			DataTable dataTable = new DataTable();
 
 			if (!File.Exists(fileName))
@@ -806,14 +1043,13 @@ namespace MISReports {
 					}
 				}
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			return dataTable;
 		}
 
-
-
+		
 
 		public static bool PerformOnlineAccountsUsage(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, 
@@ -856,7 +1092,7 @@ namespace MISReports {
 				//rowsUsed++;
 				ws.Range["A" + rowsUsed].Select();
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 			
 			SaveAndCloseWorkbook(xlApp, wb, ws);
@@ -876,7 +1112,7 @@ namespace MISReports {
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
 				ws.Columns["C:C"].EntireColumn.AutoFit();
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			try {
@@ -884,7 +1120,7 @@ namespace MISReports {
 				//wb.Sheets["Данные"].Activate();
 				//AddPivotTableFreeCells(wb, ws, xlApp, true, dateBeginOriginal, dateEnd);
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			wb.Sheets["Сводная таблица"].Activate();
@@ -993,57 +1229,6 @@ namespace MISReports {
 		
 
 
-		private static bool OpenWorkbook(string workbook, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws, string sheetName = "") {
-			xlApp = null;
-			wb = null;
-			ws = null;
-
-			xlApp = new Excel.Application();
-
-			if (xlApp == null) {
-				Logging.ToFile("Не удалось открыть приложение Excel");
-				return false;
-			}
-
-			xlApp.Visible = false;
-
-			wb = xlApp.Workbooks.Open(workbook);
-
-			if (wb == null) {
-				Logging.ToFile("Не удалось открыть книгу " + workbook);
-				return false;
-			}
-
-			if (string.IsNullOrEmpty(sheetName))
-				sheetName = "Данные";
-
-			ws = wb.Sheets[sheetName];
-
-			if (ws == null) {
-				Logging.ToFile("Не удалось открыть лист Данные");
-				return false;
-			}
-
-			return true;
-		}
-
-		private static void SaveAndCloseWorkbook(Excel.Application xlApp, Excel.Workbook wb, Excel.Worksheet ws) {
-			if (ws != null)
-				Marshal.ReleaseComObject(ws);
-
-			if (wb != null) {
-				wb.Save();
-				wb.Close();
-				Marshal.ReleaseComObject(wb);
-			}
-
-			if (xlApp != null) {
-				xlApp.Quit();
-				Marshal.ReleaseComObject(xlApp);
-			}
-		}
-		
-
 
 		public static bool PerformUnclosedProtocols(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
@@ -1062,19 +1247,19 @@ namespace MISReports {
 				ws.Columns["G:G"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 			
 			try {
 				UnclosedProtocolsAddPivotTableDepartments(wb, ws, xlApp);
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			try {
 				UnclosedProtocolsAddPivotTableDoctors(wb, ws, xlApp);
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			wb.Sheets["Сводная по отделениям"].Activate();
@@ -1236,6 +1421,7 @@ namespace MISReports {
 		}
 
 
+
 		public static bool PerformRegistryMarks(string resultFile, DataTable dataTable) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
 				return false;
@@ -1248,7 +1434,7 @@ namespace MISReports {
 				ws.UsedRange.AutoFilter(4, "Плохо");
 				ws.Range["A1"].Select();
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			try {
@@ -1256,7 +1442,7 @@ namespace MISReports {
 				ws.Activate();
 				RegistryMarksAddPivotTable(ws, xlApp, dataTable);
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			wb.Sheets[1].Name = "Негативные отзывы";
@@ -1292,10 +1478,10 @@ namespace MISReports {
 					} else if (mark.Contains("Дубль")) {
 						marks[itemRegistryMark.ID].MarkDuplicate++;
 					} else { 
-						Logging.ToFile("Неизвестная оценка - " + mark);
+						Logging.ToLog("Неизвестная оценка - " + mark);
 					}
 				} catch (Exception e) {
-					Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 				}
 			}
 
@@ -1371,6 +1557,8 @@ namespace MISReports {
 			}
 		}
 
+
+
 		private static void AddBoldBorder(Excel.Range range) {
 			try {
 				//foreach (Excel.XlBordersIndex item in new Excel.XlBordersIndex[] {
@@ -1391,7 +1579,7 @@ namespace MISReports {
 					range.Borders[item].Weight = Excel.XlBorderWeight.xlMedium;
 				}
 			} catch (Exception e) {
-				Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 		}
 	}

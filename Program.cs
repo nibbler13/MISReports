@@ -28,7 +28,8 @@ namespace MISReports {
 			VIP_MSKM,
 			VIP_PND,
 			RegistryMarks,
-			Workload
+			Workload,
+			Robocalls
 		};
 
 		public static Dictionary<ReportType, string> AcceptedParameters = new Dictionary<ReportType, string> {
@@ -46,14 +47,15 @@ namespace MISReports {
 			{ ReportType.VIP_MSKM, "Отчет по ВИП-пациентам Фрунзенская" },
 			{ ReportType.VIP_PND, "Отчет по ВИП-пациентам ПНД" },
 			{ ReportType.RegistryMarks, "Отчет по оценкам регистратуры" },
-			{ ReportType.Workload, "Отчет по загрузке сотрудников" }
+			{ ReportType.Workload, "Отчет по загрузке сотрудников" },
+			{ ReportType.Robocalls, "Информация для автообзвона" }
 		};
 
 		static void Main(string[] args) {
-			Logging.ToFile("Старт");
+			Logging.ToLog("Старт");
 
 			if (args.Length < 2 || args.Length > 3) {
-				Logging.ToFile("Неверное количество параметров");
+				Logging.ToLog("Неверное количество параметров");
 				WriteOutAcceptedParameters();
 				return;
 			}
@@ -97,6 +99,7 @@ namespace MISReports {
 				sqlQuery = Properties.Settings.Default.MisDbSqlGetMESUsage;
 				mailTo = Properties.Settings.Default.MailToMESUsage;
 				templateFileName = Properties.Settings.Default.TemplateMESUsage;
+				folderToSave = Properties.Settings.Default.FolderToSaveMESUsage;
 
 			} else if (reportName.Equals(ReportType.OnlineAccountsUsage.ToString())) {
 				reportToCreate = ReportType.OnlineAccountsUsage;
@@ -162,8 +165,14 @@ namespace MISReports {
 				templateFileName = Properties.Settings.Default.TemplateWorkload;
 				mailTo = Properties.Settings.Default.MailToWorkload;
 
+			} else if (reportName.Equals(ReportType.Robocalls.ToString())) {
+				reportToCreate = ReportType.Robocalls;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetRobocalls;
+				templateFileName = Properties.Settings.Default.TemplateRobocalls;
+				mailTo = Properties.Settings.Default.MailToRobocalls;
+
 			} else {
-				Logging.ToFile("Неизвестное название отчета: " + reportName);
+				Logging.ToLog("Неизвестное название отчета: " + reportName);
 				WriteOutAcceptedParameters();
 				return;
 			}
@@ -191,7 +200,7 @@ namespace MISReports {
 			}
 
 			if (!dateBeginReport.HasValue || !dateEndReport.HasValue) {
-				Logging.ToFile("Не удалось распознать временные интервалы формирования отчета");
+				Logging.ToLog("Не удалось распознать временные интервалы формирования отчета");
 				WriteOutAcceptedParameters();
 				return;
 			}
@@ -208,7 +217,7 @@ namespace MISReports {
 			string dateBeginStr = dateBeginOriginal.Value.ToShortDateString();
 			string dateEndStr = dateEndReport.Value.ToShortDateString();
 			string subject = AcceptedParameters[reportToCreate] + " с " + dateBeginStr + " по " + dateEndStr;
-			Logging.ToFile(subject);
+			Logging.ToLog(subject);
 
 			DataTable dataTable = null;
 			DataTable dataTableWorkLoadA6 = null;
@@ -217,10 +226,10 @@ namespace MISReports {
 				reportToCreate == ReportType.FreeCellsDay ||
 				reportToCreate == ReportType.FreeCellsWeek*/) {
 
-				Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
+				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
 				for (int i = 0; dateBeginReport.Value.AddDays(i) <= dateEndReport; i++) {
 					string dayToGetData = dateBeginReport.Value.AddDays(i).ToShortDateString();
-					Logging.ToFile("Получение данных за день: " + dayToGetData);
+					Logging.ToLog("Получение данных за день: " + dayToGetData);
 
 					Dictionary<string, object> parameters = new Dictionary<string, object>() {
 						{ "@dateBegin", dayToGetData },
@@ -241,7 +250,7 @@ namespace MISReports {
 					{ "@dateEnd", dateEndStr }
 				};
 
-				Logging.ToFile("Получение данных из базы МИС Инфоклиника за период с " + dateBeginStr + " по " + dateEndStr);
+				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + dateBeginStr + " по " + dateEndStr);
 
 				if (reportToCreate == ReportType.Workload) {
 					parameters = new Dictionary<string, object>();
@@ -258,18 +267,18 @@ namespace MISReports {
 
 							dataTable = firebirdClient.GetDataTable(queryA8_2, parameters);
 							dataTableWorkLoadA6 = firebirdClient.GetDataTable(queryA6, parameters);
-							Logging.ToFile("Получено строк A6: " + dataTableWorkLoadA6.Rows.Count);
+							Logging.ToLog("Получено строк A6: " + dataTableWorkLoadA6.Rows.Count);
 							dataTableWorkloadA11_10 = firebirdClient.GetDataTable(queryA11_10, parameters);
-							Logging.ToFile("Получено строк A11_10: " + dataTableWorkloadA11_10.Rows.Count);
+							Logging.ToLog("Получено строк A11_10: " + dataTableWorkloadA11_10.Rows.Count);
 						} catch (Exception e) {
-							Logging.ToFile(e.Message + Environment.NewLine + e.StackTrace);
+							Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 						}
 					}
 				} else
 					dataTable = firebirdClient.GetDataTable(sqlQuery, parameters);
 			}
 
-			Logging.ToFile("Получено строк: " + dataTable.Rows.Count);
+			Logging.ToLog("Получено строк: " + dataTable.Rows.Count);
 
 			string fileResult = string.Empty;
 			string body = string.Empty;
@@ -278,7 +287,7 @@ namespace MISReports {
 
 			if (dataTable.Rows.Count > 0 || 
 				reportToCreate.ToString().StartsWith("VIP_")) {
-				Logging.ToFile("Запись данных в файл Excel");
+				Logging.ToLog("Запись данных в файл Excel");
 				
 				if (reportToCreate == ReportType.FreeCellsDay ||
 					reportToCreate == ReportType.FreeCellsWeek) {
@@ -333,6 +342,8 @@ namespace MISReports {
 					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6, subject, templateFileName, false, "Услуги УЗИ");
 					NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10, subject, fileResult, false, "Искл.услуги (интенсив)", false);
 					NpoiExcelGeneral.WriteDataTableToExcel(dataTable, subject, fileResult, false, "Интенсив (расчет)", false);
+				} else if (reportToCreate == ReportType.Robocalls) {
+					fileResult = NpoiExcelGeneral.WriteDataTableToTextFile(dataTable, subject, templateFileName);
 				} else {
 					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable, subject, templateFileName);
 				}
@@ -350,6 +361,7 @@ namespace MISReports {
 							isPostProcessingOk = NpoiExcelGeneral.PerformUnclosedProtocols(fileResult);
 							break;
 						case ReportType.MESUsage:
+							isPostProcessingOk = NpoiExcelGeneral.PerformMesUsage(fileResult);
 							break;
 						case ReportType.OnlineAccountsUsage:
 							isPostProcessingOk = NpoiExcelGeneral.PerformOnlineAccountsUsage(fileResult);
@@ -379,7 +391,7 @@ namespace MISReports {
 
 					if (isPostProcessingOk) {
 						body = "Отчет во вложении";
-						Logging.ToFile("Данные сохранены в файл: " + fileResult);
+						Logging.ToLog("Данные сохранены в файл: " + fileResult);
 					} else {
 						body = "Не удалось выполнить обработку Excel книги";
 						hasError = true;
@@ -394,7 +406,7 @@ namespace MISReports {
 			}
 
 			if (hasError) {
-				Logging.ToFile(body);
+				Logging.ToLog(body);
 				mailTo = mailCopy;
 				fileResult = string.Empty;
 			}
@@ -441,7 +453,7 @@ namespace MISReports {
 				return;
 
 			SystemMail.SendMail(subject, body, mailTo, fileResult);
-			Logging.ToFile("Завершение работы");
+			Logging.ToLog("Завершение работы");
 		}
 
 		public static Dictionary<string, ItemMESUsageTreatment> ParseMESUsageDataTableToTreatments(DataTable dataTable) {
@@ -498,7 +510,7 @@ namespace MISReports {
 						treatments.Add(treatcode, treatment);
 					}
 				} catch (Exception e) {
-					Logging.ToFile(e.Message);
+					Logging.ToLog(e.Message);
 				}
 			}
 
@@ -533,7 +545,7 @@ namespace MISReports {
 
 					keyValuePairs.Add(referralCode, referralDetails);
 				} catch (Exception e) {
-					Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
+					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 				}
 			}
 
@@ -557,7 +569,7 @@ namespace MISReports {
 					int.TryParse(referral[1], out int referralStatus);
 					keyValuePairs.Add(referralCode, referralStatus);
 				} catch (Exception e) {
-					Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
+					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 				}
 			}
 
@@ -574,7 +586,7 @@ namespace MISReports {
 			foreach (KeyValuePair<ReportType, string> pair in AcceptedParameters)
 				message += pair.Key + " (" + pair.Value + ")" + Environment.NewLine;
 
-			Logging.ToFile(message);
+			Logging.ToLog(message);
 		}
 	}
 }

@@ -8,7 +8,7 @@ namespace MISReports {
 		private static string LOG_FILE_NAME = Assembly.GetExecutingAssembly().GetName().Name + "_*.log";
 		private const int MAX_LOGFILES_QUANTITY = 7;
 
-		public static void ToFile(string msg) {
+		public static void ToLog(string msg) {
 			string today = DateTime.Now.ToString("yyyyMMdd");
 			string logFileName = Program.AssemblyDirectory + LOG_FILE_NAME.Replace("*", today);
 
@@ -27,7 +27,7 @@ namespace MISReports {
 		}
 
 		public static void WriteStringToFile(string text, string fileFullPath) {
-			ToFile("Запись текста в файл: " + fileFullPath + ", содержание: " + Environment.NewLine + text);
+			ToLog("Запись текста в файл: " + fileFullPath + ", содержание: " + Environment.NewLine + text);
 
 			try {
 				System.IO.File.WriteAllText(fileFullPath, text);
