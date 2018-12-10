@@ -17,7 +17,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace MISReports {
 	class NpoiExcelGeneral {
-		private static bool CreateNewIWorkbook(string resultFilePrefix, string templateFileName,
+        private static bool CreateNewIWorkbook(string resultFilePrefix, string templateFileName,
 			out IWorkbook workbook, out ISheet sheet, out string resultFile, string sheetName) {
 			workbook = null;
 			sheet = null;
@@ -125,20 +125,27 @@ namespace MISReports {
 			return true;
 		}
 
-		private static void SaveAndCloseWorkbook(Excel.Application xlApp, Excel.Workbook wb, Excel.Worksheet ws) {
-			if (ws != null)
-				Marshal.ReleaseComObject(ws);
+        private static void SaveAndCloseWorkbook(Excel.Application xlApp, Excel.Workbook wb, Excel.Worksheet ws) {
+			if (ws != null) {
+                Marshal.ReleaseComObject(ws);
+                ws = null;
+            }
 
 			if (wb != null) {
 				wb.Save();
-				wb.Close();
+				wb.Close(0);
 				Marshal.ReleaseComObject(wb);
+                wb = null;
 			}
 
 			if (xlApp != null) {
 				xlApp.Quit();
 				Marshal.ReleaseComObject(xlApp);
-			}
+                xlApp = null;
+            }
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
 		}
 
 
@@ -230,8 +237,11 @@ namespace MISReports {
 						foreach (object value in values)
 							valuesToWrite.Add(value.ToString().Replace(" 0:00:00", ""));
 
-						string logLine = string.Join("	", valuesToWrite.ToArray());
-						sw.WriteLine(logLine);
+						if (valuesToWrite.Count > 0) {
+							string logLine = string.Join("	", valuesToWrite.ToArray());
+							sw.WriteLine();
+							sw.Write(logLine);
+						}
 					}
 				}
 			} catch (Exception e) {
@@ -957,6 +967,8 @@ namespace MISReports {
 			try {
 				ws.Columns["B:B"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
+				ws.Columns["C:D"].Select();
+				xlApp.Selection.NumberFormat = "ч:мм;@";
 				ws.Columns["K:K"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
 				ws.Cells[1, 1].Select();
@@ -1422,25 +1434,24 @@ namespace MISReports {
 
 
 
-		public static bool PerformRegistryMarks(string resultFile, DataTable dataTable) {
+		public static bool PerformRegistryMarks(
+            string resultFile, DataTable dataTable, DateTime dateTimeBegin) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
 				return false;
 
 			try {
 				ws.Columns["C:C"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ Ч:мм;@";
-				ws.Range["A2"].Select();
-				xlApp.Selection.Autofilter();
-				ws.UsedRange.AutoFilter(4, "Плохо");
 				ws.Range["A1"].Select();
-			} catch (Exception e) {
+                xlApp.Selection.AutoFilter();
+                ws.UsedRange.AutoFilter(3, ">" + dateTimeBegin.ToOADate(), Excel.XlAutoFilterOperator.xlAnd);
+                ws.UsedRange.AutoFilter(4, "Плохо");
+            } catch (Exception e) {
 				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			try {
-				ws = wb.Sheets["Сводная таблица"];
-				ws.Activate();
-				RegistryMarksAddPivotTable(ws, xlApp, dataTable);
+				RegistryMarksAddPivotTables(wb, xlApp, dataTable, dateTimeBegin);
 			} catch (Exception e) {
 				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
@@ -1452,108 +1463,286 @@ namespace MISReports {
 			return true;
 		}
 
-		private static void RegistryMarksAddPivotTable(Excel.Worksheet ws, Excel.Application xlApp, DataTable dataTable) {
-			SortedDictionary<string, ItemRegistryMark> marks = new SortedDictionary<string, ItemRegistryMark>();
+		private static void RegistryMarksAddPivotTables(
+            Excel.Workbook wb, Excel.Application xlApp, DataTable dataTable, DateTime dateTimeBegin) {
+			SortedDictionary<string, ItemRegistryMark> marksSelectedPeriodByFilials = 
+                new SortedDictionary<string, ItemRegistryMark>();
+			SortedDictionary<string, SortedDictionary<string, ItemRegistryMark>> marksByWeeks 
+                = new SortedDictionary<string, SortedDictionary<string, ItemRegistryMark>>();
 
-			foreach (DataRow dataRow in dataTable.Rows) {
+            List<string> uniqueInnerKeys = new List<string>();
+
+            foreach (DataRow dataRow in dataTable.Rows) {
 				try {
+                    DateTime createDate = DateTime.Parse(dataRow["createdate"].ToString());
+                    
+                    int weekNumber = CultureInfo.CurrentCulture.Calendar.GetWeekOfYear(
+                        createDate, CalendarWeekRule.FirstFullWeek, DayOfWeek.Monday);
+                    string dictByWeeksInnerKey = createDate.Year + " / " + weekNumber;
+
+                    if (!uniqueInnerKeys.Contains(dictByWeeksInnerKey))
+                        uniqueInnerKeys.Add(dictByWeeksInnerKey);
+
 					string shortname = dataRow["SHORTNAME"].ToString();
 					string department = dataRow["DEPARTMENT"].ToString();
-					string mark = dataRow["MARK"].ToString();
+                    string dictsOuterKey = shortname + " / " + department;
 
-					ItemRegistryMark itemRegistryMark = new ItemRegistryMark(shortname, department);
+                    string mark = dataRow["MARK"].ToString();
 
-					if (!marks.ContainsKey(itemRegistryMark.ID))
-						marks.Add(itemRegistryMark.ID, itemRegistryMark);
+                    if (!marksByWeeks.Keys.Contains(dictsOuterKey))
+                        marksByWeeks.Add(dictsOuterKey, new SortedDictionary<string, ItemRegistryMark>());
+
+                    if (!marksByWeeks[dictsOuterKey].Keys.Contains(dictByWeeksInnerKey))
+                        marksByWeeks[dictsOuterKey].Add(dictByWeeksInnerKey, new ItemRegistryMark(shortname, department));
+
+                    if (!marksSelectedPeriodByFilials.ContainsKey(dictsOuterKey))
+						marksSelectedPeriodByFilials.Add(dictsOuterKey, new ItemRegistryMark(shortname, department));
 
 					if (mark.Contains("Плохо")) {
-						marks[itemRegistryMark.ID].MarkBad++;
-						marks[itemRegistryMark.ID].MarkTotal++;
+                        marksByWeeks[dictsOuterKey][dictByWeeksInnerKey].MarkBad++;
+
+                        if (createDate >= dateTimeBegin)
+                            marksSelectedPeriodByFilials[dictsOuterKey].MarkBad++;
 					} else if (mark.Contains("Средне")) {
-						marks[itemRegistryMark.ID].MarkMedium++;
-						marks[itemRegistryMark.ID].MarkTotal++;
+                        marksByWeeks[dictsOuterKey][dictByWeeksInnerKey].MarkMedium++;
+
+                        if (createDate >= dateTimeBegin)
+                            marksSelectedPeriodByFilials[dictsOuterKey].MarkMedium++;
 					} else if (mark.Contains("Хорошо")) {
-						marks[itemRegistryMark.ID].MarkGood++;
-						marks[itemRegistryMark.ID].MarkTotal++;
+                        marksByWeeks[dictsOuterKey][dictByWeeksInnerKey].MarkGood++;
+
+                        if (createDate >= dateTimeBegin)
+                            marksSelectedPeriodByFilials[dictsOuterKey].MarkGood++;
 					} else if (mark.Contains("Дубль")) {
-						marks[itemRegistryMark.ID].MarkDuplicate++;
-					} else { 
-						Logging.ToLog("Неизвестная оценка - " + mark);
-					}
-				} catch (Exception e) {
+                        if (createDate >= dateTimeBegin)
+                            marksSelectedPeriodByFilials[dictsOuterKey].MarkDuplicate++;
+					} else
+                        Logging.ToLog("Неизвестная оценка - " + mark);
+                } catch (Exception e) {
 					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 				}
 			}
 
-			int row = 2;
-			int markBadTotal = 0;
-			int markMediumTotal = 0;
-			int markGoogTotal = 0;
-			int markDuplicateTotal = 0;
+            uniqueInnerKeys.Sort();
 
-			foreach (ItemRegistryMark item in marks.Values) {
-				ws.Range["A" + row].Value = item.FilialName;
-				ws.Range["B" + row].Value = item.Department;
-				ws.Range["C" + row].Value = item.MarkBad;
-				ws.Range["D" + row].Value = item.MarkMedium;
-				ws.Range["E" + row].Value = item.MarkGood;
-				ws.Range["F" + row].Value = item.MarkTotal;
-				ws.Range["G" + row].Value = (item.MarkTotal > 0) ? (double)item.MarkBad / (double)item.MarkTotal : 0;
-				ws.Range["H" + row].Value = (item.MarkTotal > 0) ? (double)item.MarkMedium / (double)item.MarkTotal : 0;
-				ws.Range["I" + row].Value = (item.MarkTotal > 0) ? (double)item.MarkGood / (double)item.MarkTotal : 0;
-				ws.Range["J" + row].Value = item.MarkDuplicate;
+            foreach (string innerKey in uniqueInnerKeys)
+                foreach (string outerKey in marksByWeeks.Keys)
+                    if (!marksByWeeks[outerKey].Keys.Contains(innerKey))
+                        marksByWeeks[outerKey].Add(innerKey, new ItemRegistryMark("", ""));
 
-				markBadTotal += item.MarkBad;
-				markMediumTotal += item.MarkMedium;
-				markGoogTotal += item.MarkGood;
-				markDuplicateTotal += item.MarkDuplicate;
+            Excel.Worksheet ws = wb.Sheets["Сводная таблица"];
+            ws.Activate();
+            RegistryMarkDrawPivotTable(ws, marksSelectedPeriodByFilials);
 
-				row++;
-			}
+            ws = wb.Sheets["График - негативные"];
+            ws.Activate();
+            RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, 0);
 
-			int totalMarks = markBadTotal + markMediumTotal + markGoogTotal;
-			ws.Range["A" + row].Value = "Итого";
-			ws.Range["C" + row].Value = markBadTotal;
-			ws.Range["D" + row].Value = markMediumTotal;
-			ws.Range["E" + row].Value = markGoogTotal;
-			ws.Range["F" + row].Value = totalMarks;
-			ws.Range["G" + row].Value = (totalMarks > 0) ? (double)markBadTotal / (double)totalMarks : 0;
-			ws.Range["H" + row].Value = (totalMarks > 0) ? (double)markMediumTotal / (double)totalMarks : 0;
-			ws.Range["I" + row].Value = (totalMarks > 0) ? (double)markGoogTotal / (double)totalMarks : 0;
-			ws.Range["J" + row].Value = markDuplicateTotal;
+            ws = wb.Sheets["График - позитивные"];
+            ws.Activate();
+            RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, 1);
 
-			ws.Columns["G:I"].Style = "Percent";
+            ws = wb.Sheets["График - всего"];
+            ws.Activate();
+            RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, 2);
 
-			AddBoldBorder(ws.Range["A" + row + ":J" + row]);
-			AddBoldBorder(ws.Range["A2:B" + row]);
-			AddBoldBorder(ws.Range["C2:E" + row]);
-			AddBoldBorder(ws.Range["F2:F" + row]);
-			AddBoldBorder(ws.Range["G2:I" + row]);
-			AddBoldBorder(ws.Range["J2:J" + row]);
+            ws = wb.Sheets["График - KPI"];
+            ws.Activate();
+            RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, 3);
 
-			ws.Range["A" + row].Font.Bold = true;
+            Marshal.ReleaseComObject(ws);
+            ws = null;
+        }
 
-			row += 2;
-			ws.Range["A" + row].Value = "* попытки повторного голосования в течении 60 секунд";
-			ws.Range["A" + row].Font.Italic = true;
-			ws.Range["A1"].Select();
+        private static void RegistryMarkDrawPivotTable(
+            Excel.Worksheet ws, SortedDictionary<string, ItemRegistryMark> marksSelectedPeriodByFilials) {
+            int row = 2;
+            int markBadTotal = 0;
+            int markMediumTotal = 0;
+            int markGoogTotal = 0;
+            int markDuplicateTotal = 0;
 
-		}
+            foreach (ItemRegistryMark item in marksSelectedPeriodByFilials.Values) {
+                ws.Range["A" + row].Value = item.FilialName;
+                ws.Range["B" + row].Value = item.Department;
+                ws.Range["C" + row].Value = item.MarkBad;
+                ws.Range["D" + row].Value = item.MarkMedium;
+                ws.Range["E" + row].Value = item.MarkGood;
+                ws.Range["F" + row].Value = item.MarkTotal;
+                ws.Range["G" + row].Value = (item.MarkTotal > 0) ? (double)item.MarkBad / (double)item.MarkTotal : 0;
+                ws.Range["H" + row].Value = (item.MarkTotal > 0) ? (double)item.MarkMedium / (double)item.MarkTotal : 0;
+                ws.Range["I" + row].Value = (item.MarkTotal > 0) ? (double)item.MarkGood / (double)item.MarkTotal : 0;
+                ws.Range["J" + row].Value = item.MarkDuplicate;
+
+                markBadTotal += item.MarkBad;
+                markMediumTotal += item.MarkMedium;
+                markGoogTotal += item.MarkGood;
+                markDuplicateTotal += item.MarkDuplicate;
+
+                row++;
+            }
+
+            int totalMarks = markBadTotal + markMediumTotal + markGoogTotal;
+            ws.Range["A" + row].Value = "Итого";
+            ws.Range["C" + row].Value = markBadTotal;
+            ws.Range["D" + row].Value = markMediumTotal;
+            ws.Range["E" + row].Value = markGoogTotal;
+            ws.Range["F" + row].Value = totalMarks;
+            ws.Range["G" + row].Value = (totalMarks > 0) ? (double)markBadTotal / (double)totalMarks : 0;
+            ws.Range["H" + row].Value = (totalMarks > 0) ? (double)markMediumTotal / (double)totalMarks : 0;
+            ws.Range["I" + row].Value = (totalMarks > 0) ? (double)markGoogTotal / (double)totalMarks : 0;
+            ws.Range["J" + row].Value = markDuplicateTotal;
+
+            ws.Columns["G:I"].Style = "Percent";
+
+            AddBoldBorder(ws.Range["A" + row + ":J" + row]);
+            AddBoldBorder(ws.Range["A2:B" + row]);
+            AddBoldBorder(ws.Range["C2:E" + row]);
+            AddBoldBorder(ws.Range["F2:F" + row]);
+            AddBoldBorder(ws.Range["G2:I" + row]);
+            AddBoldBorder(ws.Range["J2:J" + row]);
+
+            ws.Range["A" + row].Font.Bold = true;
+
+            row += 2;
+            ws.Range["A" + row].Value = "* попытки повторного голосования в течении 60 секунд";
+            ws.Range["A" + row].Font.Italic = true;
+            ws.Range["A1"].Select();
+        }
+
+        private static void RegistryMarkDrawMarksByWeek(
+            Excel.Application xlApp, Excel.Worksheet ws, 
+            SortedDictionary<string, SortedDictionary<string, ItemRegistryMark>> marksByWeeks, 
+            List<string> uniqueInnerKeys,
+            int marksType) { //marksType: 0 - negative, 1 - positive, 2 - total, 3 - KPI
+
+            string chartTitle;
+            string hint;
+            switch (marksType) {
+                case 0:
+                    chartTitle = "Негативные оценки - хронология";
+                    hint = "Отображены только оценки 'Плохо'";
+                    break;
+                case 1:
+                    chartTitle = "Положительные оценки - хронология";
+                    hint = "Отображены только оценки 'Хорошо'";
+                    break;
+                case 2:
+                    chartTitle = "Всего оценок - хронология";
+                    hint = "Отображены все оценки 'Плохо' + 'Средне' + 'Хорошо'";
+                    break;
+                case 3:
+                    chartTitle = "KPI - хронология";
+                    hint = "KPI рассчитывается по формуле: 'Средне' + 'Хорошо' / 'Всего'";
+                    break;
+                default:
+                    Logging.ToLog("Неизвестный тип оценки - " + marksType);
+                    return;
+            }
+
+            int row = 1;
+            int column = 2;
+            
+            foreach (string innerKey in uniqueInnerKeys) {
+                ws.Cells[1, column].Value2 = innerKey;
+                column++;
+            }
+
+            row++;
+
+            foreach (KeyValuePair<string, SortedDictionary<string, ItemRegistryMark>> pair in marksByWeeks) {
+                column = 1;
+
+                ws.Cells[row, column].Value2 = pair.Key;
+                column++;
+
+                foreach (ItemRegistryMark mark in pair.Value.Values) {
+                    object value;
+
+                    switch (marksType) {
+                        case 0:
+                            value = mark.MarkBad;
+                            break;
+                        case 1:
+                            value = mark.MarkGood;
+                            break;
+                        case 2:
+                            value = mark.MarkTotal;
+                            break;
+                        case 3:
+                            if (mark.MarkTotal > 0)
+                                value = ((double)mark.MarkTotal - (double)mark.MarkBad) / (double)mark.MarkTotal;
+                            else
+                                value = string.Empty;
+                            break;
+                        default:
+                            continue;
+                    }
+
+                    ws.Cells[row, column].Value2 = value;
+
+                    if (marksType == 3)
+                        ws.Cells[row, column].NumberFormat = "0%";
+
+                    column++;
+                }
+
+                row++;
+            }
+
+            column = 1;
+            ws.Cells[row, column].Value2 = "ИТОГО";
+            foreach (string innerKey in uniqueInnerKeys) {
+                column++;
+                if (marksType == 3) {
+                    double marksPositive = 0;
+                    double marksTotal = 0;
+                    foreach (KeyValuePair<string, SortedDictionary<String, ItemRegistryMark>> pair in marksByWeeks) {
+                        ItemRegistryMark mark = pair.Value[innerKey];
+                        marksPositive += mark.MarkTotal - mark.MarkBad;
+                        marksTotal += mark.MarkTotal;
+                    }
+
+                    if (marksTotal > 0)
+                        ws.Cells[row, column].Value2 = marksPositive / marksTotal;
+                    else
+                        ws.Cells[row, column].Value2 = string.Empty;
+
+                    ws.Cells[row, column].NumberFormat = "0%";
+                } else 
+                    ws.Cells[row, column].FormulaR1C1Local = "=СУММ(R[-" + (row - 2) + "]C:R[-1]C)";
+            }
+
+            Excel.Shape shape = xlApp.ActiveSheet.Shapes.AddChart2(234, Excel.XlChartType.xlLineMarkers, 10, 200, 1350, 370);
+            shape.Select();
+            xlApp.ActiveChart.SetSourceData(ws.UsedRange);
+            xlApp.ActiveChart.ChartTitle.Text = chartTitle;
+
+            for (int i = 1; i <= marksByWeeks.Keys.Count; i++)
+                xlApp.ActiveChart.FullSeriesCollection(i).IsFiltered = true;
+
+            ws.Cells[row + 2, 1].Value2 = hint;
+            ws.Cells[row + 2, 1].Font.Italic = true;
+
+            ws.Range["A1"].Select();
+
+            Marshal.ReleaseComObject(shape);
+            shape = null;
+        }
 
 		private class ItemRegistryMark {
-			public string ID { get; private set; }
 			public string FilialName { get; private set; }
 			public string Department { get; private set; }
 			public int MarkBad { get; set; }
 			public int MarkMedium { get; set; }
 			public int MarkGood { get; set; }
-			public int MarkTotal { get; set; }
 			public int MarkDuplicate { get; set; }
 
-			public ItemRegistryMark(string filialName, string department) {
+            public int MarkTotal { get { return MarkBad + MarkMedium + MarkGood; } }
+
+            public ItemRegistryMark(string filialName, string department) {
 				FilialName = filialName;
 				Department = department;
-				ID = filialName + " | " + department;
 			}
 		}
 

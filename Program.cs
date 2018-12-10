@@ -215,17 +215,18 @@ namespace MISReports {
 			dateBeginReport = dateBeginReport.Value.AddDays((-1 * dateBeginReport.Value.Day) + 1);
 
 			string dateBeginStr = dateBeginOriginal.Value.ToShortDateString();
-			string dateEndStr = dateEndReport.Value.ToShortDateString();
-			string subject = AcceptedParameters[reportToCreate] + " с " + dateBeginStr + " по " + dateEndStr;
-			Logging.ToLog(subject);
+            string dateEndStr = dateEndReport.Value.ToShortDateString();
+            string subject = AcceptedParameters[reportToCreate] + " с " + dateBeginStr + " по " + dateEndStr;
+            Logging.ToLog(subject);
+
+            if (reportToCreate == ReportType.RegistryMarks)
+                dateBeginStr = "01.09.2018";
 
 			DataTable dataTable = null;
 			DataTable dataTableWorkLoadA6 = null;
 			DataTable dataTableWorkloadA11_10 = null;
-			if (reportToCreate == ReportType.MESUsage/* ||
-				reportToCreate == ReportType.FreeCellsDay ||
-				reportToCreate == ReportType.FreeCellsWeek*/) {
 
+			if (reportToCreate == ReportType.MESUsage) {
 				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
 				for (int i = 0; dateBeginReport.Value.AddDays(i) <= dateEndReport; i++) {
 					string dayToGetData = dateBeginReport.Value.AddDays(i).ToShortDateString();
@@ -380,7 +381,8 @@ namespace MISReports {
 							isPostProcessingOk = NpoiExcelGeneral.PerformVIP(fileResult, previousFile);
 							break;
 						case ReportType.RegistryMarks:
-							isPostProcessingOk = NpoiExcelGeneral.PerformRegistryMarks(fileResult, dataTable);
+							isPostProcessingOk = NpoiExcelGeneral.PerformRegistryMarks(
+                                fileResult, dataTable, dateBeginOriginal.Value);
 							break;
 						case ReportType.Workload:
 							isPostProcessingOk = NpoiExcelGeneral.PerformWorkload(fileResult);
