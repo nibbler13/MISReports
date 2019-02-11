@@ -29,7 +29,8 @@ namespace MISReports {
 			VIP_PND,
 			RegistryMarks,
 			Workload,
-			Robocalls
+			Robocalls,
+			UniqueServices
 		};
 
 		public static Dictionary<ReportType, string> AcceptedParameters = new Dictionary<ReportType, string> {
@@ -48,7 +49,8 @@ namespace MISReports {
 			{ ReportType.VIP_PND, "Отчет по ВИП-пациентам ПНД" },
 			{ ReportType.RegistryMarks, "Отчет по оценкам регистратуры" },
 			{ ReportType.Workload, "Отчет по загрузке сотрудников" },
-			{ ReportType.Robocalls, "Информация для автообзвона" }
+			{ ReportType.Robocalls, "Информация для автообзвона" },
+			{ReportType.UniqueServices, "Отчет по уникальным услугам" }
 		};
 
 		static void Main(string[] args) {
@@ -61,12 +63,12 @@ namespace MISReports {
 			}
 
 			string sqlQuery = string.Empty;
-			string mailTo = string.Empty;
-			string templateFileName = string.Empty;
 			string folderToSave = string.Empty;
 			string previousFile = string.Empty;
 			ReportType reportToCreate;
 			string reportName = args[0];
+			string templateFileName;
+			string mailTo;
 
 			if (reportName.Equals(ReportType.FreeCellsDay.ToString())) {
 				reportToCreate = ReportType.FreeCellsDay;
@@ -171,6 +173,12 @@ namespace MISReports {
 				templateFileName = Properties.Settings.Default.TemplateRobocalls;
 				mailTo = Properties.Settings.Default.MailToRobocalls;
 
+			} else if (reportName.Equals(ReportType.UniqueServices.ToString())) {
+				reportToCreate = ReportType.UniqueServices;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServices;
+				templateFileName = Properties.Settings.Default.TemplateUniqueServices;
+				mailTo = Properties.Settings.Default.MailToUniqueServices;
+
 			} else {
 				Logging.ToLog("Неизвестное название отчета: " + reportName);
 				WriteOutAcceptedParameters();
@@ -183,7 +191,8 @@ namespace MISReports {
 			if (args.Length == 2) {
 				if (args[1].Equals("PreviousMonth")) {
 					dateBeginReport = DateTime.Now.AddMonths(-1).AddDays(-1 * (DateTime.Now.Day - 1));
-					dateEndReport = dateBeginReport.Value.AddDays(DateTime.DaysInMonth(dateBeginReport.Value.Year, dateBeginReport.Value.Month) - 1);
+					dateEndReport = dateBeginReport.Value.AddDays(
+						DateTime.DaysInMonth(dateBeginReport.Value.Year, dateBeginReport.Value.Month) - 1);
 				}
 			} else if (args.Length == 3) {
 				if (int.TryParse(args[1], out int dateBeginOffset) &&
@@ -225,6 +234,7 @@ namespace MISReports {
 			DataTable dataTable = null;
 			DataTable dataTableWorkLoadA6 = null;
 			DataTable dataTableWorkloadA11_10 = null;
+			DataTable dataTableUniqueServiceTotal = null;
 
 			if (reportToCreate == ReportType.MESUsage) {
 				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
@@ -277,19 +287,29 @@ namespace MISReports {
 					}
 				} else
 					dataTable = firebirdClient.GetDataTable(sqlQuery, parameters);
+
+				if (reportToCreate == ReportType.UniqueServices) {
+					Dictionary<string, object> parametersTotal = new Dictionary<string, object>() {
+						{"@dateBegin",  DateTime.Parse("01.01." + dateEndReport.Value.ToString("yyyy")).ToShortDateString() },
+						{"@dateEnd", dateEndStr }
+					};
+
+					dataTableUniqueServiceTotal = firebirdClient.GetDataTable(sqlQuery, parametersTotal);
+				}
+
 			}
 
 			Logging.ToLog("Получено строк: " + dataTable.Rows.Count);
 
 			string fileResult = string.Empty;
-			string body = string.Empty;
 			string mailCopy = Properties.Settings.Default.MailCopy;
 			bool hasError = false;
+			string body;
 
-			if (dataTable.Rows.Count > 0 || 
+			if (dataTable.Rows.Count > 0 ||
 				reportToCreate.ToString().StartsWith("VIP_")) {
 				Logging.ToLog("Запись данных в файл Excel");
-				
+
 				if (reportToCreate == ReportType.FreeCellsDay ||
 					reportToCreate == ReportType.FreeCellsWeek) {
 					DataColumn dataColumn = dataTable.Columns.Add("SortingOrder", typeof(int));
@@ -335,18 +355,55 @@ namespace MISReports {
 				}
 
 				if (reportToCreate == ReportType.MESUsage) {
-					Dictionary<string, ItemMESUsageTreatment> treatments = ParseMESUsageDataTableToTreatments(dataTable);
-					fileResult = NpoiExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments, subject, templateFileName);
+					Dictionary<string, ItemMESUsageTreatment> treatments = 
+						ParseMESUsageDataTableToTreatments(dataTable);
+					fileResult = NpoiExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments,
+																  subject,
+																  templateFileName);
+
 				} else if (reportToCreate == ReportType.TelemedicineOnlyIngosstrakh) {
-					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable, subject, templateFileName, true);
+					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable,
+														 subject,
+														 templateFileName,
+														 true);
+
 				} else if (reportToCreate == ReportType.Workload) {
-					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6, subject, templateFileName, false, "Услуги УЗИ");
-					NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10, subject, fileResult, false, "Искл.услуги (интенсив)", false);
-					NpoiExcelGeneral.WriteDataTableToExcel(dataTable, subject, fileResult, false, "Интенсив (расчет)", false);
+					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
+														 subject,
+														 templateFileName,
+														 false,
+														 "Услуги Методика1");
+
+					NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
+											subject,
+											fileResult,
+											false,
+											"Искл.услуги (интенсив)",
+											false);
+
+					NpoiExcelGeneral.WriteDataTableToExcel(dataTable,
+											subject,
+											fileResult,
+											false,
+											"Интенсив (расчет)",
+											false);
+
 				} else if (reportToCreate == ReportType.Robocalls) {
-					fileResult = NpoiExcelGeneral.WriteDataTableToTextFile(dataTable, subject, templateFileName);
+					fileResult = NpoiExcelGeneral.WriteDataTableToTextFile(dataTable,
+															subject,
+															templateFileName);
+
+				} else if (reportToCreate == ReportType.UniqueServices) {
+					fileResult = NpoiExcelGeneral.PerformUniqueServices(dataTable,
+														 dataTableUniqueServiceTotal,
+														 subject,
+														 templateFileName,
+														 dateBeginStr + " - " + dateEndStr);
+
 				} else {
-					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable, subject, templateFileName);
+					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable,
+														 subject,
+														 templateFileName);
 				}
 
 				if (File.Exists(fileResult)) {
@@ -382,7 +439,7 @@ namespace MISReports {
 							break;
 						case ReportType.RegistryMarks:
 							isPostProcessingOk = NpoiExcelGeneral.PerformRegistryMarks(
-                                fileResult, dataTable, dateBeginOriginal.Value);
+								fileResult, dataTable, dateBeginOriginal.Value);
 							break;
 						case ReportType.Workload:
 							isPostProcessingOk = NpoiExcelGeneral.PerformWorkload(fileResult);

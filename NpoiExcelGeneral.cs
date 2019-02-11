@@ -534,7 +534,7 @@ namespace MISReports {
 
 
 		public static bool PerformWorkload(string resultFile) {
-			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws, "Услуги УЗИ"))
+			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws, "Услуги Методика1"))
 				return false;
 
 			try {
@@ -1534,24 +1534,24 @@ namespace MISReports {
             ws.Activate();
             RegistryMarkDrawPivotTable(ws, marksSelectedPeriodByFilials);
 
-            ws = wb.Sheets["График - негативные"];
+            ws = wb.Sheets["График - кол-во"];
             ws.Activate();
-            RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, 0);
+            RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, RegistryMarkChartType.Total);
 
-            ws = wb.Sheets["График - позитивные"];
-            ws.Activate();
-            RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, 1);
+            //ws = wb.Sheets["График - %"];
+            //ws.Activate();
+            //RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, 1);
 
-            ws = wb.Sheets["График - всего"];
-            ws.Activate();
-            RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, 2);
-
-            ws = wb.Sheets["График - KPI"];
-            ws.Activate();
-            RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, 3);
+            //ws = wb.Sheets["График - KPI"];
+            //ws.Activate();
+            //RegistryMarkDrawMarksByWeek(xlApp, ws, marksByWeeks, uniqueInnerKeys, 2);
 
             Marshal.ReleaseComObject(ws);
             ws = null;
+        }
+
+        private enum RegistryMarkChartType {
+            Total, Percentage, KPI
         }
 
         private static void RegistryMarkDrawPivotTable(
@@ -1614,62 +1614,73 @@ namespace MISReports {
             Excel.Application xlApp, Excel.Worksheet ws, 
             SortedDictionary<string, SortedDictionary<string, ItemRegistryMark>> marksByWeeks, 
             List<string> uniqueInnerKeys,
-            int marksType) { //marksType: 0 - negative, 1 - positive, 2 - total, 3 - KPI
-
+            RegistryMarkChartType type) {
             string chartTitle;
             string hint;
-            switch (marksType) {
-                case 0:
-                    chartTitle = "Негативные оценки - хронология";
-                    hint = "Отображены только оценки 'Плохо'";
-                    break;
-                case 1:
-                    chartTitle = "Положительные оценки - хронология";
-                    hint = "Отображены только оценки 'Хорошо'";
-                    break;
-                case 2:
+
+            switch (type) {
+                case RegistryMarkChartType.Total:
                     chartTitle = "Всего оценок - хронология";
                     hint = "Отображены все оценки 'Плохо' + 'Средне' + 'Хорошо'";
                     break;
-                case 3:
+                case RegistryMarkChartType.Percentage:
+                    chartTitle = "Соотношение оценок хорошо и плохо";
+                    hint = "Отображены только оценки 'Хорошо' и 'Плохо'";
+                    break;
+                case RegistryMarkChartType.KPI:
                     chartTitle = "KPI - хронология";
                     hint = "KPI рассчитывается по формуле: 'Средне' + 'Хорошо' / 'Всего'";
                     break;
                 default:
-                    Logging.ToLog("Неизвестный тип оценки - " + marksType);
+                    Logging.ToLog("Неизвестный тип оценки - " + type);
                     return;
             }
 
             int row = 1;
-            int column = 2;
+            int column = 1;
             
-            foreach (string innerKey in uniqueInnerKeys) {
-                ws.Cells[1, column].Value2 = innerKey;
-                column++;
-            }
+            if (type != RegistryMarkChartType.Total)
+                foreach (string innerKey in uniqueInnerKeys) {
+                    ws.Cells[1, column].Value2 = innerKey;
+                    column++;
+                }
 
             row++;
 
             foreach (KeyValuePair<string, SortedDictionary<string, ItemRegistryMark>> pair in marksByWeeks) {
-                column = 1;
+                string rowTitle = string.Empty;
+                ws.Cells[row, 1].Value2 = pair.Key;
+                column = 2;
 
-                ws.Cells[row, column].Value2 = pair.Key;
-                column++;
-
-                foreach (ItemRegistryMark mark in pair.Value.Values) {
+                foreach (KeyValuePair<string, ItemRegistryMark> weekMarks in pair.Value) {
                     object value;
+                    ItemRegistryMark mark = weekMarks.Value;
 
-                    switch (marksType) {
-                        case 0:
-                            value = mark.MarkBad;
+                    switch (type) {
+                        case RegistryMarkChartType.Total:
+                            string[] markDate = weekMarks.Key.Split('/');
+                            string markYear = markDate[0].Trim(' ');
+                            int weekNumber = Convert.ToInt32(markDate[1].Trim(' '));
+                            string currentRowTitle = pair.Key + " " + markYear;
+
+                            if (string.IsNullOrEmpty(rowTitle)) {
+                                rowTitle = currentRowTitle;
+                                ws.Cells[row, 1].Value2 = currentRowTitle;
+                            } else {
+                                if (!rowTitle.Equals(currentRowTitle)) {
+                                    row++;
+                                    rowTitle = currentRowTitle;
+                                    ws.Cells[row, 1].Value2 = rowTitle;
+                                }
+                            }
+
+                            column = weekNumber + 1;
+                            value = mark.MarkBad + mark.MarkMedium + mark.MarkGood;
                             break;
-                        case 1:
-                            value = mark.MarkGood;
+                        case RegistryMarkChartType.Percentage:
+                            value = weekMarks.Value.MarkGood;
                             break;
-                        case 2:
-                            value = mark.MarkTotal;
-                            break;
-                        case 3:
+                        case RegistryMarkChartType.KPI:
                             if (mark.MarkTotal > 0)
                                 value = ((double)mark.MarkTotal - (double)mark.MarkBad) / (double)mark.MarkTotal;
                             else
@@ -1681,7 +1692,8 @@ namespace MISReports {
 
                     ws.Cells[row, column].Value2 = value;
 
-                    if (marksType == 3)
+                    if (type == RegistryMarkChartType.Percentage || 
+                        type == RegistryMarkChartType.KPI)
                         ws.Cells[row, column].NumberFormat = "0%";
 
                     column++;
@@ -1694,7 +1706,7 @@ namespace MISReports {
             ws.Cells[row, column].Value2 = "ИТОГО";
             foreach (string innerKey in uniqueInnerKeys) {
                 column++;
-                if (marksType == 3) {
+                if (type == RegistryMarkChartType.KPI) {
                     double marksPositive = 0;
                     double marksTotal = 0;
                     foreach (KeyValuePair<string, SortedDictionary<String, ItemRegistryMark>> pair in marksByWeeks) {
@@ -1746,6 +1758,84 @@ namespace MISReports {
 			}
 		}
 
+
+
+		public static string PerformUniqueServices(DataTable dataTableCurrent,
+											 DataTable dataTableTotal,
+											 string resultFilePrefix,
+											 string templateName,
+											 string period) {
+			if (!GetTemplateFilePath(ref templateName))
+				return string.Empty;
+
+			string resultPath = GetResultFilePath(resultFilePrefix, templateName);
+
+			try {
+				File.Copy(templateName, resultPath);
+			} catch (Exception e) {
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+				return string.Empty;
+			}
+
+			if (!OpenWorkbook(resultPath, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
+				return string.Empty;
+
+			Dictionary<string, int> serviceMap = new Dictionary<string, int> {
+				{ "Имплантация (кол-во имплантов)", 7},
+				{ "Протезирование: МК, включая коронки на имплантатах", 8},
+				{ "Отбеливание ZOOM", 9},
+				{ "Ортодонтия: кол-во начатых лечений (уник. обратившихся) в отчетный период", 10},
+				{ "Направление на КЛКТ", 11},
+				{ "ЭГДС под внутренней седацией", 12},
+				{ "ФКС под внутренней седацией", 13},
+				{ "Консультация диетолога", 14},
+				{ "Закрытые направления КДЛ за наличный расчет (кол-во шт.)", 15}
+			};
+
+			Dictionary<string, string> filialMapCurrent = new Dictionary<string, string> {
+				{ "МДМ", "G" },
+				{ "СУЩ", "H" },
+				{ "М-СРЕТ", "I" }
+			};
+
+			Dictionary<string, string> filialMapTotal = new Dictionary<string, string> {
+				{ "МДМ", "K" },
+				{ "СУЩ", "L" },
+				{ "М-СРЕТ", "M" }
+			};
+
+			ParseAndWriteUniqueService(ws, dataTableCurrent, serviceMap, filialMapCurrent);
+			ParseAndWriteUniqueService(ws, dataTableTotal, serviceMap, filialMapTotal);
+
+			ws.Range["A1"].Value2 = ((string)ws.Range["A1"].Value2).Replace("@period", period);
+			ws.Range["G5"].Value2 = ((string)ws.Range["G5"].Value2).Replace("@period", period);
+
+			SaveAndCloseWorkbook(xlApp, wb, ws);
+			return resultPath;
+		}
+
+		private static void ParseAndWriteUniqueService(Excel.Worksheet ws,
+										  DataTable services,
+										  Dictionary<string, int> serviceMap,
+										  Dictionary<string, string> filialMap) {
+			foreach (DataRow dataRow in services.Rows) {
+				try {
+					string filial = dataRow["SHORTNAME"].ToString().TrimStart(' ').TrimEnd(' ');
+					string service = dataRow["SERVICE"].ToString().TrimStart(' ').TrimEnd(' ');
+					int scount = Convert.ToInt32(dataRow["SCOUNT"].ToString().TrimStart(' ').TrimEnd(' '));
+
+					if (!serviceMap.Keys.Contains(service) ||
+						!filialMap.Keys.Contains(filial)) {
+						Logging.ToLog("Не удалось найти ключи для пары: " + filial + "|" + service);
+						continue;
+					}
+
+					ws.Range[filialMap[filial] + serviceMap[service]].Value2 = scount;
+				} catch (Exception e) {
+					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+				}
+			}
+		}
 
 
 		private static void AddBoldBorder(Excel.Range range) {
