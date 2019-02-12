@@ -372,20 +372,20 @@ namespace MISReports {
 														 subject,
 														 templateFileName,
 														 false,
-														 "Услуги Методика1");
+														 "Услуги Мет. 1");
 
 					NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
 											subject,
 											fileResult,
 											false,
-											"Искл.услуги (интенсив)",
+											"Искл. услуги",
 											false);
 
 					NpoiExcelGeneral.WriteDataTableToExcel(dataTable,
 											subject,
 											fileResult,
 											false,
-											"Интенсив (расчет)",
+											"Расчет",
 											false);
 
 				} else if (reportToCreate == ReportType.Robocalls) {
