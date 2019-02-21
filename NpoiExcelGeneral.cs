@@ -151,7 +151,7 @@ namespace MISReports {
 
 
 		public static string WriteDataTableToExcel(DataTable dataTable, string resultFilePrefix, string templateFileName,
-			bool telemedicineOnlyIngosstrakh = false, string sheetName = "", bool createNew = true) {
+			bool telemedicineOnlyIngosstrakh = false, string sheetName = "", bool createNew = true, string workloadFilial = "") {
 			IWorkbook workbook = null;
 			ISheet sheet = null;
 			string resultFile = string.Empty;
@@ -177,6 +177,13 @@ namespace MISReports {
 			int columnNumber = 0;
 
 			foreach (DataRow dataRow in dataTable.Rows) {
+				if (!string.IsNullOrEmpty(workloadFilial) && !workloadFilial.Equals("_Общий")) {
+					string currentRowFilial = dataRow[3].ToString();
+
+					if (!currentRowFilial.StartsWith(workloadFilial))
+						continue;
+				}
+
 				IRow row = null;
 				try { row = sheet.GetRow(rowNumber); } catch (Exception) { }
 
@@ -571,8 +578,11 @@ namespace MISReports {
 				xlApp.Selection.AutoFill(ws.Range["Y2:Y" + ws.UsedRange.Rows.Count]);
 
 				List<string> deptsToExclude = new List<string> {
+					"АНЕСТЕЗИОЛОГИЯ-РЕАНИМАТОЛОГИЯ",
 					"ДЕЖУРНЫЙ ВРАЧ",
+					"Дежурный врач детский",
 					"ПРОЦЕДУРНЫЙ",
+					"Процедурный кабинет детский",
 					"ФИЗИОПРОЦЕДУРЫ",
 					"ТЕЛЕМЕДИЦИНА",
 					"Аппаратная коррекция зрения",
@@ -658,7 +668,13 @@ namespace MISReports {
 
 						if (docPost.Equals("Рентгенолаборант") && 
 							!filialCode.Equals("17") && 
-							!filialCode.Equals("15"))
+							!filialCode.Equals("15")) {
+							ws.Range["AL" + row].Value2 = 1;
+							continue;
+						}
+
+						if (docPost.Equals("Мануальный терапевт") &&
+							((string)ws.Range["H" + row].Value2).StartsWith("Пеньтковский"))
 							ws.Range["AL" + row].Value2 = 1;
 
 					} catch (Exception e) {
@@ -673,15 +689,15 @@ namespace MISReports {
 				xlApp.Selection.FormatConditions(1).Interior.ThemeColor = Excel.XlThemeColor.xlThemeColorDark1;
 				xlApp.Selection.FormatConditions(1).Interior.TintAndShade = 0;
 
-				xlApp.Selection.FormatConditions.Add(Excel.XlFormatConditionType.xlCellValue, Excel.XlFormatConditionOperator.xlLess, "=20");
-				xlApp.Selection.FormatConditions(2).Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
-				xlApp.Selection.FormatConditions(2).Interior.ThemeColor = Excel.XlThemeColor.xlThemeColorAccent1;
-				xlApp.Selection.FormatConditions(2).Interior.TintAndShade = 0.799981688894314;
+				//xlApp.Selection.FormatConditions.Add(Excel.XlFormatConditionType.xlCellValue, Excel.XlFormatConditionOperator.xlLess, "=20");
+				//xlApp.Selection.FormatConditions(2).Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
+				//xlApp.Selection.FormatConditions(2).Interior.ThemeColor = Excel.XlThemeColor.xlThemeColorAccent1;
+				//xlApp.Selection.FormatConditions(2).Interior.TintAndShade = 0.799981688894314;
 
-				xlApp.Selection.FormatConditions.Add(Excel.XlFormatConditionType.xlCellValue, Excel.XlFormatConditionOperator.xlGreater, "=150");
-				xlApp.Selection.FormatConditions(3).Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
-				xlApp.Selection.FormatConditions(3).Interior.Color = 65535;
-				xlApp.Selection.FormatConditions(3).Interior.TintAndShade = 0;
+				//xlApp.Selection.FormatConditions.Add(Excel.XlFormatConditionType.xlCellValue, Excel.XlFormatConditionOperator.xlGreater, "=150");
+				//xlApp.Selection.FormatConditions(3).Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
+				//xlApp.Selection.FormatConditions(3).Interior.Color = 65535;
+				//xlApp.Selection.FormatConditions(3).Interior.TintAndShade = 0;
 
 				ws.Range["A1"].Select();
 

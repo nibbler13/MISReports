@@ -166,6 +166,7 @@ namespace MISReports {
 				reportToCreate = ReportType.Workload;
 				templateFileName = Properties.Settings.Default.TemplateWorkload;
 				mailTo = Properties.Settings.Default.MailToWorkload;
+				folderToSave = Properties.Settings.Default.FolderToSaveWorkload;
 
 			} else if (reportName.Equals(ReportType.Robocalls.ToString())) {
 				reportToCreate = ReportType.Robocalls;
@@ -306,6 +307,19 @@ namespace MISReports {
 			bool hasError = false;
 			string body;
 
+			Dictionary<string, string> workloadResultFiles = new Dictionary<string, string> {
+				{ "_Общий", string.Empty },
+				{ "Казань", string.Empty },
+				{ "Красн", string.Empty },
+				{ "К-УРАЛ", string.Empty },
+				{ "МДМ", string.Empty },
+				{ "М-СРЕТ", string.Empty },
+				{ "Сочи", string.Empty },
+				{ "С-Пб", string.Empty },
+				{ "СУЩ", string.Empty },
+				{ "Уфа", string.Empty }
+			};
+
 			if (dataTable.Rows.Count > 0 ||
 				reportToCreate.ToString().StartsWith("VIP_")) {
 				Logging.ToLog("Запись данных в файл Excel");
@@ -368,25 +382,37 @@ namespace MISReports {
 														 true);
 
 				} else if (reportToCreate == ReportType.Workload) {
-					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
-														 subject,
-														 templateFileName,
-														 false,
-														 "Услуги Мет. 1");
+					for (int i = 0; i < workloadResultFiles.Count; i++) {
+						string key = workloadResultFiles.Keys.ElementAt(i);
+						Logging.ToLog("Филиал: " + key);
 
-					NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
-											subject,
-											fileResult,
-											false,
-											"Искл. услуги",
-											false);
+						workloadResultFiles[key] = NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
+															 subject + " " + key,
+															 templateFileName,
+															 false,
+															 "Услуги Мет. 1",
+															 true,
+															 key);
 
-					NpoiExcelGeneral.WriteDataTableToExcel(dataTable,
-											subject,
-											fileResult,
-											false,
-											"Расчет",
-											false);
+						if (string.IsNullOrEmpty(workloadResultFiles[key]))
+							continue;
+
+						NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
+												subject,
+												workloadResultFiles[key],
+												false,
+												"Искл. услуги",
+												false,
+												key);
+
+						NpoiExcelGeneral.WriteDataTableToExcel(dataTable,
+												subject,
+												workloadResultFiles[key],
+												false,
+												"Расчет",
+												false,
+												key);
+					}
 
 				} else if (reportToCreate == ReportType.Robocalls) {
 					fileResult = NpoiExcelGeneral.WriteDataTableToTextFile(dataTable,
@@ -406,7 +432,7 @@ namespace MISReports {
 														 templateFileName);
 				}
 
-				if (File.Exists(fileResult)) {
+				if (File.Exists(fileResult) || reportToCreate == ReportType.Workload) {
 					bool isPostProcessingOk = true;
 
 					switch (reportToCreate) {
@@ -442,7 +468,19 @@ namespace MISReports {
 								fileResult, dataTable, dateBeginOriginal.Value);
 							break;
 						case ReportType.Workload:
-							isPostProcessingOk = NpoiExcelGeneral.PerformWorkload(fileResult);
+							bool isAllOk = true;
+							Logging.ToLog("Пост-обработка");
+							foreach (string currentFileResult in workloadResultFiles.Values) {
+								Logging.ToLog("Файл: " + currentFileResult);
+
+								if (string.IsNullOrEmpty(currentFileResult))
+									continue;
+
+								if (!NpoiExcelGeneral.PerformWorkload(currentFileResult))
+									isAllOk = false;
+							}
+							
+							isPostProcessingOk = isAllOk;
 							break;
 						default:
 							break;
@@ -450,7 +488,9 @@ namespace MISReports {
 
 					if (isPostProcessingOk) {
 						body = "Отчет во вложении";
-						Logging.ToLog("Данные сохранены в файл: " + fileResult);
+						Logging.ToLog("Данные сохранены в файл: " + (reportToCreate == ReportType.Workload ?
+							string.Join("; ", workloadResultFiles.Values) :
+							fileResult));
 					} else {
 						body = "Не удалось выполнить обработку Excel книги";
 						hasError = true;
@@ -491,11 +531,24 @@ namespace MISReports {
 
 			if (!string.IsNullOrEmpty(folderToSave)) {
 				try {
-					string fileName = Path.GetFileName(fileResult);
-					string destFile = Path.Combine(folderToSave, fileName);
-					File.Copy(fileResult, destFile, true);
-					body = "Файл с отчетом сохранен по адресу: " +
-						Environment.NewLine + "<a href=\"" + destFile + "\">" + destFile + "</a>";
+					if (reportToCreate == ReportType.Workload) {
+						Logging.ToLog("Сохранение отчетов в сетевую папку");
+						body = "Отчеты сохранены в папку:<br>" + "<a href=\"" + folderToSave + "\">" + folderToSave + "</a><br><br>";
+						foreach (KeyValuePair<string, string> pair in workloadResultFiles) {
+							Logging.ToLog("Филиал: " + pair.Key);
+							if (string.IsNullOrEmpty(pair.Value)) {
+								body += pair.Key + ": Нет данных / ошибки обработки<br><br>";
+								continue;
+							}
+
+							body += pair.Key + ": <br>" +
+								SaveFileToNetworkFolder(pair.Value, Path.Combine(folderToSave, pair.Key)) +
+								"<br><br>";
+						}
+					} else {
+						body = "Файл с отчетом сохранен по адресу: " + Environment.NewLine +
+							SaveFileToNetworkFolder(fileResult, folderToSave);
+					}
 				} catch (Exception e) {
 					Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
 					body = "Не удалось сохранить отчет в папку " + folderToSave +
@@ -513,6 +566,13 @@ namespace MISReports {
 
 			SystemMail.SendMail(subject, body, mailTo, fileResult);
 			Logging.ToLog("Завершение работы");
+		}
+
+		public static string SaveFileToNetworkFolder(string localFile, string folderToSave) {
+			string fileName = Path.GetFileName(localFile);
+			string destFile = Path.Combine(folderToSave, fileName);
+			File.Copy(localFile, destFile, true);
+			return "<a href=\"" + destFile + "\">" + destFile + "</a>";
 		}
 
 		public static Dictionary<string, ItemMESUsageTreatment> ParseMESUsageDataTableToTreatments(DataTable dataTable) {
