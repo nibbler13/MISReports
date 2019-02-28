@@ -50,7 +50,7 @@ namespace MISReports {
 			{ ReportType.RegistryMarks, "Отчет по оценкам регистратуры" },
 			{ ReportType.Workload, "Отчет по загрузке сотрудников" },
 			{ ReportType.Robocalls, "Информация для автообзвона" },
-			{ReportType.UniqueServices, "Отчет по уникальным услугам" }
+			{ ReportType.UniqueServices, "Отчет по уникальным услугам" }
 		};
 
 		static void Main(string[] args) {
@@ -176,7 +176,7 @@ namespace MISReports {
 
 			} else if (reportName.Equals(ReportType.UniqueServices.ToString())) {
 				reportToCreate = ReportType.UniqueServices;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServices;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServicesMain;
 				templateFileName = Properties.Settings.Default.TemplateUniqueServices;
 				mailTo = Properties.Settings.Default.MailToUniqueServices;
 
@@ -236,6 +236,8 @@ namespace MISReports {
 			DataTable dataTableWorkLoadA6 = null;
 			DataTable dataTableWorkloadA11_10 = null;
 			DataTable dataTableUniqueServiceTotal = null;
+			DataTable dataTableUniqueServiceLab = null;
+			DataTable dataTableUniqueServiceLabTotal = null;
 
 			if (reportToCreate == ReportType.MESUsage) {
 				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
@@ -290,12 +292,16 @@ namespace MISReports {
 					dataTable = firebirdClient.GetDataTable(sqlQuery, parameters);
 
 				if (reportToCreate == ReportType.UniqueServices) {
+					string sqlQueryUniqueServiceLab = Properties.Settings.Default.MisDbSqlGetUniqueServicesLab;
+					dataTableUniqueServiceLab = firebirdClient.GetDataTable(sqlQueryUniqueServiceLab, parameters);
+
 					Dictionary<string, object> parametersTotal = new Dictionary<string, object>() {
 						{"@dateBegin",  DateTime.Parse("01.01." + dateEndReport.Value.ToString("yyyy")).ToShortDateString() },
 						{"@dateEnd", dateEndStr }
 					};
 
 					dataTableUniqueServiceTotal = firebirdClient.GetDataTable(sqlQuery, parametersTotal);
+					dataTableUniqueServiceLabTotal = firebirdClient.GetDataTable(sqlQueryUniqueServiceLab, parametersTotal);
 				}
 
 			}
@@ -422,6 +428,8 @@ namespace MISReports {
 				} else if (reportToCreate == ReportType.UniqueServices) {
 					fileResult = NpoiExcelGeneral.PerformUniqueServices(dataTable,
 														 dataTableUniqueServiceTotal,
+														 dataTableUniqueServiceLab,
+														 dataTableUniqueServiceLabTotal,
 														 subject,
 														 templateFileName,
 														 dateBeginStr + " - " + dateEndStr);

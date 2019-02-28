@@ -17,7 +17,8 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace MISReports {
 	class NpoiExcelGeneral {
-        private static bool CreateNewIWorkbook(string resultFilePrefix, string templateFileName,
+		//============================ NPOI Excel ============================
+		private static bool CreateNewIWorkbook(string resultFilePrefix, string templateFileName,
 			out IWorkbook workbook, out ISheet sheet, out string resultFile, string sheetName) {
 			workbook = null;
 			sheet = null;
@@ -91,6 +92,7 @@ namespace MISReports {
 
 
 
+		//============================ Interop Excel ============================
 		private static bool OpenWorkbook(string workbook, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws, string sheetName = "") {
 			xlApp = null;
 			wb = null;
@@ -407,9 +409,84 @@ namespace MISReports {
 
 			return resultFile;
 		}
+		
+		private static void AddBoldBorder(Excel.Range range) {
+			try {
+				//foreach (Excel.XlBordersIndex item in new Excel.XlBordersIndex[] {
+				//	Excel.XlBordersIndex.xlDiagonalDown,
+				//	Excel.XlBordersIndex.xlDiagonalUp,
+				//	Excel.XlBordersIndex.xlInsideHorizontal,
+				//	Excel.XlBordersIndex.xlInsideVertical}) 
+				//	range.Borders[item].LineStyle = Excel.Constants.xlNone;
+
+				foreach (Excel.XlBordersIndex item in new Excel.XlBordersIndex[] {
+					Excel.XlBordersIndex.xlEdgeBottom,
+					Excel.XlBordersIndex.xlEdgeLeft,
+					Excel.XlBordersIndex.xlEdgeRight,
+					Excel.XlBordersIndex.xlEdgeTop}) {
+					range.Borders[item].LineStyle = Excel.XlLineStyle.xlContinuous;
+					range.Borders[item].ColorIndex = 0;
+					range.Borders[item].TintAndShade = 0;
+					range.Borders[item].Weight = Excel.XlBorderWeight.xlMedium;
+				}
+			} catch (Exception e) {
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+			}
+		}
+
+		private static void AddInteriorColor(Excel.Range range, Excel.XlThemeColor xlThemeColor) {
+			range.Interior.Pattern = Excel.Constants.xlSolid;
+			range.Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
+			range.Interior.ThemeColor = xlThemeColor;
+			range.Interior.TintAndShade = 0.799981688894314;
+			range.Interior.PatternTintAndShade = 0;
+		}
 
 
 
+		//============================ OleDB Excel ============================
+		private static DataTable ReadExcelFile(string fileName, string sheetName) {
+			Logging.ToLog("Считывание файла: " + fileName + ", лист: " + sheetName);
+			DataTable dataTable = new DataTable();
+
+			if (!File.Exists(fileName))
+				return dataTable;
+
+			try {
+				using (OleDbConnection conn = new OleDbConnection()) {
+					conn.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileName + ";Mode=Read;" +
+						"Extended Properties='Excel 12.0 Xml;HDR=NO;'";
+
+					using (OleDbCommand comm = new OleDbCommand()) {
+						if (string.IsNullOrEmpty(sheetName)) {
+							conn.Open();
+							DataTable dtSchema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
+								new object[] { null, null, null, "TABLE" });
+							sheetName = dtSchema.Rows[0].Field<string>("TABLE_NAME");
+							conn.Close();
+						} else
+							sheetName += "$";
+
+						comm.CommandText = "Select * from [" + sheetName + "]";
+						comm.Connection = conn;
+
+						using (OleDbDataAdapter oleDbDataAdapter = new OleDbDataAdapter()) {
+							oleDbDataAdapter.SelectCommand = comm;
+							oleDbDataAdapter.Fill(dataTable);
+						}
+					}
+				}
+			} catch (Exception e) {
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			return dataTable;
+		}
+
+
+
+
+		//============================ MesUsage ============================
 		public static bool PerformMesUsage(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
 				return false;
@@ -530,16 +607,10 @@ namespace MISReports {
 			wb.ShowPivotTableFieldList = false;
 		}
 
-		private static void AddInteriorColor(Excel.Range range, Excel.XlThemeColor xlThemeColor) {
-			range.Interior.Pattern = Excel.Constants.xlSolid;
-			range.Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
-			range.Interior.ThemeColor = xlThemeColor;
-			range.Interior.TintAndShade = 0.799981688894314;
-			range.Interior.PatternTintAndShade = 0;
-		}
 
 
 
+		//============================ Workload ============================
 		public static bool PerformWorkload(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws, "Услуги Мет. 1"))
 				return false;
@@ -777,6 +848,7 @@ namespace MISReports {
 
 
 
+		//============================ NonAppearance ============================
 		public static bool PerformNonAppearance(string resultFile, DataTable dataTable) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
 				return false;
@@ -1039,6 +1111,7 @@ namespace MISReports {
 
 
 
+		//============================ Telemedicine ============================
 		public static bool PerformTelemedicine(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
 				return false;
@@ -1121,6 +1194,7 @@ namespace MISReports {
 
 
 
+		//============================ VIP ============================
 		public static bool PerformVIP(string resultFile, string previousFile) {
 			Logging.ToLog("Подготовка файла с отчетом по VIP-пациентам: " + resultFile);
 			Logging.ToLog("Предыдущий файл: " + previousFile);
@@ -1189,46 +1263,9 @@ namespace MISReports {
 			return true;
 		}
 
-		private static DataTable ReadExcelFile(string fileName, string sheetName) {
-			Logging.ToLog("Считывание файла: " + fileName + ", лист: " + sheetName);
-			DataTable dataTable = new DataTable();
 
-			if (!File.Exists(fileName))
-				return dataTable;
 
-			try {
-				using (OleDbConnection conn = new OleDbConnection()) {
-					conn.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + fileName + ";Mode=Read;" +
-						"Extended Properties='Excel 12.0 Xml;HDR=NO;'";
-
-					using (OleDbCommand comm = new OleDbCommand()) {
-						if (string.IsNullOrEmpty(sheetName)) {
-							conn.Open();
-							DataTable dtSchema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
-								new object[] { null, null, null, "TABLE" });
-							sheetName = dtSchema.Rows[0].Field<string>("TABLE_NAME");
-							conn.Close();
-						} else
-							sheetName += "$";
-
-						comm.CommandText = "Select * from [" + sheetName + "]";
-						comm.Connection = conn;
-
-						using (OleDbDataAdapter oleDbDataAdapter = new OleDbDataAdapter()) {
-							oleDbDataAdapter.SelectCommand = comm;
-							oleDbDataAdapter.Fill(dataTable);
-						}
-					}
-				}
-			} catch (Exception e) {
-				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
-			}
-
-			return dataTable;
-		}
-
-		
-
+		//============================ OnlineAccountsUsage ============================
 		public static bool PerformOnlineAccountsUsage(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, 
 				out Excel.Worksheet ws))
@@ -1280,6 +1317,7 @@ namespace MISReports {
 
 
 
+		//============================ FreeCells ============================
 		public static bool PerformFreeCells(string resultFile, DateTime dateBeginOriginal, DateTime dateEnd) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, 
 				out Excel.Worksheet ws))
@@ -1404,10 +1442,11 @@ namespace MISReports {
 			wsPivote.Range["A1"].Select();
 			wb.ShowPivotTableFieldList = false;
 		}
-		
 
 
 
+
+		//============================ UnclosedProtocols ============================
 		public static bool PerformUnclosedProtocols(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
 				return false;
@@ -1600,6 +1639,7 @@ namespace MISReports {
 
 
 
+		//============================ RegistryMarks ============================
 		public static bool PerformRegistryMarks(
             string resultFile, DataTable dataTable, DateTime dateTimeBegin) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
@@ -1926,8 +1966,11 @@ namespace MISReports {
 
 
 
+		//============================ UniqueServices ============================
 		public static string PerformUniqueServices(DataTable dataTableCurrent,
 											 DataTable dataTableTotal,
+											 DataTable dataTableLab,
+											 DataTable dataTableLabTotal,
 											 string resultFilePrefix,
 											 string templateName,
 											 string period) {
@@ -1971,7 +2014,9 @@ namespace MISReports {
 			};
 
 			ParseAndWriteUniqueService(ws, dataTableCurrent, serviceMap, filialMapCurrent);
+			ParseAndWriteUniqueService(ws, dataTableLab, serviceMap, filialMapCurrent);
 			ParseAndWriteUniqueService(ws, dataTableTotal, serviceMap, filialMapTotal);
+			ParseAndWriteUniqueService(ws, dataTableLabTotal, serviceMap, filialMapTotal);
 
 			ws.Range["A1"].Value2 = ((string)ws.Range["A1"].Value2).Replace("@period", period);
 			ws.Range["G5"].Value2 = ((string)ws.Range["G5"].Value2).Replace("@period", period);
@@ -2000,31 +2045,6 @@ namespace MISReports {
 				} catch (Exception e) {
 					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 				}
-			}
-		}
-
-
-		private static void AddBoldBorder(Excel.Range range) {
-			try {
-				//foreach (Excel.XlBordersIndex item in new Excel.XlBordersIndex[] {
-				//	Excel.XlBordersIndex.xlDiagonalDown,
-				//	Excel.XlBordersIndex.xlDiagonalUp,
-				//	Excel.XlBordersIndex.xlInsideHorizontal,
-				//	Excel.XlBordersIndex.xlInsideVertical}) 
-				//	range.Borders[item].LineStyle = Excel.Constants.xlNone;
-
-				foreach (Excel.XlBordersIndex item in new Excel.XlBordersIndex[] {
-					Excel.XlBordersIndex.xlEdgeBottom,
-					Excel.XlBordersIndex.xlEdgeLeft,
-					Excel.XlBordersIndex.xlEdgeRight,
-					Excel.XlBordersIndex.xlEdgeTop}) {
-					range.Borders[item].LineStyle = Excel.XlLineStyle.xlContinuous;
-					range.Borders[item].ColorIndex = 0;
-					range.Borders[item].TintAndShade = 0;
-					range.Borders[item].Weight = Excel.XlBorderWeight.xlMedium;
-				}
-			} catch (Exception e) {
-				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 		}
 	}
