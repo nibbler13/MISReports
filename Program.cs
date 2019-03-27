@@ -13,45 +13,50 @@ namespace MISReports {
 	class Program {
 		public static string AssemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\";
 
-		public enum ReportType {
-			FreeCellsDay,
-			FreeCellsWeek,
-			UnclosedProtocolsWeek,
-			UnclosedProtocolsMonth,
-			MESUsage,
-			OnlineAccountsUsage,
-			TelemedicineOnlyIngosstrakh,
-			TelemedicineAll,
-			NonAppearance,
-			VIP_MSSU,
-			VIP_Moscow,
-			VIP_MSKM,
-			VIP_PND,
-			RegistryMarks,
-			Workload,
-			Robocalls,
-			UniqueServices
+		private static ReportsInfo.Type reportToCreate;
+
+		private static string sqlQuery = string.Empty;
+		private static string folderToSave = string.Empty;
+		private static string templateFileName = string.Empty;
+		private static string previousFile = string.Empty;
+		private static string mailTo = string.Empty;
+
+		private static DateTime? dateBeginReport = null;
+		private static DateTime? dateEndReport = null;
+
+		private static DataTable dataTableMainData = null;
+		private static DataTable dataTableWorkLoadA6 = null;
+		private static DataTable dataTableWorkloadA11_10 = null;
+		private static DataTable dataTableUniqueServiceTotal = null;
+		private static DataTable dataTableUniqueServiceLab = null;
+		private static DataTable dataTableUniqueServiceLabTotal = null;
+
+		private static DateTime? dateBeginOriginal = null;
+
+		private static string dateBeginStr = string.Empty;
+		private static string dateEndStr = string.Empty;
+		private static string subject = string.Empty;
+
+		private static string fileResult = string.Empty;
+		private static readonly string mailCopy = Properties.Settings.Default.MailCopy;
+		private static bool hasError = false;
+		private static string body;
+
+		private static readonly Dictionary<string, string> workloadResultFiles = new Dictionary<string, string> {
+			{ "_Общий", string.Empty },
+			{ "Казань", string.Empty },
+			{ "Красн", string.Empty },
+			{ "К-УРАЛ", string.Empty },
+			{ "МДМ", string.Empty },
+			{ "М-СРЕТ", string.Empty },
+			{ "Сочи", string.Empty },
+			{ "С-Пб", string.Empty },
+			{ "СУЩ", string.Empty },
+			{ "Уфа", string.Empty }
 		};
 
-		public static Dictionary<ReportType, string> AcceptedParameters = new Dictionary<ReportType, string> {
-			{ ReportType.FreeCellsDay, "Отчет по свободным слотам" },
-			{ ReportType.FreeCellsWeek, "Отчет по свободным слотам" },
-			{ ReportType.UnclosedProtocolsWeek, "Отчет по неподписанным протоколам" },
-			{ ReportType.UnclosedProtocolsMonth, "Отчет по неподписанным протоколам" },
-			{ ReportType.MESUsage, "Отчет по использованию МЭС" },
-			{ ReportType.OnlineAccountsUsage, "Отчет по записи на прием через личный кабинет" },
-			{ ReportType.TelemedicineOnlyIngosstrakh, "Отчет по приемам телемедицины - только Ингосстрах" },
-			{ ReportType.TelemedicineAll, "Отчет по приемам телемедицины - все типы оплаты" },
-			{ ReportType.NonAppearance, "Отчет по неявкам" },
-			{ ReportType.VIP_MSSU, "Отчет по ВИП-пациентам Сущевка" },
-			{ ReportType.VIP_Moscow, "Отчет по ВИП-пациентам Москва" },
-			{ ReportType.VIP_MSKM, "Отчет по ВИП-пациентам Фрунзенская" },
-			{ ReportType.VIP_PND, "Отчет по ВИП-пациентам ПНД" },
-			{ ReportType.RegistryMarks, "Отчет по оценкам регистратуры" },
-			{ ReportType.Workload, "Отчет по загрузке сотрудников" },
-			{ ReportType.Robocalls, "Информация для автообзвона" },
-			{ ReportType.UniqueServices, "Отчет по уникальным услугам" }
-		};
+
+
 
 		static void Main(string[] args) {
 			Logging.ToLog("Старт");
@@ -62,133 +67,70 @@ namespace MISReports {
 				return;
 			}
 
-			string sqlQuery = string.Empty;
-			string folderToSave = string.Empty;
-			string previousFile = string.Empty;
-			ReportType reportToCreate;
 			string reportName = args[0];
-			string templateFileName;
-			string mailTo;
-
-			if (reportName.Equals(ReportType.FreeCellsDay.ToString())) {
-				reportToCreate = ReportType.FreeCellsDay;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
-				mailTo = Properties.Settings.Default.MailToFreeCellsDay;
-				templateFileName = Properties.Settings.Default.TemplateFreeCells;
-
-			} else if (reportName.Equals(ReportType.FreeCellsWeek.ToString())) {
-				reportToCreate = ReportType.FreeCellsWeek;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
-				mailTo = Properties.Settings.Default.MailToFreeCellsWeek;
-				templateFileName = Properties.Settings.Default.TemplateFreeCells;
-
-			} else if (reportName.Equals(ReportType.UnclosedProtocolsWeek.ToString())) {
-				reportToCreate = ReportType.UnclosedProtocolsWeek;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
-				mailTo = Properties.Settings.Default.MailToUnclosedProtocolsWeek;
-				templateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
-				folderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
-
-			} else if (reportName.Equals(ReportType.UnclosedProtocolsMonth.ToString())) {
-				reportToCreate = ReportType.UnclosedProtocolsMonth;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
-				mailTo = Properties.Settings.Default.MailToUnclosedProtocolsMonth;
-				templateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
-				folderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
-
-			} else if (reportName.Equals(ReportType.MESUsage.ToString())) {
-				reportToCreate = ReportType.MESUsage;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetMESUsage;
-				mailTo = Properties.Settings.Default.MailToMESUsage;
-				templateFileName = Properties.Settings.Default.TemplateMESUsage;
-				folderToSave = Properties.Settings.Default.FolderToSaveMESUsage;
-
-			} else if (reportName.Equals(ReportType.OnlineAccountsUsage.ToString())) {
-				reportToCreate = ReportType.OnlineAccountsUsage;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetOnlineAccountsUsage;
-				mailTo = Properties.Settings.Default.MailToOnlineAccountsUsage;
-				templateFileName = Properties.Settings.Default.TemplateOnlineAccountsUsage;
-
-			} else if (reportName.Equals(ReportType.TelemedicineOnlyIngosstrakh.ToString())) {
-				reportToCreate = ReportType.TelemedicineOnlyIngosstrakh;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
-				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
-				mailTo = Properties.Settings.Default.MailToTelemedicineOnlyIngosstrakh;
-
-			} else if (reportName.Equals(ReportType.TelemedicineAll.ToString())) {
-				reportToCreate = ReportType.TelemedicineAll;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
-				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
-				mailTo = Properties.Settings.Default.MailToTelemedicineAll;
-
-			} else if (reportName.Equals(ReportType.NonAppearance.ToString())) {
-				reportToCreate = ReportType.NonAppearance;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetNonAppearance;
-				templateFileName = Properties.Settings.Default.TemplateNonAppearance;
-				mailTo = Properties.Settings.Default.MailToNonAppearance;
-				folderToSave = Properties.Settings.Default.FolderToSaveNonAppearance;
-
-			} else if (reportName.Equals(ReportType.VIP_MSSU.ToString())) {
-				reportToCreate = ReportType.VIP_MSSU;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "12");
-				templateFileName = Properties.Settings.Default.TemplateVIP;
-				mailTo = Properties.Settings.Default.MailToVIP_MSSU;
-				previousFile = Properties.Settings.Default.PreviousFileVIP_MSSU;
-
-			} else if (reportName.Equals(ReportType.VIP_Moscow.ToString())) {
-				reportToCreate = ReportType.VIP_Moscow;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1,5,12,6");
-				templateFileName = Properties.Settings.Default.TemplateVIP;
-				mailTo = Properties.Settings.Default.MailToVIP_Moscow;
-				previousFile = Properties.Settings.Default.PreviousFileVIP_Moscow;
-
-			} else if (reportName.Equals(ReportType.VIP_MSKM.ToString())) {
-				reportToCreate = ReportType.VIP_MSKM;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1");
-				templateFileName = Properties.Settings.Default.TemplateVIP;
-				mailTo = Properties.Settings.Default.MailToVIP_MSKM;
-				previousFile = Properties.Settings.Default.PreviousFileVIP_MSKM;
-
-			} else if (reportName.Equals(ReportType.VIP_PND.ToString())) {
-				reportToCreate = ReportType.VIP_PND;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "6");
-				templateFileName = Properties.Settings.Default.TemplateVIP;
-				mailTo = Properties.Settings.Default.MailToVIP_PND;
-				previousFile = Properties.Settings.Default.PreviousFileVIP_PND;
-
-			} else if (reportName.Equals(ReportType.RegistryMarks.ToString())) {
-				reportToCreate = ReportType.RegistryMarks;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetRegistryMarks;
-				templateFileName = Properties.Settings.Default.TemplateRegistryMarks;
-				mailTo = Properties.Settings.Default.MailToRegistryMarks;
-
-			} else if (reportName.Equals(ReportType.Workload.ToString())) {
-				reportToCreate = ReportType.Workload;
-				templateFileName = Properties.Settings.Default.TemplateWorkload;
-				mailTo = Properties.Settings.Default.MailToWorkload;
-				folderToSave = Properties.Settings.Default.FolderToSaveWorkload;
-
-			} else if (reportName.Equals(ReportType.Robocalls.ToString())) {
-				reportToCreate = ReportType.Robocalls;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetRobocalls;
-				templateFileName = Properties.Settings.Default.TemplateRobocalls;
-				mailTo = Properties.Settings.Default.MailToRobocalls;
-
-			} else if (reportName.Equals(ReportType.UniqueServices.ToString())) {
-				reportToCreate = ReportType.UniqueServices;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServicesMain;
-				templateFileName = Properties.Settings.Default.TemplateUniqueServices;
-				mailTo = Properties.Settings.Default.MailToUniqueServices;
-
-			} else {
+			if (!LoadSettings(reportName)) {
 				Logging.ToLog("Неизвестное название отчета: " + reportName);
 				WriteOutAcceptedParameters();
 				return;
 			}
 
-			DateTime? dateBeginReport = null;
-			DateTime? dateEndReport = null;
+			ParseDateInterval(args);
 
+			if (!dateBeginReport.HasValue || !dateEndReport.HasValue) {
+				Logging.ToLog("Не удалось распознать временные интервалы формирования отчета");
+				WriteOutAcceptedParameters();
+				return;
+			}
+
+			FirebirdClient firebirdClient = new FirebirdClient(
+				Properties.Settings.Default.MisDbAddress,
+				Properties.Settings.Default.MisDbName,
+				Properties.Settings.Default.MisDbUser,
+				Properties.Settings.Default.MisDbPassword);
+
+			LoadData(firebirdClient);
+
+			firebirdClient.Close();
+
+			Logging.ToLog("Получено строк: " + dataTableMainData.Rows.Count);
+
+			WriteDataToFile();
+
+			if (hasError) {
+				Logging.ToLog(body);
+				mailTo = mailCopy;
+				fileResult = string.Empty;
+			}
+
+			SaveSettings();
+
+			if (Debugger.IsAttached)
+				return;
+
+			if (!string.IsNullOrEmpty(folderToSave))
+				SaveReportToFolder();
+
+			SystemMail.SendMail(subject, body, mailTo, fileResult);
+			Logging.ToLog("Завершение работы");
+		}
+
+
+
+
+		private static void WriteOutAcceptedParameters() {
+			string message = Environment.NewLine + "Формат указания параметров:" + Environment.NewLine +
+				"НазваниеОтчета СмещениеДатаНачала СмещениеДатаОкончания (пример: 'FreeCells 0 6')" + Environment.NewLine +
+				"НазваниеОтчета ДатаНачала ДатаОкончания (пример: 'FreeCells 01.01.2018 31.01.2018')" +
+				"НазваниеОтчета PreviousMonth (пример: 'FreeCells PreviousMonth' - отчет за предыдущий месяц)" +
+				Environment.NewLine + Environment.NewLine +
+				"Варианты отчетов:" + Environment.NewLine;
+			foreach (KeyValuePair<ReportsInfo.Type, string> pair in ReportsInfo.AcceptedParameters)
+				message += pair.Key + " (" + pair.Value + ")" + Environment.NewLine;
+
+			Logging.ToLog(message);
+		}
+
+		private static void ParseDateInterval(string[] args) {
 			if (args.Length == 2) {
 				if (args[1].Equals("PreviousMonth")) {
 					dateBeginReport = DateTime.Now.AddMonths(-1).AddDays(-1 * (DateTime.Now.Day - 1));
@@ -208,134 +150,278 @@ namespace MISReports {
 					dateEndReport = dateEndArg;
 				}
 			}
+		}
 
-			if (!dateBeginReport.HasValue || !dateEndReport.HasValue) {
-				Logging.ToLog("Не удалось распознать временные интервалы формирования отчета");
-				WriteOutAcceptedParameters();
-				return;
-			}
+		private static bool LoadSettings(string reportName) {
+			if (reportName.Equals(ReportsInfo.Type.FreeCellsDay.ToString())) {
+				reportToCreate = ReportsInfo.Type.FreeCellsDay;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
+				mailTo = Properties.Settings.Default.MailToFreeCellsDay;
+				templateFileName = Properties.Settings.Default.TemplateFreeCells;
 
-			FirebirdClient firebirdClient = new FirebirdClient(
-				Properties.Settings.Default.MisDbAddress,
-				Properties.Settings.Default.MisDbName,
-				Properties.Settings.Default.MisDbUser,
-				Properties.Settings.Default.MisDbPassword);
+			} else if (reportName.Equals(ReportsInfo.Type.FreeCellsWeek.ToString())) {
+				reportToCreate = ReportsInfo.Type.FreeCellsWeek;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
+				mailTo = Properties.Settings.Default.MailToFreeCellsWeek;
+				templateFileName = Properties.Settings.Default.TemplateFreeCells;
 
-			DateTime? dateBeginOriginal = dateBeginReport;
+			} else if (reportName.Equals(ReportsInfo.Type.UnclosedProtocolsWeek.ToString())) {
+				reportToCreate = ReportsInfo.Type.UnclosedProtocolsWeek;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
+				mailTo = Properties.Settings.Default.MailToUnclosedProtocolsWeek;
+				templateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
+				folderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
+
+			} else if (reportName.Equals(ReportsInfo.Type.UnclosedProtocolsMonth.ToString())) {
+				reportToCreate = ReportsInfo.Type.UnclosedProtocolsMonth;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
+				mailTo = Properties.Settings.Default.MailToUnclosedProtocolsMonth;
+				templateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
+				folderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
+
+			} else if (reportName.Equals(ReportsInfo.Type.MESUsage.ToString())) {
+				reportToCreate = ReportsInfo.Type.MESUsage;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetMESUsage;
+				mailTo = Properties.Settings.Default.MailToMESUsage;
+				templateFileName = Properties.Settings.Default.TemplateMESUsage;
+				folderToSave = Properties.Settings.Default.FolderToSaveMESUsage;
+
+			} else if (reportName.Equals(ReportsInfo.Type.OnlineAccountsUsage.ToString())) {
+				reportToCreate = ReportsInfo.Type.OnlineAccountsUsage;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetOnlineAccountsUsage;
+				mailTo = Properties.Settings.Default.MailToOnlineAccountsUsage;
+				templateFileName = Properties.Settings.Default.TemplateOnlineAccountsUsage;
+
+			} else if (reportName.Equals(ReportsInfo.Type.TelemedicineOnlyIngosstrakh.ToString())) {
+				reportToCreate = ReportsInfo.Type.TelemedicineOnlyIngosstrakh;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
+				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
+				mailTo = Properties.Settings.Default.MailToTelemedicineOnlyIngosstrakh;
+
+			} else if (reportName.Equals(ReportsInfo.Type.TelemedicineAll.ToString())) {
+				reportToCreate = ReportsInfo.Type.TelemedicineAll;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
+				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
+				mailTo = Properties.Settings.Default.MailToTelemedicineAll;
+
+			} else if (reportName.Equals(ReportsInfo.Type.NonAppearance.ToString())) {
+				reportToCreate = ReportsInfo.Type.NonAppearance;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetNonAppearance;
+				templateFileName = Properties.Settings.Default.TemplateNonAppearance;
+				mailTo = Properties.Settings.Default.MailToNonAppearance;
+				folderToSave = Properties.Settings.Default.FolderToSaveNonAppearance;
+
+			} else if (reportName.Equals(ReportsInfo.Type.VIP_MSSU.ToString())) {
+				reportToCreate = ReportsInfo.Type.VIP_MSSU;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "12");
+				templateFileName = Properties.Settings.Default.TemplateVIP;
+				mailTo = Properties.Settings.Default.MailToVIP_MSSU;
+				previousFile = Properties.Settings.Default.PreviousFileVIP_MSSU;
+
+			} else if (reportName.Equals(ReportsInfo.Type.VIP_Moscow.ToString())) {
+				reportToCreate = ReportsInfo.Type.VIP_Moscow;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1,5,12,6");
+				templateFileName = Properties.Settings.Default.TemplateVIP;
+				mailTo = Properties.Settings.Default.MailToVIP_Moscow;
+				previousFile = Properties.Settings.Default.PreviousFileVIP_Moscow;
+
+			} else if (reportName.Equals(ReportsInfo.Type.VIP_MSKM.ToString())) {
+				reportToCreate = ReportsInfo.Type.VIP_MSKM;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1");
+				templateFileName = Properties.Settings.Default.TemplateVIP;
+				mailTo = Properties.Settings.Default.MailToVIP_MSKM;
+				previousFile = Properties.Settings.Default.PreviousFileVIP_MSKM;
+
+			} else if (reportName.Equals(ReportsInfo.Type.VIP_PND.ToString())) {
+				reportToCreate = ReportsInfo.Type.VIP_PND;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "6");
+				templateFileName = Properties.Settings.Default.TemplateVIP;
+				mailTo = Properties.Settings.Default.MailToVIP_PND;
+				previousFile = Properties.Settings.Default.PreviousFileVIP_PND;
+
+			} else if (reportName.Equals(ReportsInfo.Type.RegistryMarks.ToString())) {
+				reportToCreate = ReportsInfo.Type.RegistryMarks;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetRegistryMarks;
+				templateFileName = Properties.Settings.Default.TemplateRegistryMarks;
+				mailTo = Properties.Settings.Default.MailToRegistryMarks;
+
+			} else if (reportName.Equals(ReportsInfo.Type.Workload.ToString())) {
+				reportToCreate = ReportsInfo.Type.Workload;
+				templateFileName = Properties.Settings.Default.TemplateWorkload;
+				mailTo = Properties.Settings.Default.MailToWorkload;
+				folderToSave = Properties.Settings.Default.FolderToSaveWorkload;
+
+			} else if (reportName.Equals(ReportsInfo.Type.Robocalls.ToString())) {
+				reportToCreate = ReportsInfo.Type.Robocalls;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetRobocalls;
+				templateFileName = Properties.Settings.Default.TemplateRobocalls;
+				mailTo = Properties.Settings.Default.MailToRobocalls;
+
+			} else if (reportName.Equals(ReportsInfo.Type.UniqueServices.ToString())) {
+				reportToCreate = ReportsInfo.Type.UniqueServices;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServices;
+				templateFileName = Properties.Settings.Default.TemplateUniqueServices;
+				mailTo = Properties.Settings.Default.MailToUniqueServices;
+
+			} else if (reportName.Equals(ReportsInfo.Type.UniqueServicesRegions.ToString())) {
+				reportToCreate = ReportsInfo.Type.UniqueServicesRegions;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServicesRegions;
+				templateFileName = Properties.Settings.Default.TemplateUniqueServicesRegions;
+				mailTo = Properties.Settings.Default.MailToUniqueServicesRegions;
+
+			} else if (reportName.Equals(ReportsInfo.Type.PriceListToSite.ToString())) {
+				reportToCreate = ReportsInfo.Type.PriceListToSite;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetPriceListToSite;
+				templateFileName = Properties.Settings.Default.TemplatePriceListToSite;
+				mailTo = Properties.Settings.Default.MailToPriceListToSite;
+				folderToSave = Properties.Settings.Default.FolderToSavePriceListToSite;
+
+			} else if (reportName.Equals(ReportsInfo.Type.GBooking.ToString())) {
+				reportToCreate = ReportsInfo.Type.GBooking;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetGBooking;
+				templateFileName = Properties.Settings.Default.TemplateGBooking;
+				mailTo = Properties.Settings.Default.MailToGBooking;
+
+			} else
+				return false;
+
+			return true;
+		}
+
+		private static void LoadData(FirebirdClient firebirdClient) {
+			dateBeginOriginal = dateBeginReport;
 			dateBeginReport = dateBeginReport.Value.AddDays((-1 * dateBeginReport.Value.Day) + 1);
 
-			string dateBeginStr = dateBeginOriginal.Value.ToShortDateString();
-            string dateEndStr = dateEndReport.Value.ToShortDateString();
-            string subject = AcceptedParameters[reportToCreate] + " с " + dateBeginStr + " по " + dateEndStr;
-            Logging.ToLog(subject);
+			dateBeginStr = dateBeginOriginal.Value.ToShortDateString();
+			dateEndStr = dateEndReport.Value.ToShortDateString();
+			subject = ReportsInfo.AcceptedParameters[reportToCreate] + " с " + dateBeginStr + " по " + dateEndStr;
+			Logging.ToLog(subject);
 
-            if (reportToCreate == ReportType.RegistryMarks)
-                dateBeginStr = "01.09.2018";
+			if (reportToCreate == ReportsInfo.Type.RegistryMarks)
+				dateBeginStr = "01.09.2018";
 
-			DataTable dataTable = null;
-			DataTable dataTableWorkLoadA6 = null;
-			DataTable dataTableWorkloadA11_10 = null;
-			DataTable dataTableUniqueServiceTotal = null;
-			DataTable dataTableUniqueServiceLab = null;
-			DataTable dataTableUniqueServiceLabTotal = null;
-
-			if (reportToCreate == ReportType.MESUsage) {
+			if (reportToCreate == ReportsInfo.Type.MESUsage) {
 				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + dateBeginReport.Value.ToShortDateString() + " по " + dateEndStr);
 				for (int i = 0; dateBeginReport.Value.AddDays(i) <= dateEndReport; i++) {
 					string dayToGetData = dateBeginReport.Value.AddDays(i).ToShortDateString();
 					Logging.ToLog("Получение данных за день: " + dayToGetData);
 
-					Dictionary<string, object> parameters = new Dictionary<string, object>() {
+					Dictionary<string, object> parametersMes = new Dictionary<string, object>() {
 						{ "@dateBegin", dayToGetData },
 						{ "@dateEnd", dayToGetData }
 					};
-					
-					DataTable dataTablePart = firebirdClient.GetDataTable(sqlQuery, parameters);
 
-					if (dataTable == null) {
-						dataTable = dataTablePart;
-					} else {
-						dataTable.Merge(dataTablePart);
-					}
-				}
-			} else {
-				Dictionary<string, object> parameters = new Dictionary<string, object>() {
-					{ "@dateBegin", dateBeginStr },
-					{ "@dateEnd", dateEndStr }
-				};
+					DataTable dataTablePart = firebirdClient.GetDataTable(sqlQuery, parametersMes);
 
-				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + dateBeginStr + " по " + dateEndStr);
-
-				if (reportToCreate == ReportType.Workload) {
-					parameters = new Dictionary<string, object>();
-
-					string queryA6 = Path.Combine(AssemblyDirectory, Properties.Settings.Default.QueryWorkloadA6);
-					string queryA8_2 = Path.Combine(AssemblyDirectory, Properties.Settings.Default.QueryWorkloadA8_2);
-					string queryA11_10 = Path.Combine(AssemblyDirectory, Properties.Settings.Default.QueryWorkloadA11_10);
-
-					if (File.Exists(queryA6) && File.Exists(queryA8_2) && File.Exists(queryA11_10)) {
-						try {
-							queryA6 = File.ReadAllText(queryA6).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
-							queryA8_2 = File.ReadAllText(queryA8_2).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
-							queryA11_10 = File.ReadAllText(queryA11_10).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
-
-							dataTable = firebirdClient.GetDataTable(queryA8_2, parameters);
-							dataTableWorkLoadA6 = firebirdClient.GetDataTable(queryA6, parameters);
-							Logging.ToLog("Получено строк A6: " + dataTableWorkLoadA6.Rows.Count);
-							dataTableWorkloadA11_10 = firebirdClient.GetDataTable(queryA11_10, parameters);
-							Logging.ToLog("Получено строк A11_10: " + dataTableWorkloadA11_10.Rows.Count);
-						} catch (Exception e) {
-							Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
-						}
-					}
-				} else
-					dataTable = firebirdClient.GetDataTable(sqlQuery, parameters);
-
-				if (reportToCreate == ReportType.UniqueServices) {
-					string sqlQueryUniqueServiceLab = Properties.Settings.Default.MisDbSqlGetUniqueServicesLab;
-					dataTableUniqueServiceLab = firebirdClient.GetDataTable(sqlQueryUniqueServiceLab, parameters);
-
-					Dictionary<string, object> parametersTotal = new Dictionary<string, object>() {
-						{"@dateBegin",  DateTime.Parse("01.01." + dateEndReport.Value.ToString("yyyy")).ToShortDateString() },
-						{"@dateEnd", dateEndStr }
-					};
-
-					dataTableUniqueServiceTotal = firebirdClient.GetDataTable(sqlQuery, parametersTotal);
-					dataTableUniqueServiceLabTotal = firebirdClient.GetDataTable(sqlQueryUniqueServiceLab, parametersTotal);
+					if (dataTableMainData == null)
+						dataTableMainData = dataTablePart;
+					else
+						dataTableMainData.Merge(dataTablePart);
 				}
 
+				return;
 			}
 
-			Logging.ToLog("Получено строк: " + dataTable.Rows.Count);
-
-			string fileResult = string.Empty;
-			string mailCopy = Properties.Settings.Default.MailCopy;
-			bool hasError = false;
-			string body;
-
-			Dictionary<string, string> workloadResultFiles = new Dictionary<string, string> {
-				{ "_Общий", string.Empty },
-				{ "Казань", string.Empty },
-				{ "Красн", string.Empty },
-				{ "К-УРАЛ", string.Empty },
-				{ "МДМ", string.Empty },
-				{ "М-СРЕТ", string.Empty },
-				{ "Сочи", string.Empty },
-				{ "С-Пб", string.Empty },
-				{ "СУЩ", string.Empty },
-				{ "Уфа", string.Empty }
+			Dictionary<string, object> parameters = new Dictionary<string, object>() {
+				{ "@dateBegin", dateBeginStr },
+				{ "@dateEnd", dateEndStr }
 			};
 
-			if (dataTable.Rows.Count > 0 ||
+			Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + dateBeginStr + " по " + dateEndStr);
+
+			if (reportToCreate == ReportsInfo.Type.Workload) {
+				parameters = new Dictionary<string, object>();
+
+				string queryA6 = Path.Combine(AssemblyDirectory, Properties.Settings.Default.QueryWorkloadA6);
+				string queryA8_2 = Path.Combine(AssemblyDirectory, Properties.Settings.Default.QueryWorkloadA8_2);
+				string queryA11_10 = Path.Combine(AssemblyDirectory, Properties.Settings.Default.QueryWorkloadA11_10);
+
+				if (File.Exists(queryA6) && File.Exists(queryA8_2) && File.Exists(queryA11_10)) {
+					try {
+						queryA6 = File.ReadAllText(queryA6).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
+						queryA8_2 = File.ReadAllText(queryA8_2).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
+						queryA11_10 = File.ReadAllText(queryA11_10).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
+
+						dataTableMainData = firebirdClient.GetDataTable(queryA8_2, parameters);
+						dataTableWorkLoadA6 = firebirdClient.GetDataTable(queryA6, parameters);
+						Logging.ToLog("Получено строк A6: " + dataTableWorkLoadA6.Rows.Count);
+						dataTableWorkloadA11_10 = firebirdClient.GetDataTable(queryA11_10, parameters);
+						Logging.ToLog("Получено строк A11_10: " + dataTableWorkloadA11_10.Rows.Count);
+					} catch (Exception e) {
+						Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+					}
+				}
+
+				return;
+			}
+
+			if (reportToCreate == ReportsInfo.Type.UniqueServices ||
+				reportToCreate == ReportsInfo.Type.UniqueServicesRegions) {
+				string sqlQueryUniqueServiceLab = Properties.Settings.Default.MisDbSqlGetUniqueServicesLab;
+
+				if (reportToCreate == ReportsInfo.Type.UniqueServicesRegions)
+					sqlQueryUniqueServiceLab = Properties.Settings.Default.MisDbSqlGetUniqueServicesRegionsLab;
+
+				dataTableUniqueServiceLab = firebirdClient.GetDataTable(sqlQueryUniqueServiceLab, parameters);
+
+				Dictionary<string, object> parametersTotal = new Dictionary<string, object>() {
+					{"@dateBegin",  DateTime.Parse("01.01." + dateEndReport.Value.ToString("yyyy")).ToShortDateString() },
+					{"@dateEnd", dateEndStr }
+				};
+
+				dataTableUniqueServiceTotal = firebirdClient.GetDataTable(sqlQuery, parametersTotal);
+				dataTableUniqueServiceLabTotal = firebirdClient.GetDataTable(sqlQueryUniqueServiceLab, parametersTotal);
+			}
+
+			dataTableMainData = firebirdClient.GetDataTable(sqlQuery, parameters);
+
+			if (reportToCreate == ReportsInfo.Type.PriceListToSite) {
+				if (!Directory.Exists(folderToSave)) {
+					Logging.ToLog("Не удается получить доступ к папке: " + folderToSave);
+					return;
+				}
+
+				string priceListToSiteSettingFile = "_Параметры обработки.xlsx";
+				string priceListToSiteSettingFilePath = Path.Combine(folderToSave, priceListToSiteSettingFile);
+				if (!File.Exists(priceListToSiteSettingFilePath)) {
+					Logging.ToLog("Не удается получить доступ к файлу с настройками: " + priceListToSiteSettingFilePath);
+					return;
+				}
+
+				string sheetNameExclusions = "Исключения";
+				string sheetNameGrouping = "Группировки";
+				string sheetNamePriorities = "Приоритеты";
+
+				Logging.ToLog("Считывание настроек из файла: " + priceListToSiteSettingFilePath);
+
+				try {
+					DataTable dataTablePriceExclusions = ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNameExclusions);
+					Logging.ToLog("Считано строк: " + dataTablePriceExclusions.Rows.Count);
+					DataTable dataTablePriceGrouping = ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNameGrouping);
+					Logging.ToLog("Считано строк: " + dataTablePriceGrouping.Rows.Count);
+					DataTable dataTablePricePriorities = ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNamePriorities);
+					Logging.ToLog("Считано строк: " + dataTablePricePriorities.Rows.Count);
+
+					dataTableMainData = ExcelHandlers.PriceListToSite.PerformData(
+						dataTableMainData, dataTablePriceExclusions, dataTablePriceGrouping, dataTablePricePriorities);
+				} catch (Exception e) {
+					Logging.ToLog(e.StackTrace + Environment.NewLine + e.StackTrace);
+					return;
+				}
+			}
+		}
+
+		private static void WriteDataToFile() {
+			if (dataTableMainData.Rows.Count > 0 ||
 				reportToCreate.ToString().StartsWith("VIP_")) {
 				Logging.ToLog("Запись данных в файл Excel");
 
-				if (reportToCreate == ReportType.FreeCellsDay ||
-					reportToCreate == ReportType.FreeCellsWeek) {
-					DataColumn dataColumn = dataTable.Columns.Add("SortingOrder", typeof(int));
+				if (reportToCreate == ReportsInfo.Type.FreeCellsDay ||
+					reportToCreate == ReportsInfo.Type.FreeCellsWeek) {
+					DataColumn dataColumn = dataTableMainData.Columns.Add("SortingOrder", typeof(int));
 					dataColumn.SetOrdinal(0);
 
-					foreach (DataRow dataRow in dataTable.Rows) {
+					foreach (DataRow dataRow in dataTableMainData.Rows) {
 						int order = 99;
 
 						switch (dataRow["SHORTNAME"].ToString().ToUpper()) {
@@ -374,28 +460,27 @@ namespace MISReports {
 					}
 				}
 
-				if (reportToCreate == ReportType.MESUsage) {
-					Dictionary<string, ItemMESUsageTreatment> treatments = 
-						ParseMESUsageDataTableToTreatments(dataTable);
-					fileResult = NpoiExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments,
+				if (reportToCreate == ReportsInfo.Type.MESUsage) {
+					Dictionary<string, ItemMESUsageTreatment> treatments =
+						ParseMESUsageDataTableToTreatments(dataTableMainData);
+					fileResult = ExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments,
 																  subject,
 																  templateFileName);
 
-				} else if (reportToCreate == ReportType.TelemedicineOnlyIngosstrakh) {
-					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable,
+				} else if (reportToCreate == ReportsInfo.Type.TelemedicineOnlyIngosstrakh) {
+					fileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
 														 subject,
 														 templateFileName,
-														 true);
+														 type: reportToCreate);
 
-				} else if (reportToCreate == ReportType.Workload) {
+				} else if (reportToCreate == ReportsInfo.Type.Workload) {
 					for (int i = 0; i < workloadResultFiles.Count; i++) {
 						string key = workloadResultFiles.Keys.ElementAt(i);
 						Logging.ToLog("Филиал: " + key);
 
-						workloadResultFiles[key] = NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
+						workloadResultFiles[key] = ExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
 															 subject + " " + key,
 															 templateFileName,
-															 false,
 															 "Услуги Мет. 1",
 															 true,
 															 key);
@@ -403,79 +488,80 @@ namespace MISReports {
 						if (string.IsNullOrEmpty(workloadResultFiles[key]))
 							continue;
 
-						NpoiExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
+						ExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
 												subject,
 												workloadResultFiles[key],
-												false,
 												"Искл. услуги",
 												false,
 												key);
 
-						NpoiExcelGeneral.WriteDataTableToExcel(dataTable,
+						ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
 												subject,
 												workloadResultFiles[key],
-												false,
 												"Расчет",
 												false,
 												key);
 					}
 
-				} else if (reportToCreate == ReportType.Robocalls) {
-					fileResult = NpoiExcelGeneral.WriteDataTableToTextFile(dataTable,
+				} else if (reportToCreate == ReportsInfo.Type.Robocalls) {
+					fileResult = ExcelGeneral.WriteDataTableToTextFile(dataTableMainData,
 															subject,
 															templateFileName);
 
-				} else if (reportToCreate == ReportType.UniqueServices) {
-					fileResult = NpoiExcelGeneral.PerformUniqueServices(dataTable,
+				} else if (reportToCreate == ReportsInfo.Type.UniqueServices ||
+					reportToCreate == ReportsInfo.Type.UniqueServicesRegions) {
+					fileResult = ExcelHandlers.UniqueServices.Process(dataTableMainData,
 														 dataTableUniqueServiceTotal,
 														 dataTableUniqueServiceLab,
 														 dataTableUniqueServiceLabTotal,
 														 subject,
 														 templateFileName,
-														 dateBeginStr + " - " + dateEndStr);
+														 dateBeginStr + " - " + dateEndStr,
+														 reportToCreate);
 
 				} else {
-					fileResult = NpoiExcelGeneral.WriteDataTableToExcel(dataTable,
+					fileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
 														 subject,
-														 templateFileName);
+														 templateFileName,
+														 type: reportToCreate);
 				}
 
-				if (File.Exists(fileResult) || reportToCreate == ReportType.Workload) {
+				if (File.Exists(fileResult) || reportToCreate == ReportsInfo.Type.Workload) {
 					bool isPostProcessingOk = true;
 
 					switch (reportToCreate) {
-						case ReportType.FreeCellsDay:
-						case ReportType.FreeCellsWeek:
-							isPostProcessingOk = NpoiExcelGeneral.PerformFreeCells(fileResult, dateBeginOriginal.Value, dateEndReport.Value);
+						case ReportsInfo.Type.FreeCellsDay:
+						case ReportsInfo.Type.FreeCellsWeek:
+							isPostProcessingOk = ExcelHandlers.FreeCells.Process(fileResult, dateBeginOriginal.Value, dateEndReport.Value);
 							break;
-						case ReportType.UnclosedProtocolsWeek:
-						case ReportType.UnclosedProtocolsMonth:
-							isPostProcessingOk = NpoiExcelGeneral.PerformUnclosedProtocols(fileResult);
+						case ReportsInfo.Type.UnclosedProtocolsWeek:
+						case ReportsInfo.Type.UnclosedProtocolsMonth:
+							isPostProcessingOk = ExcelHandlers.UnclosedProtocols.Process(fileResult);
 							break;
-						case ReportType.MESUsage:
-							isPostProcessingOk = NpoiExcelGeneral.PerformMesUsage(fileResult);
+						case ReportsInfo.Type.MESUsage:
+							isPostProcessingOk = ExcelHandlers.MesUsage.Process(fileResult);
 							break;
-						case ReportType.OnlineAccountsUsage:
-							isPostProcessingOk = NpoiExcelGeneral.PerformOnlineAccountsUsage(fileResult);
+						case ReportsInfo.Type.OnlineAccountsUsage:
+							isPostProcessingOk = ExcelHandlers.OnlineAccounts.Process(fileResult);
 							break;
-						case ReportType.TelemedicineOnlyIngosstrakh:
-						case ReportType.TelemedicineAll:
-							isPostProcessingOk = NpoiExcelGeneral.PerformTelemedicine(fileResult);
+						case ReportsInfo.Type.TelemedicineOnlyIngosstrakh:
+						case ReportsInfo.Type.TelemedicineAll:
+							isPostProcessingOk = ExcelHandlers.Telemedicine.Process(fileResult);
 							break;
-						case ReportType.NonAppearance:
-							isPostProcessingOk = NpoiExcelGeneral.PerformNonAppearance(fileResult, dataTable);
+						case ReportsInfo.Type.NonAppearance:
+							isPostProcessingOk = ExcelHandlers.NonAppearance.Process(fileResult, dataTableMainData);
 							break;
-						case ReportType.VIP_MSSU:
-						case ReportType.VIP_Moscow:
-						case ReportType.VIP_MSKM:
-						case ReportType.VIP_PND:
-							isPostProcessingOk = NpoiExcelGeneral.PerformVIP(fileResult, previousFile);
+						case ReportsInfo.Type.VIP_MSSU:
+						case ReportsInfo.Type.VIP_Moscow:
+						case ReportsInfo.Type.VIP_MSKM:
+						case ReportsInfo.Type.VIP_PND:
+							isPostProcessingOk = ExcelHandlers.VIP.Process(fileResult, previousFile);
 							break;
-						case ReportType.RegistryMarks:
-							isPostProcessingOk = NpoiExcelGeneral.PerformRegistryMarks(
-								fileResult, dataTable, dateBeginOriginal.Value);
+						case ReportsInfo.Type.RegistryMarks:
+							isPostProcessingOk = ExcelHandlers.RegistryMarks.Process(
+								fileResult, dataTableMainData, dateBeginOriginal.Value);
 							break;
-						case ReportType.Workload:
+						case ReportsInfo.Type.Workload:
 							bool isAllOk = true;
 							Logging.ToLog("Пост-обработка");
 							foreach (string currentFileResult in workloadResultFiles.Values) {
@@ -484,11 +570,17 @@ namespace MISReports {
 								if (string.IsNullOrEmpty(currentFileResult))
 									continue;
 
-								if (!NpoiExcelGeneral.PerformWorkload(currentFileResult))
+								if (!ExcelHandlers.Workload.Process(currentFileResult))
 									isAllOk = false;
 							}
-							
+
 							isPostProcessingOk = isAllOk;
+							break;
+						case ReportsInfo.Type.GBooking:
+							isPostProcessingOk = ExcelHandlers.GBooking.Process(fileResult);
+							break;
+						case ReportsInfo.Type.PriceListToSite:
+							isPostProcessingOk = ExcelHandlers.PriceListToSite.Process(fileResult);
 							break;
 						default:
 							break;
@@ -496,7 +588,7 @@ namespace MISReports {
 
 					if (isPostProcessingOk) {
 						body = "Отчет во вложении";
-						Logging.ToLog("Данные сохранены в файл: " + (reportToCreate == ReportType.Workload ?
+						Logging.ToLog("Данные сохранены в файл: " + (reportToCreate == ReportsInfo.Type.Workload ?
 							string.Join("; ", workloadResultFiles.Values) :
 							fileResult));
 					} else {
@@ -511,77 +603,68 @@ namespace MISReports {
 				body = "Отсутствуют данные за период " + dateBeginReport + "-" + dateEndReport;
 				hasError = true;
 			}
+		}
 
-			if (hasError) {
-				Logging.ToLog(body);
-				mailTo = mailCopy;
-				fileResult = string.Empty;
-			}
-			
-			firebirdClient.Close();
-
-			switch (reportToCreate) {
-				case ReportType.VIP_MSSU:
-					Properties.Settings.Default.PreviousFileVIP_MSSU = fileResult;
-					break;
-				case ReportType.VIP_Moscow:
-					Properties.Settings.Default.PreviousFileVIP_Moscow = fileResult;
-					break;
-				case ReportType.VIP_MSKM:
-					Properties.Settings.Default.PreviousFileVIP_MSKM = fileResult;
-					break;
-				case ReportType.VIP_PND:
-					Properties.Settings.Default.PreviousFileVIP_PND = fileResult;
-					break;
-				default:
-					break;
-			}
-
-			if (!string.IsNullOrEmpty(folderToSave)) {
-				try {
-					if (reportToCreate == ReportType.Workload) {
-						Logging.ToLog("Сохранение отчетов в сетевую папку");
-						body = "Отчеты сохранены в папку:<br>" + "<a href=\"" + folderToSave + "\">" + folderToSave + "</a><br><br>";
-						foreach (KeyValuePair<string, string> pair in workloadResultFiles) {
-							Logging.ToLog("Филиал: " + pair.Key);
-							if (string.IsNullOrEmpty(pair.Value)) {
-								body += pair.Key + ": Нет данных / ошибки обработки<br><br>";
-								continue;
-							}
-
-							body += pair.Key + ": <br>" +
-								SaveFileToNetworkFolder(pair.Value, Path.Combine(folderToSave, pair.Key)) +
-								"<br><br>";
+		private static void SaveReportToFolder() {
+			try {
+				if (reportToCreate == ReportsInfo.Type.Workload) {
+					Logging.ToLog("Сохранение отчетов в сетевую папку");
+					body = "Отчеты сохранены в папку:<br>" + "<a href=\"" + folderToSave + "\">" + folderToSave + "</a><br><br>";
+					foreach (KeyValuePair<string, string> pair in workloadResultFiles) {
+						Logging.ToLog("Филиал: " + pair.Key);
+						if (string.IsNullOrEmpty(pair.Value)) {
+							body += pair.Key + ": Нет данных / ошибки обработки<br><br>";
+							continue;
 						}
-					} else {
-						body = "Файл с отчетом сохранен по адресу: " + Environment.NewLine +
-							SaveFileToNetworkFolder(fileResult, folderToSave);
-					}
-				} catch (Exception e) {
-					Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
-					body = "Не удалось сохранить отчет в папку " + folderToSave +
-						Environment.NewLine + e.Message + Environment.NewLine + e.StackTrace;
-					mailTo = mailCopy;
-				}
 
-				fileResult = string.Empty;
+						body += pair.Key + ": <br>" +
+							SaveFileToNetworkFolder(pair.Value, Path.Combine(folderToSave, pair.Key)) +
+							"<br><br>";
+					}
+				} else {
+					body = "Файл с отчетом сохранен по адресу: " + Environment.NewLine +
+						SaveFileToNetworkFolder(fileResult, folderToSave);
+				}
+			} catch (Exception e) {
+				Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
+				body = "Не удалось сохранить отчет в папку " + folderToSave +
+					Environment.NewLine + e.Message + Environment.NewLine + e.StackTrace;
+				mailTo = mailCopy;
 			}
 
-			Properties.Settings.Default.Save();
-
-			if (Debugger.IsAttached)
-				return;
-
-			SystemMail.SendMail(subject, body, mailTo, fileResult);
-			Logging.ToLog("Завершение работы");
+			fileResult = string.Empty;
 		}
 
 		public static string SaveFileToNetworkFolder(string localFile, string folderToSave) {
 			string fileName = Path.GetFileName(localFile);
 			string destFile = Path.Combine(folderToSave, fileName);
 			File.Copy(localFile, destFile, true);
-			return "<a href=\"" + destFile + "\">" + destFile + "</a>";
+			return "<a href=\"" + folderToSave + "\">" + folderToSave + "</a>";
 		}
+
+		private static void SaveSettings() {
+			switch (reportToCreate) {
+				case ReportsInfo.Type.VIP_MSSU:
+					Properties.Settings.Default.PreviousFileVIP_MSSU = fileResult;
+					break;
+				case ReportsInfo.Type.VIP_Moscow:
+					Properties.Settings.Default.PreviousFileVIP_Moscow = fileResult;
+					break;
+				case ReportsInfo.Type.VIP_MSKM:
+					Properties.Settings.Default.PreviousFileVIP_MSKM = fileResult;
+					break;
+				case ReportsInfo.Type.VIP_PND:
+					Properties.Settings.Default.PreviousFileVIP_PND = fileResult;
+					break;
+				default:
+					break;
+			}
+
+			Properties.Settings.Default.Save();
+		}
+
+
+
 
 		public static Dictionary<string, ItemMESUsageTreatment> ParseMESUsageDataTableToTreatments(DataTable dataTable) {
 			Dictionary<string, ItemMESUsageTreatment> treatments = new Dictionary<string, ItemMESUsageTreatment>();
@@ -624,9 +707,9 @@ namespace MISReports {
 							AGNAME = row["AGNAME"].ToString(),
 							AGNUM = row["AGNUM"].ToString(),
 							SERVICE_TYPE = row["LISTALLSERVICES"].ToString().ToUpper().Contains("ПЕРВИЧНЫЙ") ? "Первичный" : "Повторный",
-							PAYMENT_TYPE = string.IsNullOrEmpty(row["GRNAME"].ToString()) ? "Страховая компания \\ Безнал" : "Наличный расчет" 
+							PAYMENT_TYPE = string.IsNullOrEmpty(row["GRNAME"].ToString()) ? "Страховая компания \\ Безнал" : "Наличный расчет"
 						};
-						
+
 						if (string.IsNullOrEmpty(mid))
 							treatment.ListReferralsFromDoc.AddRange(arrayReferrals);
 						else
@@ -645,7 +728,7 @@ namespace MISReports {
 		}
 
 		private static Dictionary<string, ItemMESUsageTreatment.ReferralDetails> ParseAllReferrals(string[] valuesArray) {
-			Dictionary<string, ItemMESUsageTreatment.ReferralDetails> keyValuePairs = 
+			Dictionary<string, ItemMESUsageTreatment.ReferralDetails> keyValuePairs =
 				new Dictionary<string, ItemMESUsageTreatment.ReferralDetails>();
 
 			foreach (string item in valuesArray) {
@@ -703,17 +786,5 @@ namespace MISReports {
 			return keyValuePairs;
 		}
 
-		private static void WriteOutAcceptedParameters() {
-			string message = Environment.NewLine + "Формат указания параметров:" + Environment.NewLine +
-				"НазваниеОтчета СмещениеДатаНачала СмещениеДатаОкончания (пример: 'FreeCells 0 6')" + Environment.NewLine +
-				"НазваниеОтчета ДатаНачала ДатаОкончания (пример: 'FreeCells 01.01.2018 31.01.2018')" +
-				"НазваниеОтчета PreviousMonth (пример: 'FreeCells PreviousMonth' - отчет за предыдущий месяц)" +
-				Environment.NewLine + Environment.NewLine +
-				"Варианты отчетов:" + Environment.NewLine;
-			foreach (KeyValuePair<ReportType, string> pair in AcceptedParameters)
-				message += pair.Key + " (" + pair.Value + ")" + Environment.NewLine;
-
-			Logging.ToLog(message);
-		}
 	}
 }
