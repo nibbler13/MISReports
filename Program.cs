@@ -282,6 +282,19 @@ namespace MISReports {
 				templateFileName = Properties.Settings.Default.TemplateGBooking;
 				mailTo = Properties.Settings.Default.MailToGBooking;
 
+			} else if (reportName.Equals(ReportsInfo.Type.PersonalAccountSchedule.ToString())) {
+				reportToCreate = ReportsInfo.Type.PersonalAccountSchedule;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetPersonalAccountSchedule;
+				templateFileName = Properties.Settings.Default.TemplatePersonalAccountSchedule;
+				mailTo = Properties.Settings.Default.MailToPersonalAccountSchedule;
+
+			} else if (reportName.Equals(ReportsInfo.Type.ProtocolViewCDBSyncEvent.ToString())) {
+				reportToCreate = ReportsInfo.Type.ProtocolViewCDBSyncEvent;
+				sqlQuery = Properties.Settings.Default.MisDbSqlGetProtocolViewCDBSyncEvent;
+				templateFileName = Properties.Settings.Default.TemplateProtocolViewCDBSyncEvent;
+				mailTo = Properties.Settings.Default.MailToProtocolViewCDBSyncEvent;
+				folderToSave = Properties.Settings.Default.FolderToSaveProtocolViewCDBSyncEvent;
+
 			} else
 				return false;
 
@@ -395,11 +408,11 @@ namespace MISReports {
 				Logging.ToLog("Считывание настроек из файла: " + priceListToSiteSettingFilePath);
 
 				try {
-					DataTable dataTablePriceExclusions = ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNameExclusions);
+					DataTable dataTablePriceExclusions = ExcelHandlers.ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNameExclusions);
 					Logging.ToLog("Считано строк: " + dataTablePriceExclusions.Rows.Count);
-					DataTable dataTablePriceGrouping = ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNameGrouping);
+					DataTable dataTablePriceGrouping = ExcelHandlers.ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNameGrouping);
 					Logging.ToLog("Считано строк: " + dataTablePriceGrouping.Rows.Count);
-					DataTable dataTablePricePriorities = ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNamePriorities);
+					DataTable dataTablePricePriorities = ExcelHandlers.ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNamePriorities);
 					Logging.ToLog("Считано строк: " + dataTablePricePriorities.Rows.Count);
 
 					dataTableMainData = ExcelHandlers.PriceListToSite.PerformData(
@@ -463,12 +476,12 @@ namespace MISReports {
 				if (reportToCreate == ReportsInfo.Type.MESUsage) {
 					Dictionary<string, ItemMESUsageTreatment> treatments =
 						ParseMESUsageDataTableToTreatments(dataTableMainData);
-					fileResult = ExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments,
+					fileResult = ExcelHandlers.ExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments,
 																  subject,
 																  templateFileName);
 
 				} else if (reportToCreate == ReportsInfo.Type.TelemedicineOnlyIngosstrakh) {
-					fileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
+					fileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
 														 subject,
 														 templateFileName,
 														 type: reportToCreate);
@@ -478,7 +491,7 @@ namespace MISReports {
 						string key = workloadResultFiles.Keys.ElementAt(i);
 						Logging.ToLog("Филиал: " + key);
 
-						workloadResultFiles[key] = ExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
+						workloadResultFiles[key] = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
 															 subject + " " + key,
 															 templateFileName,
 															 "Услуги Мет. 1",
@@ -488,14 +501,14 @@ namespace MISReports {
 						if (string.IsNullOrEmpty(workloadResultFiles[key]))
 							continue;
 
-						ExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
+						ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
 												subject,
 												workloadResultFiles[key],
 												"Искл. услуги",
 												false,
 												key);
 
-						ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
+						ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
 												subject,
 												workloadResultFiles[key],
 												"Расчет",
@@ -504,7 +517,7 @@ namespace MISReports {
 					}
 
 				} else if (reportToCreate == ReportsInfo.Type.Robocalls) {
-					fileResult = ExcelGeneral.WriteDataTableToTextFile(dataTableMainData,
+					fileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToTextFile(dataTableMainData,
 															subject,
 															templateFileName);
 
@@ -520,7 +533,7 @@ namespace MISReports {
 														 reportToCreate);
 
 				} else {
-					fileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
+					fileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
 														 subject,
 														 templateFileName,
 														 type: reportToCreate);
@@ -576,11 +589,13 @@ namespace MISReports {
 
 							isPostProcessingOk = isAllOk;
 							break;
-						case ReportsInfo.Type.GBooking:
-							isPostProcessingOk = ExcelHandlers.GBooking.Process(fileResult);
-							break;
 						case ReportsInfo.Type.PriceListToSite:
 							isPostProcessingOk = ExcelHandlers.PriceListToSite.Process(fileResult);
+							break;
+						case ReportsInfo.Type.GBooking:
+						case ReportsInfo.Type.PersonalAccountSchedule:
+						case ReportsInfo.Type.ProtocolViewCDBSyncEvent:
+							isPostProcessingOk = ExcelHandlers.ExcelGeneral.CopyFormatting(fileResult);
 							break;
 						default:
 							break;

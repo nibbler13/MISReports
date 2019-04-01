@@ -64,7 +64,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExcelHandlers\FreeCells.cs" />
-    <Compile Include="ExcelHandlers\GBooking.cs" />
     <Compile Include="ExcelHandlers\MesUsage.cs" />
     <Compile Include="ExcelHandlers\NonAppearance.cs" />
     <Compile Include="ExcelHandlers\OnlineAccounts.cs" />

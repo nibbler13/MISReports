@@ -23,7 +23,7 @@ namespace MISReports.ExcelHandlers {
 				ws.Range["B2"].Select();
 				xlApp.ActiveCell.FormulaR1C1 = "=IF(RC[-1]=R[1]C[-1],0,1)";
 				xlApp.Selection.AutoFill(ws.Range["B2:B" + usedRows]);
-				ws.Columns["G:G"].Select();
+				ws.Columns["H:H"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
 			} catch (Exception e) {
 				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
@@ -103,17 +103,6 @@ namespace MISReports.ExcelHandlers {
 
 			wsPivote.Columns[2].ColumnWidth = 12;
 
-			/*
-			With ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE")
-				.Orientation = xlRowField
-				.Position = 2
-			End With
-			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE").Subtotals = _
-				Array(False, False, False, False, False, False, False, False, False, False, False, False)
-			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE").LayoutForm _
-				= xlTabular
-			 */
-
 			pivotTable.HasAutoFormat = false;
 			wb.ShowPivotTableFieldList = false;
 		}
@@ -147,22 +136,6 @@ namespace MISReports.ExcelHandlers {
 				new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
 			pivotTable.PivotFields("DCODE").LayoutForm = Excel.XlLayoutFormType.xlTabular;
 
-			/*
-			 With ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE")
-				.Orientation = xlRowField
-				.Position = 4
-			End With
-			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE").Subtotals = _
-				Array(False, False, False, False, False, False, False, False, False, False, False, False)
-			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("DCODE").LayoutForm _
-				= xlTabular
-			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("ФИО врача"). _
-				Subtotals = Array(False, False, False, False, False, False, False, False, False, False, _
-				False, False)
-			ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields("ФИО врача"). _
-				LayoutForm = xlTabular
-			 */
-
 			pivotTable.AddDataField(pivotTable.PivotFields("Уникальное лечение"), "Кол-во лечений", Excel.XlConsolidationFunction.xlSum);
 
 			pivotTable.CalculatedFields().Add("Всего протоколов", "='Протокол подписан' +'Протокол не подписан'", true);
@@ -182,12 +155,6 @@ namespace MISReports.ExcelHandlers {
 
 			pivotTable.PivotFields("Статус сотрудника").Orientation = Excel.XlPivotFieldOrientation.xlPageField;
 			pivotTable.PivotFields("Статус сотрудника").Position = 1;
-
-			//With ActiveSheet.PivotTables("WorkTimePivotTable").PivotFields( _
-			//	"Статус сотрудника")
-			//	.Orientation = xlPageField
-			//	.Position = 1
-			//End With
 
 			pivotTable.PivotFields("Подразделение").ShowDetail = false;
 			pivotTable.PivotFields("Филиал").ShowDetail = false;

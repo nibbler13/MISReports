@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using Excel = Microsoft.Office.Interop.Excel;
 
-namespace MISReports {
+namespace MISReports.ExcelHandlers {
 	class ExcelGeneral {
 		//============================ NPOI Excel ============================
 		private static bool CreateNewIWorkbook(string resultFilePrefix, string templateFileName,
@@ -148,6 +148,46 @@ namespace MISReports {
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
+		}
+
+		public static bool CopyFormatting(string resultFile) {
+			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb,
+				out Excel.Worksheet ws))
+				return false;
+
+			try {
+				int rowsUsed = ws.UsedRange.Rows.Count;
+				string lastColumn = GetExcelColumnName(ws.UsedRange.Columns.Count);
+
+				ws.Range["A2:" + lastColumn + "2"].Select();
+				xlApp.Selection.Copy();
+				ws.Range["A3:" + lastColumn + rowsUsed].Select();
+				xlApp.Selection.PasteSpecial(Excel.XlPasteType.xlPasteFormats);
+				ws.Rows["2:" + rowsUsed].Select();
+				xlApp.Selection.RowHeight = 15;
+
+				ws.Range["A1"].Select();
+			} catch (Exception e) {
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			SaveAndCloseWorkbook(xlApp, wb, ws);
+
+			return true;
+		}
+
+		private static string GetExcelColumnName(int columnNumber) {
+			int dividend = columnNumber;
+			string columnName = String.Empty;
+			int modulo;
+
+			while (dividend > 0) {
+				modulo = (dividend - 1) % 26;
+				columnName = Convert.ToChar(65 + modulo).ToString() + columnName;
+				dividend = (int)((dividend - modulo) / 26);
+			}
+
+			return columnName;
 		}
 
 

@@ -22,7 +22,7 @@ namespace MISReports.ExcelHandlers {
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ Ч:мм;@";
 				ws.Range["A1"].Select();
 				xlApp.Selection.AutoFilter();
-				ws.UsedRange.AutoFilter(3, ">" + dateTimeBegin.ToOADate(), Excel.XlAutoFilterOperator.xlAnd);
+				ws.UsedRange.AutoFilter(3, ">" + dateTimeBegin.Date.ToOADate(), Excel.XlAutoFilterOperator.xlAnd);
 				ws.UsedRange.AutoFilter(4, "Плохо");
 			} catch (Exception e) {
 				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);

@@ -26,7 +26,9 @@ namespace MISReports {
 			UniqueServices,
 			UniqueServicesRegions,
 			PriceListToSite,
-			GBooking
+			GBooking,
+			PersonalAccountSchedule,
+			ProtocolViewCDBSyncEvent
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -49,7 +51,9 @@ namespace MISReports {
 			{ Type.UniqueServices, "Отчет по уникальным услугам" },
 			{ Type.UniqueServicesRegions, "Отчет по уникальным услугам (регионы)" },
 			{ Type.PriceListToSite, "Прайс-лист для загрузки на сайт" },
-			{ Type.GBooking, "Информация для обзвона пациентов с GBooking" }
+			{ Type.GBooking, "Информация для обзвона пациентов с GBooking" },
+			{ Type.PersonalAccountSchedule, "Отчет по записям через личный кабинет" },
+			{ Type.ProtocolViewCDBSyncEvent, "Отчет по просмотрам ИБ и синхронизации с ЦБД" }
 		};
 	}
 }
