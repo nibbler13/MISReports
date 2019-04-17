@@ -1,0 +1,9 @@
+Select w.kodoper,s.sprice,p.filial,c.GRNAME from wschema w
+join schpricecontractor s on s.schid=w.schid
+join pricescontractor p on s.prid=p.prid
+join clgroup c on c.grcod=s.kateg
+where w.kodoper in (
+
+)
+
+and w.structid = 4 and p.filial=:Fil and c.grcod=14

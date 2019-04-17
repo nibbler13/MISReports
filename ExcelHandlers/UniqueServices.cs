@@ -47,7 +47,25 @@ namespace MISReports.ExcelHandlers {
 				{ "Ударно-волновая терапия", 16 }
 			};
 
-			if (reportType == ReportsInfo.Type.UniqueServicesRegions)
+			Dictionary<string, string> filialMapCurrent = new Dictionary<string, string> {
+				{ "МДМ", "G" },
+				{ "СУЩ", "H" },
+				{ "М-СРЕТ", "I" }
+			};
+
+			Dictionary<string, string> filialMapTotal = new Dictionary<string, string> {
+				{ "МДМ", "K" },
+				{ "СУЩ", "L" },
+				{ "М-СРЕТ", "M" }
+			};
+
+			Dictionary<string, string> filialMapPlan = new Dictionary<string, string> {
+				{ "МДМ", "C" },
+				{ "СУЩ", "D" },
+				{ "М-СРЕТ", "E" }
+			};
+
+			if (reportType == ReportsInfo.Type.UniqueServicesRegions) {
 				serviceMap = new Dictionary<string, int> {
 					{ "Имплантация (кол-во имплантов)", 7 },
 					{ "Протезирование: МК, включая коронки на имплантатах", 8 },
@@ -59,13 +77,6 @@ namespace MISReports.ExcelHandlers {
 					{ "Закрытые направления КДЛ за наличный расчет (кол-во шт.)", 14 }
 				};
 
-			Dictionary<string, string> filialMapCurrent = new Dictionary<string, string> {
-				{ "МДМ", "G" },
-				{ "СУЩ", "H" },
-				{ "М-СРЕТ", "I" }
-			};
-
-			if (reportType == ReportsInfo.Type.UniqueServicesRegions)
 				filialMapCurrent = new Dictionary<string, string> {
 					{ "С-Пб.", "J" },
 					{ "Уфа", "K" },
@@ -75,13 +86,6 @@ namespace MISReports.ExcelHandlers {
 					{ "Сочи", "O" }
 				};
 
-			Dictionary<string, string> filialMapTotal = new Dictionary<string, string> {
-				{ "МДМ", "K" },
-				{ "СУЩ", "L" },
-				{ "М-СРЕТ", "M" }
-			};
-
-			if (reportType == ReportsInfo.Type.UniqueServicesRegions)
 				filialMapTotal = new Dictionary<string, string> {
 					{ "С-Пб.", "Q" },
 					{ "Уфа", "R" },
@@ -91,10 +95,20 @@ namespace MISReports.ExcelHandlers {
 					{ "Сочи", "V" }
 				};
 
-			ParseAndWriteUniqueService(ws, dataTableCurrent, serviceMap, filialMapCurrent);
-			ParseAndWriteUniqueService(ws, dataTableLab, serviceMap, filialMapCurrent);
-			ParseAndWriteUniqueService(ws, dataTableTotal, serviceMap, filialMapTotal);
-			ParseAndWriteUniqueService(ws, dataTableLabTotal, serviceMap, filialMapTotal);
+				filialMapPlan = new Dictionary<string, string> {
+					{ "С-Пб.", "C" },
+					{ "Уфа", "D" },
+					{ "К-УРАЛ", "E" },
+					{ "Казань", "F" },
+					{ "Красн", "G" },
+					{ "Сочи", "H" }
+				};
+			}
+
+			ParseAndWriteUniqueService(ws, dataTableCurrent, serviceMap, filialMapCurrent, filialMapPlan);
+			ParseAndWriteUniqueService(ws, dataTableLab, serviceMap, filialMapCurrent, filialMapPlan);
+			ParseAndWriteUniqueService(ws, dataTableTotal, serviceMap, filialMapTotal, filialMapPlan);
+			ParseAndWriteUniqueService(ws, dataTableLabTotal, serviceMap, filialMapTotal, filialMapPlan);
 
 			ws.Range["A1"].Value2 = ((string)ws.Range["A1"].Value2).Replace("@period", period);
 
@@ -111,7 +125,8 @@ namespace MISReports.ExcelHandlers {
 		private static void ParseAndWriteUniqueService(Excel.Worksheet ws,
 										  DataTable services,
 										  Dictionary<string, int> serviceMap,
-										  Dictionary<string, string> filialMap) {
+										  Dictionary<string, string> filialMap,
+										  Dictionary<string, string> filialMapPlan) {
 			foreach (DataRow dataRow in services.Rows) {
 				try {
 					string filial = dataRow["SHORTNAME"].ToString().TrimStart(' ').TrimEnd(' ');
@@ -119,10 +134,15 @@ namespace MISReports.ExcelHandlers {
 					int scount = Convert.ToInt32(dataRow["SCOUNT"].ToString().TrimStart(' ').TrimEnd(' '));
 
 					if (!serviceMap.Keys.Contains(service) ||
-						!filialMap.Keys.Contains(filial)) {
+						!filialMap.Keys.Contains(filial) ||
+						!filialMapPlan.Keys.Contains(filial)) {
 						Logging.ToLog("Не удалось найти ключи для пары: " + filial + "|" + service);
 						continue;
 					}
+
+					var planValue = ws.Range[filialMapPlan[filial] + serviceMap[service]].Value2;
+					if (planValue == null || string.IsNullOrEmpty(planValue.ToString()))
+						continue;
 
 					ws.Range[filialMap[filial] + serviceMap[service]].Value2 = scount;
 				} catch (Exception e) {
