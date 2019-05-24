@@ -220,14 +220,16 @@ namespace MISReports.ExcelHandlers {
 			bool telemedicineOnlyIngosstrakh = false;
 
 			if (type.HasValue) {
-				if (type.Value == ReportsInfo.Type.PriceListToSite)
+				if (type.Value == ReportsInfo.Type.PriceListToSite || type.Value == ReportsInfo.Type.FssInfo)
 					rowNumber = 2;
 
 				if (type.Value == ReportsInfo.Type.TelemedicineOnlyIngosstrakh)
 					telemedicineOnlyIngosstrakh = true;
 			}
 
-			foreach (DataRow dataRow in dataTable.Rows) {
+            List<string> valuesToClearFssInfo = new List<string> { "0", "-1", ";", ";;", "01.01.0001 0:00:00" };
+
+            foreach (DataRow dataRow in dataTable.Rows) {
 				if (!string.IsNullOrEmpty(workloadFilial) && !workloadFilial.Equals("_Общий")) {
 					string currentRowFilial = dataRow[3].ToString();
 
@@ -257,17 +259,19 @@ namespace MISReports.ExcelHandlers {
 
 					string value = dataRow[column].ToString();
 
-					if (type.HasValue && type.Value == ReportsInfo.Type.PriceListToSite && (columnNumber == 4 || columnNumber == 7)) {
-						cell.SetCellValue(value);
-					} else {
-						if (double.TryParse(value, out double result)) {
-							cell.SetCellValue(result);
-						} else if (DateTime.TryParse(value, out DateTime date)) {
-							cell.SetCellValue(date);
-						} else {
-							cell.SetCellValue(value);
-						}
-					}
+                    if (type.HasValue && type.Value == ReportsInfo.Type.PriceListToSite && (columnNumber == 4 || columnNumber == 7)) {
+                        cell.SetCellValue(value);
+                    } else if (type.HasValue && type.Value == ReportsInfo.Type.FssInfo && valuesToClearFssInfo.Contains(value)) { 
+                        cell.SetCellValue(string.Empty);
+                    } else {
+                        if (double.TryParse(value, out double result)) {
+                            cell.SetCellValue(result);
+                        } else if (DateTime.TryParse(value, out DateTime date)) {
+                            cell.SetCellValue(date);
+                        } else {
+                            cell.SetCellValue(value);
+                        }
+                    }
 
 					columnNumber++;
 				}
@@ -534,5 +538,21 @@ namespace MISReports.ExcelHandlers {
 
 			return dataTable;
 		}
-	}
+
+
+        //=============================== MISC ================================
+        public static string ColumnIndexToColumnLetter(int colIndex) {
+            int div = colIndex;
+            string colLetter = String.Empty;
+            int mod = 0;
+
+            while (div > 0) {
+                mod = (div - 1) % 26;
+                colLetter = (char)(65 + mod) + colLetter;
+                div = (int)((div - mod) / 26);
+            }
+
+            return colLetter;
+        }
+    }
 }

@@ -69,7 +69,7 @@ namespace MISReports.ExcelHandlers {
 					string recordType = row["ИСТОЧНИК ЗАПИСИ"].ToString();
 					int recordsCount = Convert.ToInt32(row["PATIENTS_TOTAL"].ToString());
 					int nonAppearanceCount = Convert.ToInt32(row["MARKS_WITHOUT_TREATMENTS"].ToString()) +
-						Convert.ToInt32(row["WITHOUT_MARKS_WITHOUT_TREATMENTS"].ToString());
+						Convert.ToInt32(row["WOUT_MARKS_WITHOUT_TREATMENTS"].ToString());
 
 					if (!dict.ContainsKey(filial))
 						dict.Add(filial, new SortedDictionary<string, ItemNonAppearanceStatistic>());

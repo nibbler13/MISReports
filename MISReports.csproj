@@ -8,9 +8,10 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>MISReports</RootNamespace>
     <AssemblyName>MISReports</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -33,6 +34,9 @@
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationIcon>icon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>MISReports.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="FirebirdSql.Data.FirebirdClient, Version=6.4.0.0, Culture=neutral, PublicKeyToken=3750abcc3150b00c, processorArchitecture=MSIL">
@@ -64,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExcelHandlers\FreeCells.cs" />
+    <Compile Include="ExcelHandlers\FssInfo.cs" />
     <Compile Include="ExcelHandlers\MesUsage.cs" />
     <Compile Include="ExcelHandlers\NonAppearance.cs" />
     <Compile Include="ExcelHandlers\OnlineAccounts.cs" />

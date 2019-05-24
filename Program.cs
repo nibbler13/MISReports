@@ -153,149 +153,155 @@ namespace MISReports {
 		}
 
 		private static bool LoadSettings(string reportName) {
-			if (reportName.Equals(ReportsInfo.Type.FreeCellsDay.ToString())) {
-				reportToCreate = ReportsInfo.Type.FreeCellsDay;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
-				mailTo = Properties.Settings.Default.MailToFreeCellsDay;
-				templateFileName = Properties.Settings.Default.TemplateFreeCells;
+            if (reportName.Equals(ReportsInfo.Type.FreeCellsDay.ToString())) {
+                reportToCreate = ReportsInfo.Type.FreeCellsDay;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
+                mailTo = Properties.Settings.Default.MailToFreeCellsDay;
+                templateFileName = Properties.Settings.Default.TemplateFreeCells;
 
-			} else if (reportName.Equals(ReportsInfo.Type.FreeCellsWeek.ToString())) {
-				reportToCreate = ReportsInfo.Type.FreeCellsWeek;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
-				mailTo = Properties.Settings.Default.MailToFreeCellsWeek;
-				templateFileName = Properties.Settings.Default.TemplateFreeCells;
+            } else if (reportName.Equals(ReportsInfo.Type.FreeCellsWeek.ToString())) {
+                reportToCreate = ReportsInfo.Type.FreeCellsWeek;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
+                mailTo = Properties.Settings.Default.MailToFreeCellsWeek;
+                templateFileName = Properties.Settings.Default.TemplateFreeCells;
 
-			} else if (reportName.Equals(ReportsInfo.Type.UnclosedProtocolsWeek.ToString())) {
-				reportToCreate = ReportsInfo.Type.UnclosedProtocolsWeek;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
-				mailTo = Properties.Settings.Default.MailToUnclosedProtocolsWeek;
-				templateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
-				folderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
+            } else if (reportName.Equals(ReportsInfo.Type.UnclosedProtocolsWeek.ToString())) {
+                reportToCreate = ReportsInfo.Type.UnclosedProtocolsWeek;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
+                mailTo = Properties.Settings.Default.MailToUnclosedProtocolsWeek;
+                templateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
+                folderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
 
-			} else if (reportName.Equals(ReportsInfo.Type.UnclosedProtocolsMonth.ToString())) {
-				reportToCreate = ReportsInfo.Type.UnclosedProtocolsMonth;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
-				mailTo = Properties.Settings.Default.MailToUnclosedProtocolsMonth;
-				templateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
-				folderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
+            } else if (reportName.Equals(ReportsInfo.Type.UnclosedProtocolsMonth.ToString())) {
+                reportToCreate = ReportsInfo.Type.UnclosedProtocolsMonth;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
+                mailTo = Properties.Settings.Default.MailToUnclosedProtocolsMonth;
+                templateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
+                folderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
 
-			} else if (reportName.Equals(ReportsInfo.Type.MESUsage.ToString())) {
-				reportToCreate = ReportsInfo.Type.MESUsage;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetMESUsage;
-				mailTo = Properties.Settings.Default.MailToMESUsage;
-				templateFileName = Properties.Settings.Default.TemplateMESUsage;
-				folderToSave = Properties.Settings.Default.FolderToSaveMESUsage;
+            } else if (reportName.Equals(ReportsInfo.Type.MESUsage.ToString())) {
+                reportToCreate = ReportsInfo.Type.MESUsage;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetMESUsage;
+                mailTo = Properties.Settings.Default.MailToMESUsage;
+                templateFileName = Properties.Settings.Default.TemplateMESUsage;
+                folderToSave = Properties.Settings.Default.FolderToSaveMESUsage;
 
-			} else if (reportName.Equals(ReportsInfo.Type.OnlineAccountsUsage.ToString())) {
-				reportToCreate = ReportsInfo.Type.OnlineAccountsUsage;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetOnlineAccountsUsage;
-				mailTo = Properties.Settings.Default.MailToOnlineAccountsUsage;
-				templateFileName = Properties.Settings.Default.TemplateOnlineAccountsUsage;
+            } else if (reportName.Equals(ReportsInfo.Type.OnlineAccountsUsage.ToString())) {
+                reportToCreate = ReportsInfo.Type.OnlineAccountsUsage;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetOnlineAccountsUsage;
+                mailTo = Properties.Settings.Default.MailToOnlineAccountsUsage;
+                templateFileName = Properties.Settings.Default.TemplateOnlineAccountsUsage;
 
-			} else if (reportName.Equals(ReportsInfo.Type.TelemedicineOnlyIngosstrakh.ToString())) {
-				reportToCreate = ReportsInfo.Type.TelemedicineOnlyIngosstrakh;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
-				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
-				mailTo = Properties.Settings.Default.MailToTelemedicineOnlyIngosstrakh;
+            } else if (reportName.Equals(ReportsInfo.Type.TelemedicineOnlyIngosstrakh.ToString())) {
+                reportToCreate = ReportsInfo.Type.TelemedicineOnlyIngosstrakh;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
+                templateFileName = Properties.Settings.Default.TemplateTelemedicine;
+                mailTo = Properties.Settings.Default.MailToTelemedicineOnlyIngosstrakh;
 
-			} else if (reportName.Equals(ReportsInfo.Type.TelemedicineAll.ToString())) {
-				reportToCreate = ReportsInfo.Type.TelemedicineAll;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
-				templateFileName = Properties.Settings.Default.TemplateTelemedicine;
-				mailTo = Properties.Settings.Default.MailToTelemedicineAll;
+            } else if (reportName.Equals(ReportsInfo.Type.TelemedicineAll.ToString())) {
+                reportToCreate = ReportsInfo.Type.TelemedicineAll;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
+                templateFileName = Properties.Settings.Default.TemplateTelemedicine;
+                mailTo = Properties.Settings.Default.MailToTelemedicineAll;
 
-			} else if (reportName.Equals(ReportsInfo.Type.NonAppearance.ToString())) {
-				reportToCreate = ReportsInfo.Type.NonAppearance;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetNonAppearance;
-				templateFileName = Properties.Settings.Default.TemplateNonAppearance;
-				mailTo = Properties.Settings.Default.MailToNonAppearance;
-				folderToSave = Properties.Settings.Default.FolderToSaveNonAppearance;
+            } else if (reportName.Equals(ReportsInfo.Type.NonAppearance.ToString())) {
+                reportToCreate = ReportsInfo.Type.NonAppearance;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetNonAppearance;
+                templateFileName = Properties.Settings.Default.TemplateNonAppearance;
+                mailTo = Properties.Settings.Default.MailToNonAppearance;
+                folderToSave = Properties.Settings.Default.FolderToSaveNonAppearance;
 
-			} else if (reportName.Equals(ReportsInfo.Type.VIP_MSSU.ToString())) {
-				reportToCreate = ReportsInfo.Type.VIP_MSSU;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "12");
-				templateFileName = Properties.Settings.Default.TemplateVIP;
-				mailTo = Properties.Settings.Default.MailToVIP_MSSU;
-				previousFile = Properties.Settings.Default.PreviousFileVIP_MSSU;
+            } else if (reportName.Equals(ReportsInfo.Type.VIP_MSSU.ToString())) {
+                reportToCreate = ReportsInfo.Type.VIP_MSSU;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "12");
+                templateFileName = Properties.Settings.Default.TemplateVIP;
+                mailTo = Properties.Settings.Default.MailToVIP_MSSU;
+                previousFile = Properties.Settings.Default.PreviousFileVIP_MSSU;
 
-			} else if (reportName.Equals(ReportsInfo.Type.VIP_Moscow.ToString())) {
-				reportToCreate = ReportsInfo.Type.VIP_Moscow;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1,5,12,6");
-				templateFileName = Properties.Settings.Default.TemplateVIP;
-				mailTo = Properties.Settings.Default.MailToVIP_Moscow;
-				previousFile = Properties.Settings.Default.PreviousFileVIP_Moscow;
+            } else if (reportName.Equals(ReportsInfo.Type.VIP_Moscow.ToString())) {
+                reportToCreate = ReportsInfo.Type.VIP_Moscow;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1,5,12,6");
+                templateFileName = Properties.Settings.Default.TemplateVIP;
+                mailTo = Properties.Settings.Default.MailToVIP_Moscow;
+                previousFile = Properties.Settings.Default.PreviousFileVIP_Moscow;
 
-			} else if (reportName.Equals(ReportsInfo.Type.VIP_MSKM.ToString())) {
-				reportToCreate = ReportsInfo.Type.VIP_MSKM;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1");
-				templateFileName = Properties.Settings.Default.TemplateVIP;
-				mailTo = Properties.Settings.Default.MailToVIP_MSKM;
-				previousFile = Properties.Settings.Default.PreviousFileVIP_MSKM;
+            } else if (reportName.Equals(ReportsInfo.Type.VIP_MSKM.ToString())) {
+                reportToCreate = ReportsInfo.Type.VIP_MSKM;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1");
+                templateFileName = Properties.Settings.Default.TemplateVIP;
+                mailTo = Properties.Settings.Default.MailToVIP_MSKM;
+                previousFile = Properties.Settings.Default.PreviousFileVIP_MSKM;
 
-			} else if (reportName.Equals(ReportsInfo.Type.VIP_PND.ToString())) {
-				reportToCreate = ReportsInfo.Type.VIP_PND;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "6");
-				templateFileName = Properties.Settings.Default.TemplateVIP;
-				mailTo = Properties.Settings.Default.MailToVIP_PND;
-				previousFile = Properties.Settings.Default.PreviousFileVIP_PND;
+            } else if (reportName.Equals(ReportsInfo.Type.VIP_PND.ToString())) {
+                reportToCreate = ReportsInfo.Type.VIP_PND;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "6");
+                templateFileName = Properties.Settings.Default.TemplateVIP;
+                mailTo = Properties.Settings.Default.MailToVIP_PND;
+                previousFile = Properties.Settings.Default.PreviousFileVIP_PND;
 
-			} else if (reportName.Equals(ReportsInfo.Type.RegistryMarks.ToString())) {
-				reportToCreate = ReportsInfo.Type.RegistryMarks;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetRegistryMarks;
-				templateFileName = Properties.Settings.Default.TemplateRegistryMarks;
-				mailTo = Properties.Settings.Default.MailToRegistryMarks;
+            } else if (reportName.Equals(ReportsInfo.Type.RegistryMarks.ToString())) {
+                reportToCreate = ReportsInfo.Type.RegistryMarks;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetRegistryMarks;
+                templateFileName = Properties.Settings.Default.TemplateRegistryMarks;
+                mailTo = Properties.Settings.Default.MailToRegistryMarks;
 
-			} else if (reportName.Equals(ReportsInfo.Type.Workload.ToString())) {
-				reportToCreate = ReportsInfo.Type.Workload;
-				templateFileName = Properties.Settings.Default.TemplateWorkload;
-				mailTo = Properties.Settings.Default.MailToWorkload;
-				folderToSave = Properties.Settings.Default.FolderToSaveWorkload;
+            } else if (reportName.Equals(ReportsInfo.Type.Workload.ToString())) {
+                reportToCreate = ReportsInfo.Type.Workload;
+                templateFileName = Properties.Settings.Default.TemplateWorkload;
+                mailTo = Properties.Settings.Default.MailToWorkload;
+                folderToSave = Properties.Settings.Default.FolderToSaveWorkload;
 
-			} else if (reportName.Equals(ReportsInfo.Type.Robocalls.ToString())) {
-				reportToCreate = ReportsInfo.Type.Robocalls;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetRobocalls;
-				templateFileName = Properties.Settings.Default.TemplateRobocalls;
-				mailTo = Properties.Settings.Default.MailToRobocalls;
+            } else if (reportName.Equals(ReportsInfo.Type.Robocalls.ToString())) {
+                reportToCreate = ReportsInfo.Type.Robocalls;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetRobocalls;
+                templateFileName = Properties.Settings.Default.TemplateRobocalls;
+                mailTo = Properties.Settings.Default.MailToRobocalls;
 
-			} else if (reportName.Equals(ReportsInfo.Type.UniqueServices.ToString())) {
-				reportToCreate = ReportsInfo.Type.UniqueServices;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServices;
-				templateFileName = Properties.Settings.Default.TemplateUniqueServices;
-				mailTo = Properties.Settings.Default.MailToUniqueServices;
+            } else if (reportName.Equals(ReportsInfo.Type.UniqueServices.ToString())) {
+                reportToCreate = ReportsInfo.Type.UniqueServices;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServices;
+                templateFileName = Properties.Settings.Default.TemplateUniqueServices;
+                mailTo = Properties.Settings.Default.MailToUniqueServices;
 
-			} else if (reportName.Equals(ReportsInfo.Type.UniqueServicesRegions.ToString())) {
-				reportToCreate = ReportsInfo.Type.UniqueServicesRegions;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServicesRegions;
-				templateFileName = Properties.Settings.Default.TemplateUniqueServicesRegions;
-				mailTo = Properties.Settings.Default.MailToUniqueServicesRegions;
+            } else if (reportName.Equals(ReportsInfo.Type.UniqueServicesRegions.ToString())) {
+                reportToCreate = ReportsInfo.Type.UniqueServicesRegions;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServicesRegions;
+                templateFileName = Properties.Settings.Default.TemplateUniqueServicesRegions;
+                mailTo = Properties.Settings.Default.MailToUniqueServicesRegions;
 
-			} else if (reportName.Equals(ReportsInfo.Type.PriceListToSite.ToString())) {
-				reportToCreate = ReportsInfo.Type.PriceListToSite;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetPriceListToSite;
-				templateFileName = Properties.Settings.Default.TemplatePriceListToSite;
-				mailTo = Properties.Settings.Default.MailToPriceListToSite;
-				folderToSave = Properties.Settings.Default.FolderToSavePriceListToSite;
+            } else if (reportName.Equals(ReportsInfo.Type.PriceListToSite.ToString())) {
+                reportToCreate = ReportsInfo.Type.PriceListToSite;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetPriceListToSite;
+                templateFileName = Properties.Settings.Default.TemplatePriceListToSite;
+                mailTo = Properties.Settings.Default.MailToPriceListToSite;
+                folderToSave = Properties.Settings.Default.FolderToSavePriceListToSite;
 
-			} else if (reportName.Equals(ReportsInfo.Type.GBooking.ToString())) {
-				reportToCreate = ReportsInfo.Type.GBooking;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetGBooking;
-				templateFileName = Properties.Settings.Default.TemplateGBooking;
-				mailTo = Properties.Settings.Default.MailToGBooking;
+            } else if (reportName.Equals(ReportsInfo.Type.GBooking.ToString())) {
+                reportToCreate = ReportsInfo.Type.GBooking;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetGBooking;
+                templateFileName = Properties.Settings.Default.TemplateGBooking;
+                mailTo = Properties.Settings.Default.MailToGBooking;
 
-			} else if (reportName.Equals(ReportsInfo.Type.PersonalAccountSchedule.ToString())) {
-				reportToCreate = ReportsInfo.Type.PersonalAccountSchedule;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetPersonalAccountSchedule;
-				templateFileName = Properties.Settings.Default.TemplatePersonalAccountSchedule;
-				mailTo = Properties.Settings.Default.MailToPersonalAccountSchedule;
+            } else if (reportName.Equals(ReportsInfo.Type.PersonalAccountSchedule.ToString())) {
+                reportToCreate = ReportsInfo.Type.PersonalAccountSchedule;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetPersonalAccountSchedule;
+                templateFileName = Properties.Settings.Default.TemplatePersonalAccountSchedule;
+                mailTo = Properties.Settings.Default.MailToPersonalAccountSchedule;
 
-			} else if (reportName.Equals(ReportsInfo.Type.ProtocolViewCDBSyncEvent.ToString())) {
-				reportToCreate = ReportsInfo.Type.ProtocolViewCDBSyncEvent;
-				sqlQuery = Properties.Settings.Default.MisDbSqlGetProtocolViewCDBSyncEvent;
-				templateFileName = Properties.Settings.Default.TemplateProtocolViewCDBSyncEvent;
-				mailTo = Properties.Settings.Default.MailToProtocolViewCDBSyncEvent;
-				folderToSave = Properties.Settings.Default.FolderToSaveProtocolViewCDBSyncEvent;
+            } else if (reportName.Equals(ReportsInfo.Type.ProtocolViewCDBSyncEvent.ToString())) {
+                reportToCreate = ReportsInfo.Type.ProtocolViewCDBSyncEvent;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetProtocolViewCDBSyncEvent;
+                templateFileName = Properties.Settings.Default.TemplateProtocolViewCDBSyncEvent;
+                mailTo = Properties.Settings.Default.MailToProtocolViewCDBSyncEvent;
+                folderToSave = Properties.Settings.Default.FolderToSaveProtocolViewCDBSyncEvent;
 
-			} else
+            } else if (reportName.Equals(ReportsInfo.Type.FssInfo.ToString())) {
+                reportToCreate = ReportsInfo.Type.FssInfo;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetFssInfo;
+                templateFileName = Properties.Settings.Default.TemplateFssInfo;
+                mailTo = Properties.Settings.Default.MailToFssInfo;
+
+            } else
 				return false;
 
 			return true;
@@ -422,6 +428,9 @@ namespace MISReports {
 					return;
 				}
 			}
+
+            if (reportToCreate == ReportsInfo.Type.FssInfo)
+                ExcelHandlers.FssInfo.PerformData(ref dataTableMainData);
 		}
 
 		private static void WriteDataToFile() {
@@ -597,6 +606,9 @@ namespace MISReports {
 						case ReportsInfo.Type.ProtocolViewCDBSyncEvent:
 							isPostProcessingOk = ExcelHandlers.ExcelGeneral.CopyFormatting(fileResult);
 							break;
+                        case ReportsInfo.Type.FssInfo:
+                            isPostProcessingOk = ExcelHandlers.FssInfo.Process(fileResult);
+                            break;
 						default:
 							break;
 					}
