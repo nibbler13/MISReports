@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,8 +9,10 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace MISReports.ExcelHandlers {
 	class PriceListToSite : ExcelGeneral {
-		public static DataTable PerformData(DataTable main, DataTable exclusions, DataTable grouping, DataTable priorities) {
+		public static DataTable PerformData(DataTable main, DataTable exclusions, DataTable grouping, DataTable priorities, out string emptyFields) {
 			DataTable dataTableResult = main.Clone();
+
+            emptyFields = string.Empty;
 
 			foreach (DataRow dataRow in main.Rows) {
 				if (IsPriceTooLow(dataRow))
@@ -24,8 +27,19 @@ namespace MISReports.ExcelHandlers {
 				dataRow["ВЕРХНИЙ УРОВЕНЬ"] = topLevel;
 				dataRow["УСЛУГА САЙТА"] = siteService;
 
+                if (string.IsNullOrEmpty(topLevel) ||
+                    string.IsNullOrEmpty(siteService))
+                    emptyFields += "<tr><td>" + string.Join("</td><td>", dataRow.ItemArray) + "</td></tr>";
+
 				dataTableResult.Rows.Add(dataRow.ItemArray);
 			}
+
+            if (!string.IsNullOrEmpty(emptyFields))
+                emptyFields =
+                    "<table border='1'><tr><th>ВЕРХНИЙ УРОВЕНЬ</th><th>ГРУППА</th><th>ПОДГРУППА</th><th>УСЛУГА САЙТА</th><th>ID УСЛУГИ</th><th>ВИД</th><th>ПРИОРИТЕТ</th><th>" +
+                    "КОД УСЛУГИ</th><th>ИМЯ УСЛУГИ</th><th>МДМ_Наличный расчет</th><th>СУЩ_Наличный расчет</th><th>М-СРЕТ_Наличный расчет</th><th>" +
+                    "С-Пб._Наличный расчет</th><th>Красн_Наличный расчет</th><th>Уфа_Наличный расчет</th><th>Казань_Наличный расчет</th><th>" +
+                    "К-УРАЛ_Наличный расчет</th><th>Сочи_Наличный расчет</th></tr>" + emptyFields + "</table>";
 
 			return dataTableResult;
 		}
@@ -224,7 +238,7 @@ namespace MISReports.ExcelHandlers {
 
 			SaveAndCloseWorkbook(xlApp, wb, ws);
 
-			return true;
+            return true;
 		}
-	}
+    }
 }

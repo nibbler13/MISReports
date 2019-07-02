@@ -1,4 +1,5 @@
-﻿using NPOI.SS.UserModel;
+﻿using Newtonsoft.Json;
+using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
@@ -47,7 +48,7 @@ namespace MISReports.ExcelHandlers {
 		}
 
 		protected static bool GetTemplateFilePath(ref string templateFileName) {
-			templateFileName = Path.Combine(Program.AssemblyDirectory, templateFileName);
+			templateFileName = Path.Combine(Path.Combine(Program.AssemblyDirectory, "Templates\\"), templateFileName);
 
 			if (!File.Exists(templateFileName)) {
 				Logging.ToLog("Не удалось найти файл шаблона: " + templateFileName);
@@ -57,7 +58,7 @@ namespace MISReports.ExcelHandlers {
 			return true;
 		}
 
-		protected static string GetResultFilePath(string resultFilePrefix, string templateFileName, bool isPlainText = false) {
+		public static string GetResultFilePath(string resultFilePrefix, string templateFileName = "", bool isPlainText = false) {
 			string resultPath = Path.Combine(Program.AssemblyDirectory, "Results");
 			if (!Directory.Exists(resultPath))
 				Directory.CreateDirectory(resultPath);
@@ -70,7 +71,8 @@ namespace MISReports.ExcelHandlers {
 				fileEnding = ".txt";
 
 			string resultFile = Path.Combine(resultPath, resultFilePrefix + " " + DateTime.Now.ToString("yyyyMMdd_HHmmss") + fileEnding);
-			if (isPlainText)
+
+			if (isPlainText && !string.IsNullOrEmpty(templateFileName))
 				File.Copy(templateFileName, resultFile, true);
 
 			return resultFile;
@@ -282,36 +284,6 @@ namespace MISReports.ExcelHandlers {
 
 			if (!SaveAndCloseIWorkbook(workbook, resultFile))
 				return string.Empty;
-
-			return resultFile;
-		}
-		
-		public static string WriteDataTableToTextFile(DataTable dataTable, string resultFilePrefix, string templateFileName) {
-			string resultFile = string.Empty;
-
-			try {
-				if (!GetTemplateFilePath(ref templateFileName))
-					return resultFile;
-
-				resultFile = GetResultFilePath(resultFilePrefix, templateFileName, true);
-
-				using (System.IO.StreamWriter sw = System.IO.File.AppendText(resultFile)) {
-					foreach (DataRow dataRow in dataTable.Rows) {
-						object[] values = dataRow.ItemArray;
-						List<string> valuesToWrite = new List<string>();
-						foreach (object value in values)
-							valuesToWrite.Add(value.ToString().Replace(" 0:00:00", ""));
-
-						if (valuesToWrite.Count > 0) {
-							string logLine = string.Join("	", valuesToWrite.ToArray());
-							sw.WriteLine();
-							sw.Write(logLine);
-						}
-					}
-				}
-			} catch (Exception e) {
-				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
-			}
 
 			return resultFile;
 		}
@@ -553,6 +525,46 @@ namespace MISReports.ExcelHandlers {
             }
 
             return colLetter;
+        }
+
+
+
+        public static string WriteDataTableToTextFile(DataTable dataTable, string resultFilePrefix = "", string templateFileName = "", bool saveAsJson = false) {
+            string resultFile = string.Empty;
+
+            try {
+                if (saveAsJson) {
+                    string json = JsonConvert.SerializeObject(dataTable, Formatting.Indented);
+                    string filePath = GetResultFilePath(resultFilePrefix, "", true);
+
+                    File.WriteAllText(filePath, json);
+                    resultFile = filePath;
+                } else {
+                    if (!GetTemplateFilePath(ref templateFileName))
+                        return resultFile;
+
+                    resultFile = GetResultFilePath(resultFilePrefix, templateFileName, true);
+
+                    using (System.IO.StreamWriter sw = System.IO.File.AppendText(resultFile)) {
+                        foreach (DataRow dataRow in dataTable.Rows) {
+                            object[] values = dataRow.ItemArray;
+                            List<string> valuesToWrite = new List<string>();
+                            foreach (object value in values)
+                                valuesToWrite.Add(value.ToString().Replace(" 0:00:00", ""));
+
+                            if (valuesToWrite.Count > 0) {
+                                string logLine = string.Join("	", valuesToWrite.ToArray());
+                                sw.WriteLine();
+                                sw.Write(logLine);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+            }
+
+            return resultFile;
         }
     }
 }

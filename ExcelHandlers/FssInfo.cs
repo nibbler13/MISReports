@@ -16,9 +16,9 @@ namespace MISReports.ExcelHandlers {
 
             int usedRows = ws.UsedRange.Rows.Count;
 
-            ws.Range["A3:BC3"].Select();
+            ws.Range["A3:BG3"].Select();
             xlApp.Selection.Copy();
-            ws.Range["A4:BC" + usedRows].Select();
+            ws.Range["A4:BG" + usedRows].Select();
             xlApp.Selection.PasteSpecial(Excel.XlPasteType.xlPasteFormats);
             ws.Range["A1"].Select();
 
@@ -54,10 +54,10 @@ namespace MISReports.ExcelHandlers {
             for (int r = 0; r < dataTable.Rows.Count; r++) {
                 if (DateTime.TryParse(dataTable.Rows[r][0].ToString(), out DateTime date)) {
                     dataTable.Rows[r][1] = date.Year;
-                    dataTable.Rows[r][2] = "Квартал " + GetQuarter(date);
-                    dataTable.Rows[r][3] = date.ToString("MMMM", CultureInfo.CreateSpecificCulture("ru"));
+                    dataTable.Rows[r][2] = "Кв. " + GetQuarter(date);
+                    dataTable.Rows[r][3] = date.ToString("MMM", CultureInfo.CreateSpecificCulture("ru"));
                     int weekNumber = GetIso8601WeekOfYear(date);
-                    dataTable.Rows[r][4] = "Неделя " + (weekNumber.ToString().Length < 2 ? "0" + weekNumber : weekNumber.ToString());
+                    dataTable.Rows[r][4] = "Нед. " + (weekNumber.ToString().Length < 2 ? "0" + weekNumber : weekNumber.ToString());
                 }
 
                 string address = dataTable.Rows[r][17].ToString().ToLower();
@@ -107,26 +107,26 @@ namespace MISReports.ExcelHandlers {
 
             pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
 
-            pivotTable.PivotFields("Год").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+            pivotTable.PivotFields("Год").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
             pivotTable.PivotFields("Год").Position = 1;
             pivotTable.PivotFields("Год").AutoSort(Excel.XlSortOrder.xlDescending, "Год");
 
-            pivotTable.PivotFields("Квартал").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+            pivotTable.PivotFields("Квартал").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
             pivotTable.PivotFields("Квартал").Position = 2;
             pivotTable.PivotFields("Квартал").AutoSort(Excel.XlSortOrder.xlDescending, "Квартал");
 
-            pivotTable.PivotFields("Месяц").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+            pivotTable.PivotFields("Месяц").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
             pivotTable.PivotFields("Месяц").Position = 3;
             pivotTable.PivotFields("Месяц").AutoSort(Excel.XlSortOrder.xlDescending, "Месяц");
 
-            pivotTable.PivotFields("Неделя").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+            pivotTable.PivotFields("Неделя").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
             pivotTable.PivotFields("Неделя").Position = 4;
             pivotTable.PivotFields("Неделя").AutoSort(Excel.XlSortOrder.xlDescending, "Неделя");
 
             pivotTable.AddDataField(pivotTable.PivotFields("Номер ЛН"),
                 "Кол-во Номер ЛН", Excel.XlConsolidationFunction.xlCount);
 
-            pivotTable.PivotFields("Адрес").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
+            pivotTable.PivotFields("Адрес").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
             pivotTable.PivotFields("Адрес").Position = 1;
 
             pivotTable.HasAutoFormat = false;
@@ -134,15 +134,23 @@ namespace MISReports.ExcelHandlers {
             int wsPivoteColumnUsed = wsPivote.UsedRange.Columns.Count;
 
             wsPivote.Columns["B:" + ExcelGeneral.ColumnIndexToColumnLetter(wsPivoteColumnUsed)].Select();
-            xlApp.Selection.ColumnWidth = 10;
-            wsPivote.Range["B2:" + ExcelGeneral.ColumnIndexToColumnLetter(wsPivoteColumnUsed) + "2"].Select();
+            xlApp.Selection.ColumnWidth = 6;
+            wsPivote.Range["B2:" + ExcelGeneral.ColumnIndexToColumnLetter(wsPivoteColumnUsed) + "5"].Select();
             xlApp.Selection.HorizontalAlignment = Excel.Constants.xlGeneral;
             xlApp.Selection.VerticalAlignment = Excel.Constants.xlTop;
             xlApp.Selection.WrapText = true;
 
             pivotTable.PivotFields("Месяц").ShowDetail = false;
 
-            pivotTable.TableStyle2 = "PivotStyleMedium6";
+            pivotTable.TableStyle2 = "PivotStyleMedium13";
+
+            pivotTable.PivotFields("Неделя").Subtotals = new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+            pivotTable.PivotFields("Месяц").Subtotals = new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+            pivotTable.PivotFields("Квартал").Subtotals = new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
+
+            pivotTable.PivotFields("Год").PivotItems("2017").Visible = false;
+            pivotTable.PivotFields("Год").PivotItems("2018").Visible = false;
+            pivotTable.PivotFields("Адрес").PivotItems("г.Москва, Вадковский переулок, д.18").Visible = false;
 
             pivotTable.DisplayFieldCaptions = false;
             wb.ShowPivotTableFieldList = false;

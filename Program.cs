@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -38,9 +40,12 @@ namespace MISReports {
 		private static string subject = string.Empty;
 
 		private static string fileResult = string.Empty;
+        private static string fileToUpload = string.Empty;
 		private static readonly string mailCopy = Properties.Settings.Default.MailCopy;
 		private static bool hasError = false;
-		private static string body;
+		private static string body = string.Empty;
+        private static bool uploadToServer = false;
+        private static string priceListToSiteEmptyFields = string.Empty;
 
 		private static readonly Dictionary<string, string> workloadResultFiles = new Dictionary<string, string> {
 			{ "_Общий", string.Empty },
@@ -104,11 +109,14 @@ namespace MISReports {
 
 			SaveSettings();
 
-			if (Debugger.IsAttached)
-				return;
-
 			if (!string.IsNullOrEmpty(folderToSave))
 				SaveReportToFolder();
+
+            if (uploadToServer)
+                UploadFile();
+
+			if (Debugger.IsAttached)
+				return;
 
 			SystemMail.SendMail(subject, body, mailTo, fileResult);
 			Logging.ToLog("Завершение работы");
@@ -275,6 +283,7 @@ namespace MISReports {
                 templateFileName = Properties.Settings.Default.TemplatePriceListToSite;
                 mailTo = Properties.Settings.Default.MailToPriceListToSite;
                 folderToSave = Properties.Settings.Default.FolderToSavePriceListToSite;
+                uploadToServer = true;
 
             } else if (reportName.Equals(ReportsInfo.Type.GBooking.ToString())) {
                 reportToCreate = ReportsInfo.Type.GBooking;
@@ -300,6 +309,19 @@ namespace MISReports {
                 sqlQuery = Properties.Settings.Default.MisDbSqlGetFssInfo;
                 templateFileName = Properties.Settings.Default.TemplateFssInfo;
                 mailTo = Properties.Settings.Default.MailToFssInfo;
+
+            } else if (reportName.Equals(ReportsInfo.Type.TimetableBz.ToString())) {
+                reportToCreate = ReportsInfo.Type.TimetableBz;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetTimetableBz;
+                templateFileName = Properties.Settings.Default.TemplateTimetableBz;
+                mailTo = Properties.Settings.Default.MailToTimetableBz;
+                uploadToServer = true;
+
+            } else if (reportName.Equals(ReportsInfo.Type.RecordsFromInsuranceCompanies.ToString())) {
+                reportToCreate = ReportsInfo.Type.RecordsFromInsuranceCompanies;
+                sqlQuery = Properties.Settings.Default.MisDbSqlGetRecordsFromInsuranceCompanies;
+                templateFileName = Properties.Settings.Default.TemplateRecordsFromInsuranceCompanies;
+                mailTo = Properties.Settings.Default.MailToRecordsFromInsuranceCompanies;
 
             } else
 				return false;
@@ -396,14 +418,14 @@ namespace MISReports {
 
 			if (reportToCreate == ReportsInfo.Type.PriceListToSite) {
 				if (!Directory.Exists(folderToSave)) {
-					Logging.ToLog("Не удается получить доступ к папке: " + folderToSave);
+					Logging.ToLog("!!! Не удается получить доступ к папке: " + folderToSave);
 					return;
 				}
 
 				string priceListToSiteSettingFile = "_Параметры обработки.xlsx";
 				string priceListToSiteSettingFilePath = Path.Combine(folderToSave, priceListToSiteSettingFile);
 				if (!File.Exists(priceListToSiteSettingFilePath)) {
-					Logging.ToLog("Не удается получить доступ к файлу с настройками: " + priceListToSiteSettingFilePath);
+					Logging.ToLog("!!! Не удается получить доступ к файлу с настройками: " + priceListToSiteSettingFilePath);
 					return;
 				}
 
@@ -422,7 +444,7 @@ namespace MISReports {
 					Logging.ToLog("Считано строк: " + dataTablePricePriorities.Rows.Count);
 
 					dataTableMainData = ExcelHandlers.PriceListToSite.PerformData(
-						dataTableMainData, dataTablePriceExclusions, dataTablePriceGrouping, dataTablePricePriorities);
+						dataTableMainData, dataTablePriceExclusions, dataTablePriceGrouping, dataTablePricePriorities, out priceListToSiteEmptyFields);
 				} catch (Exception e) {
 					Logging.ToLog(e.StackTrace + Environment.NewLine + e.StackTrace);
 					return;
@@ -436,7 +458,7 @@ namespace MISReports {
 		private static void WriteDataToFile() {
 			if (dataTableMainData.Rows.Count > 0 ||
 				reportToCreate.ToString().StartsWith("VIP_")) {
-				Logging.ToLog("Запись данных в файл Excel");
+				Logging.ToLog("Запись данных в файл");
 
 				if (reportToCreate == ReportsInfo.Type.FreeCellsDay ||
 					reportToCreate == ReportsInfo.Type.FreeCellsWeek) {
@@ -482,55 +504,69 @@ namespace MISReports {
 					}
 				}
 
-				if (reportToCreate == ReportsInfo.Type.MESUsage) {
-					Dictionary<string, ItemMESUsageTreatment> treatments =
-						ParseMESUsageDataTableToTreatments(dataTableMainData);
-					fileResult = ExcelHandlers.ExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments,
-																  subject,
-																  templateFileName);
+                if (reportToCreate == ReportsInfo.Type.MESUsage) {
+                    Dictionary<string, ItemMESUsageTreatment> treatments =
+                        ParseMESUsageDataTableToTreatments(dataTableMainData);
+                    fileResult = ExcelHandlers.ExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments,
+                                                                  subject,
+                                                                  templateFileName);
 
-				} else if (reportToCreate == ReportsInfo.Type.TelemedicineOnlyIngosstrakh) {
-					fileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
-														 subject,
-														 templateFileName,
-														 type: reportToCreate);
+                } else if (reportToCreate == ReportsInfo.Type.TelemedicineOnlyIngosstrakh) {
+                    fileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
+                                                         subject,
+                                                         templateFileName,
+                                                         type: reportToCreate);
 
-				} else if (reportToCreate == ReportsInfo.Type.Workload) {
-					for (int i = 0; i < workloadResultFiles.Count; i++) {
-						string key = workloadResultFiles.Keys.ElementAt(i);
-						Logging.ToLog("Филиал: " + key);
+                } else if (reportToCreate == ReportsInfo.Type.Workload) {
+                    for (int i = 0; i < workloadResultFiles.Count; i++) {
+                        string key = workloadResultFiles.Keys.ElementAt(i);
+                        Logging.ToLog("Филиал: " + key);
 
-						workloadResultFiles[key] = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
-															 subject + " " + key,
-															 templateFileName,
-															 "Услуги Мет. 1",
-															 true,
-															 key);
+                        workloadResultFiles[key] = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
+                                                             subject + " " + key,
+                                                             templateFileName,
+                                                             "Услуги Мет. 1",
+                                                             true,
+                                                             key);
 
-						if (string.IsNullOrEmpty(workloadResultFiles[key]))
-							continue;
+                        if (string.IsNullOrEmpty(workloadResultFiles[key]))
+                            continue;
 
-						ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
-												subject,
-												workloadResultFiles[key],
-												"Искл. услуги",
-												false,
-												key);
+                        ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
+                                                subject,
+                                                workloadResultFiles[key],
+                                                "Искл. услуги",
+                                                false,
+                                                key);
 
-						ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
-												subject,
-												workloadResultFiles[key],
-												"Расчет",
-												false,
-												key);
-					}
+                        ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
+                                                subject,
+                                                workloadResultFiles[key],
+                                                "Расчет",
+                                                false,
+                                                key);
+                    }
 
-				} else if (reportToCreate == ReportsInfo.Type.Robocalls) {
-					fileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToTextFile(dataTableMainData,
-															subject,
-															templateFileName);
+                } else if (reportToCreate == ReportsInfo.Type.Robocalls) {
+                    fileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToTextFile(dataTableMainData,
+                                                            subject,
+                                                            templateFileName);
 
-				} else if (reportToCreate == ReportsInfo.Type.UniqueServices ||
+                } else if (reportToCreate == ReportsInfo.Type.PriceListToSite) {
+                    fileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(
+                        dataTableMainData,
+                        subject,
+                        templateFileName,
+                        type: reportToCreate);
+                    fileToUpload = ExcelHandlers.ExcelGeneral.WriteDataTableToTextFile(
+                        dataTableMainData, 
+                        "BzPriceListToUpload", 
+                        saveAsJson: true);
+
+                } else if (reportToCreate == ReportsInfo.Type.TimetableBz) {
+                    fileToUpload = ExcelHandlers.TimetableBz.PerformData(dataTableMainData);
+
+                } else if (reportToCreate == ReportsInfo.Type.UniqueServices ||
 					reportToCreate == ReportsInfo.Type.UniqueServicesRegions) {
 					fileResult = ExcelHandlers.UniqueServices.Process(dataTableMainData,
 														 dataTableUniqueServiceTotal,
@@ -598,16 +634,19 @@ namespace MISReports {
 
 							isPostProcessingOk = isAllOk;
 							break;
-						case ReportsInfo.Type.PriceListToSite:
-							isPostProcessingOk = ExcelHandlers.PriceListToSite.Process(fileResult);
-							break;
-						case ReportsInfo.Type.GBooking:
+                        case ReportsInfo.Type.PriceListToSite:
+                            isPostProcessingOk = ExcelHandlers.PriceListToSite.Process(fileResult);
+                            break;
+                        case ReportsInfo.Type.GBooking:
 						case ReportsInfo.Type.PersonalAccountSchedule:
 						case ReportsInfo.Type.ProtocolViewCDBSyncEvent:
 							isPostProcessingOk = ExcelHandlers.ExcelGeneral.CopyFormatting(fileResult);
 							break;
                         case ReportsInfo.Type.FssInfo:
                             isPostProcessingOk = ExcelHandlers.FssInfo.Process(fileResult);
+                            break;
+                        case ReportsInfo.Type.RecordsFromInsuranceCompanies:
+                            isPostProcessingOk = ExcelHandlers.RecordsFromInsuranceCompanies.Process(fileResult);
                             break;
 						default:
 							break;
@@ -689,6 +728,101 @@ namespace MISReports {
 
 			Properties.Settings.Default.Save();
 		}
+
+        private static bool PostDataToServer() {
+			string aFileurl = fileToUpload;
+			string aTargetUrl = "ftp://prodoctorov.ru" + "/" + "bz_timetable.json";
+			Debug.WriteLine("creating ftp upload. Source: " + aFileurl + " Target: " + aTargetUrl);
+			System.IO.FileStream aFileStream = null;
+			System.IO.Stream aRequestStream = null;
+
+			try {
+				var aFtpClient = (FtpWebRequest)FtpWebRequest.Create(aTargetUrl);
+				aFtpClient.Credentials = new NetworkCredential("bud-zdorov-moskva-3846", "ef5febfa506709e7788e925122dc1106");
+				aFtpClient.Method = WebRequestMethods.Ftp.UploadFile;
+				aFtpClient.UseBinary = true;
+				aFtpClient.KeepAlive = true;
+				aFtpClient.UsePassive = true;
+				aFtpClient.Proxy = null;
+
+				var aFileInfo = new System.IO.FileInfo(aFileurl);
+				aFtpClient.ContentLength = aFileInfo.Length;
+				byte[] aBuffer = new byte[4097];
+				int aBytes = 0;
+				int aTotal_bytes = (int)aFileInfo.Length;
+				aFileStream = aFileInfo.OpenRead();
+				aRequestStream = aFtpClient.GetRequestStream();
+				while (aTotal_bytes > 0) {
+					aBytes = aFileStream.Read(aBuffer, 0, aBuffer.Length);
+					aRequestStream.Write(aBuffer, 0, aBytes);
+					aTotal_bytes = aTotal_bytes - aBytes;
+				}
+				aFileStream.Close();
+				aRequestStream.Close();
+				var uploadResponse = (FtpWebResponse)aFtpClient.GetResponse();
+				Debug.WriteLine(uploadResponse.StatusDescription);
+				uploadResponse.Close();
+				return true;
+			} catch (Exception e) {
+				if (aFileStream != null) aFileStream.Close();
+				if (aRequestStream != null) aRequestStream.Close();
+
+				Debug.WriteLine(e.ToString());
+				return false;
+			}
+		}
+
+        private static void UploadFile() {
+            string msg = "Загрузка файла на сервер";
+            Logging.ToLog(msg);
+            body += Environment.NewLine + Environment.NewLine + msg;
+
+            string url = string.Empty;
+            string user = string.Empty;
+            string password = string.Empty;
+            string method = string.Empty;
+
+			if (reportToCreate == ReportsInfo.Type.PriceListToSite) {
+				url = "https://klinikabudzdorov.ru/export/price/file_input.php";
+				method = WebRequestMethods.Http.Post;
+			} else if (reportToCreate == ReportsInfo.Type.TimetableBz) {
+				PostDataToServer();
+				return;
+			} else {
+				Logging.ToLog("Не заданы параметры, возврат");
+				return;
+			}
+
+            try {
+                using (WebClient client = new WebClient()) {
+                    if (!string.IsNullOrEmpty(user) && 
+                        !string.IsNullOrEmpty(password))
+                        client.Credentials = new NetworkCredential(user, password);
+
+                    byte[] responseArray = client.UploadFile(url, method, fileToUpload);
+                    string response = System.Text.Encoding.GetEncoding("windows-1252").GetString(responseArray);
+                    Logging.ToLog(response);
+
+                    body += Environment.NewLine + response;
+
+                    if (!string.IsNullOrEmpty(priceListToSiteEmptyFields))
+                        body += Environment.NewLine + Environment.NewLine +
+                            "Услуги с недостающими данными: " + Environment.NewLine +
+                            priceListToSiteEmptyFields;
+                }
+            } catch (Exception e) {
+                hasError = true;
+                msg = e.Message + Environment.NewLine + e.StackTrace;
+                Logging.ToLog(msg);
+                body += Environment.NewLine + msg;
+            }
+
+            try {
+                File.Delete(fileToUpload);
+            } catch (Exception e) {
+                Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+            }
+        }
 
 
 
