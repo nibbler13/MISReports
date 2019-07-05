@@ -1,12 +1,14 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 
 namespace MISReports {
-	class Logging {
+	public class Logging {
 		private static string LOG_FILE_NAME = Assembly.GetExecutingAssembly().GetName().Name + "_*.log";
 		private const int MAX_LOGFILES_QUANTITY = 7;
+		public static BackgroundWorker bw;
 
 		public static void ToLog(string msg) {
 			string today = DateTime.Now.ToString("yyyyMMdd");
@@ -16,6 +18,9 @@ namespace MISReports {
 				using (System.IO.StreamWriter sw = System.IO.File.AppendText(logFileName)) {
 					string logLine = System.String.Format("{0:G}: {1}", System.DateTime.Now, msg);
 					sw.WriteLine(logLine);
+
+					if (bw != null)
+						bw.ReportProgress(0, logLine);
 				}
 			} catch (Exception e) {
 				Console.WriteLine("LogMessageToFile exception: " + logFileName + Environment.NewLine + e.Message + 
@@ -24,6 +29,7 @@ namespace MISReports {
 
 			Console.WriteLine(msg);
 			CheckAndCleanOldFiles();
+
 		}
 
 		public static void WriteStringToFile(string text, string fileFullPath) {

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MISReports {
-	class ReportsInfo {
+	public class ReportsInfo {
 		public enum Type {
 			FreeCellsDay,
 			FreeCellsWeek,
@@ -61,5 +61,33 @@ namespace MISReports {
             { Type.TimetableBz, "Расписание работы врачей" },
             { Type.RecordsFromInsuranceCompanies, "Отчет по записям из страховых компаний" }
         };
+
+		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
+			{ Type.FreeCellsDay, "Каждый день в 7:10" },
+			{ Type.FreeCellsWeek, "Каждый понедельник в 6:00" },
+			{ Type.UnclosedProtocolsWeek, "Каждый понедельник в 10:00" },
+			{ Type.UnclosedProtocolsMonth, "Каждый месяц, 2 и 5 числа в 14:50" },
+			{ Type.MESUsage, "Каждый понедельник в 6:20" },
+			{ Type.OnlineAccountsUsage, "Каждый месяц, 1 числа в 6:00" },
+			{ Type.TelemedicineOnlyIngosstrakh, "Каждый понедельник в 7:00" },
+			{ Type.TelemedicineAll, "Каждый понедельник в 6:00" },
+			{ Type.NonAppearance, "Каждый понедельник в 8:00" },
+			{ Type.VIP_MSSU, "Каждый день в 8:02 и 15:02" },
+			{ Type.VIP_Moscow, "Каждый день в 8:00 и 15:00" },
+			{ Type.VIP_MSKM, "Каждый день в 8:04 и 15:04" },
+			{ Type.VIP_PND, "Каждый день в 15:06" },
+			{ Type.RegistryMarks, "Каждый понедельник в 7:10" },
+			{ Type.Workload, "" },
+			{ Type.Robocalls, "Каждый день в 15:00" },
+			{ Type.UniqueServices, "Каждый понедельник в 7:57" },
+			{ Type.UniqueServicesRegions, "Каждый понедельник в 7:50" },
+			{ Type.PriceListToSite, "Каждый день в 2:00" },
+			{ Type.GBooking, "Каждый день в 6:10" },
+			{ Type.PersonalAccountSchedule, "Каждый день в 10:05" },
+			{ Type.ProtocolViewCDBSyncEvent, "Каждый день в 0:00" },
+			{ Type.FssInfo, "Каждый понедельник в 7:45" },
+			{ Type.TimetableBz, "" },
+			{ Type.RecordsFromInsuranceCompanies, "Каждый понедельник в 3:00" }
+		};
 	}
 }
