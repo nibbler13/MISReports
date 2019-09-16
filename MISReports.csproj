@@ -75,6 +75,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExcelHandlers\AverageCheck.cs" />
+    <Compile Include="ExcelHandlers\CompetitiveGroups.cs" />
     <Compile Include="ExcelHandlers\FreeCells.cs" />
     <Compile Include="ExcelHandlers\FssInfo.cs" />
     <Compile Include="ExcelHandlers\MesUsage.cs" />

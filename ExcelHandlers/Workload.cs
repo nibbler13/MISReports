@@ -7,8 +7,6 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace MISReports.ExcelHandlers {
 	class Workload : ExcelGeneral {
-
-		//============================ Workload ============================
 		public static bool Process(string resultFile) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws, "Услуги Мет. 1"))
 				return false;
@@ -243,6 +241,5 @@ namespace MISReports.ExcelHandlers {
 
 			wb.ShowPivotTableFieldList = false;
 		}
-
 	}
 }

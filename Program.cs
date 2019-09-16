@@ -19,6 +19,8 @@ namespace MISReports {
 		private static ItemReport itemReport;
 
 		private static DataTable dataTableMainData = null;
+		private static DataTable dataTableAverageCheckPreviousWeek = null;
+		private static DataTable dataTableAverageCheckPreviousYear = null;
 		private static DataTable dataTableWorkLoadA6 = null;
 		private static DataTable dataTableWorkloadA11_10 = null;
 		private static DataTable dataTableUniqueServiceTotal = null;
@@ -27,9 +29,19 @@ namespace MISReports {
 
 		private static DateTime? dateBeginOriginal = null;
 
+		private static Dictionary<string, object> parameters;
+		private static Dictionary<string, object> parametersAverageCheckPreviousWeek;
+		private static Dictionary<string, object> parametersAverageCheckPreviousYear;
+
+		private static ExcelHandlers.AverageCheck.ItemAverageCheck itemAverageCheckPreviousWeek = null;
+		private static ExcelHandlers.AverageCheck.ItemAverageCheck itemAverageCheckPreviousYear = null;
+		private static ExcelHandlers.CompetitiveGroups.ItemCompetitiveGroups ItemCompetitiveGroups = null;
+
 		private static string dateBeginStr = string.Empty;
 		private static string dateEndStr = string.Empty;
 		private static string subject = string.Empty;
+		private static string subjectAverageCheckPreviousWeek = string.Empty;
+		private static string subjectAverageCheckPreviousYear = string.Empty;
 		private static string body = string.Empty;
 		private static bool hasError = false;
 
@@ -94,8 +106,6 @@ namespace MISReports {
 
 			firebirdClient.Close();
 
-			Logging.ToLog("Получено строк: " + dataTableMainData.Rows.Count);
-
 			WriteDataToFile();
 
 			if (hasError) {
@@ -112,15 +122,23 @@ namespace MISReports {
 			if (itemReport.UploadToServer)
 				UploadFile();
 
-			if (Logging.bw != null) {
+			if (Logging.bw != null)
 				if (MessageBox.Show("Отправить сообщение с отчетом следующим адресатам?" +
 					Environment.NewLine + Environment.NewLine + itemReport.MailTo,
 					"Отправка сообщения", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
 					return;
-			} else if (Debugger.IsAttached)
-				return;
+			
+			//if (Debugger.IsAttached)
+			//	return;
 
-			SystemMail.SendMail(subject, body, itemReport.MailTo, itemReport.FileResult);
+			string[] attachments;
+
+			if (itemReport.Type == ReportsInfo.Type.AverageCheck)
+				attachments = new string[] { itemReport.FileResult, itemReport.FileResultAverageCheckPreviousYear };
+			else
+				attachments = new string[] { itemReport.FileResult };
+
+			SystemMail.SendMail(subject, body, itemReport.MailTo, attachments);
 			Logging.ToLog("Завершение работы");
 
 			return;
@@ -204,7 +222,7 @@ namespace MISReports {
 				return;
 			}
 
-			Dictionary<string, object> parameters = new Dictionary<string, object>() {
+			parameters = new Dictionary<string, object>() {
 				{ "@dateBegin", dateBeginStr },
 				{ "@dateEnd", dateEndStr }
 			};
@@ -256,6 +274,7 @@ namespace MISReports {
 			}
 
 			dataTableMainData = firebirdClient.GetDataTable(itemReport.SqlQuery, parameters);
+			Logging.ToLog("Получено строк: " + dataTableMainData.Rows.Count);
 
 			if (itemReport.Type == ReportsInfo.Type.PriceListToSite) {
 				if (!Directory.Exists(itemReport.FolderToSave)) {
@@ -294,6 +313,105 @@ namespace MISReports {
 
             if (itemReport.Type == ReportsInfo.Type.FssInfo)
                 ExcelHandlers.FssInfo.PerformData(ref dataTableMainData);
+
+			if (itemReport.Type == ReportsInfo.Type.AverageCheck) {
+				int reportWeekNumber = GetIso8601WeekOfYear(dateBeginOriginal.Value);
+				int previousWeekNumber = GetIso8601WeekOfYear(dateBeginOriginal.Value.Date.AddDays(-1));
+
+				if (previousWeekNumber > reportWeekNumber)
+					subjectAverageCheckPreviousWeek = ReportsInfo.AcceptedParameters[itemReport.Type] + 
+						", неделя " + reportWeekNumber + " " + 
+						DateTime.Now.Year + " и неделя " + previousWeekNumber + " год " + (DateTime.Now.Year - 1);
+				else
+					subjectAverageCheckPreviousWeek = ReportsInfo.AcceptedParameters[itemReport.Type] + 
+						", недели " + reportWeekNumber + ", " + 
+						previousWeekNumber + " год " + DateTime.Now.Year;
+
+				subjectAverageCheckPreviousYear = ReportsInfo.AcceptedParameters[itemReport.Type] + 
+					", неделя " + reportWeekNumber + " год " + 
+					DateTime.Now.Year + ", " + (DateTime.Now.Year - 1);
+
+				double totalDays = (itemReport.DateEnd - dateBeginOriginal.Value).TotalDays;
+
+				#region previous week
+				parametersAverageCheckPreviousWeek = new Dictionary<string, object> {
+					{ "@dateBegin", dateBeginOriginal.Value.AddDays(
+						-1 * (totalDays + 1)).ToShortDateString() },
+					{ "@dateEnd", dateBeginOriginal.Value.AddDays(-1).ToShortDateString() }
+				};
+
+				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " +
+					parametersAverageCheckPreviousWeek["@dateBegin"] +
+					" по " + parametersAverageCheckPreviousWeek["@dateEnd"]);
+				dataTableAverageCheckPreviousWeek = firebirdClient.GetDataTable(
+					itemReport.SqlQuery, parametersAverageCheckPreviousWeek);
+				//dataTableAverageCheckPreviousWeek = dataTableMainData.Clone(); 
+				Logging.ToLog("Получено строк: " + dataTableAverageCheckPreviousWeek.Rows.Count);
+
+				itemAverageCheckPreviousWeek = ExcelHandlers.AverageCheck.PerformData(dataTableMainData, dataTableAverageCheckPreviousWeek);
+				#endregion
+
+
+				#region previous year
+				DateTime previousYearWeekFirstDay = FirstDateOfWeekISO8601(dateBeginOriginal.Value.AddYears(-1).Year, reportWeekNumber);
+
+				parametersAverageCheckPreviousYear = new Dictionary<string, object> {
+					{ "@dateBegin", previousYearWeekFirstDay.ToShortDateString()},
+					{ "@dateEnd", previousYearWeekFirstDay.AddDays(totalDays).ToShortDateString() }
+				};
+
+				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " +
+					parametersAverageCheckPreviousYear["@dateBegin"] +
+					" по " + parametersAverageCheckPreviousYear["@dateEnd"]);
+				dataTableAverageCheckPreviousYear = firebirdClient.GetDataTable(
+					itemReport.SqlQuery, parametersAverageCheckPreviousYear);
+				//dataTableAverageCheckPreviousYear = dataTableMainData.Clone();
+				Logging.ToLog("Получено строк: " + dataTableAverageCheckPreviousYear.Rows.Count);
+
+				itemAverageCheckPreviousYear = ExcelHandlers.AverageCheck.PerformData(dataTableMainData, dataTableAverageCheckPreviousYear);
+				#endregion
+			}
+
+			if (itemReport.Type == ReportsInfo.Type.CompetitiveGroups)
+				ItemCompetitiveGroups = ExcelHandlers.CompetitiveGroups.PerformData(dataTableMainData);
+		}
+
+		private static int GetIso8601WeekOfYear(DateTime time) {
+			// Seriously cheat.  If its Monday, Tuesday or Wednesday, then it'll 
+			// be the same week# as whatever Thursday, Friday or Saturday are,
+			// and we always get those right
+			DayOfWeek day = CultureInfo.InvariantCulture.Calendar.GetDayOfWeek(time);
+			if (day >= DayOfWeek.Monday && day <= DayOfWeek.Wednesday) {
+				time = time.AddDays(3);
+			}
+
+			// Return the week of our adjusted day
+			return CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(time, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+		}
+
+		private static DateTime FirstDateOfWeekISO8601(int year, int weekOfYear) {
+			DateTime jan1 = new DateTime(year, 1, 1);
+			int daysOffset = DayOfWeek.Thursday - jan1.DayOfWeek;
+
+			// Use first Thursday in January to get first week of the year as
+			// it will never be in Week 52/53
+			DateTime firstThursday = jan1.AddDays(daysOffset);
+			var cal = CultureInfo.CurrentCulture.Calendar;
+			int firstWeek = cal.GetWeekOfYear(firstThursday, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
+
+			var weekNum = weekOfYear;
+			// As we're adding days to a date in Week 1,
+			// we need to subtract 1 in order to get the right date for week #1
+			if (firstWeek == 1) {
+				weekNum -= 1;
+			}
+
+			// Using the first Thursday as starting week ensures that we are starting in the right year
+			// then we add number of weeks multiplied with days
+			var result = firstThursday.AddDays(weekNum * 7);
+
+			// Subtract 3 days from Thursday to get Monday, which is the first weekday in ISO8601
+			return result.AddDays(-3);
 		}
 
 		private static void WriteDataToFile() {
@@ -345,69 +463,69 @@ namespace MISReports {
 					}
 				}
 
-                if (itemReport.Type == ReportsInfo.Type.MESUsage) {
-                    Dictionary<string, ItemMESUsageTreatment> treatments =
-                        ParseMESUsageDataTableToTreatments(dataTableMainData);
-                    itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments,
-                                                                  subject,
-                                                                  itemReport.TemplateFileName);
+				if (itemReport.Type == ReportsInfo.Type.MESUsage) {
+					Dictionary<string, ItemMESUsageTreatment> treatments =
+						ParseMESUsageDataTableToTreatments(dataTableMainData);
+					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments,
+																  subject,
+																  itemReport.TemplateFileName);
 
-                } else if (itemReport.Type == ReportsInfo.Type.TelemedicineOnlyIngosstrakh) {
-                    itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
-                                                         subject,
-                                                         itemReport.TemplateFileName,
-                                                         type: itemReport.Type);
+				} else if (itemReport.Type == ReportsInfo.Type.TelemedicineOnlyIngosstrakh) {
+					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
+														 subject,
+														 itemReport.TemplateFileName,
+														 type: itemReport.Type);
 
-                } else if (itemReport.Type == ReportsInfo.Type.Workload) {
-                    for (int i = 0; i < workloadResultFiles.Count; i++) {
-                        string key = workloadResultFiles.Keys.ElementAt(i);
-                        Logging.ToLog("Филиал: " + key);
+				} else if (itemReport.Type == ReportsInfo.Type.Workload) {
+					for (int i = 0; i < workloadResultFiles.Count; i++) {
+						string key = workloadResultFiles.Keys.ElementAt(i);
+						Logging.ToLog("Филиал: " + key);
 
-                        workloadResultFiles[key] = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
-                                                             subject + " " + key,
-                                                             itemReport.TemplateFileName,
-                                                             "Услуги Мет. 1",
-                                                             true,
-                                                             key);
+						workloadResultFiles[key] = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
+															 subject + " " + key,
+															 itemReport.TemplateFileName,
+															 "Услуги Мет. 1",
+															 true,
+															 key);
 
-                        if (string.IsNullOrEmpty(workloadResultFiles[key]))
-                            continue;
+						if (string.IsNullOrEmpty(workloadResultFiles[key]))
+							continue;
 
-                        ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
-                                                subject,
-                                                workloadResultFiles[key],
-                                                "Искл. услуги",
-                                                false,
-                                                key);
+						ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
+												subject,
+												workloadResultFiles[key],
+												"Искл. услуги",
+												false,
+												key);
 
-                        ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
-                                                subject,
-                                                workloadResultFiles[key],
-                                                "Расчет",
-                                                false,
-                                                key);
-                    }
+						ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
+												subject,
+												workloadResultFiles[key],
+												"Расчет",
+												false,
+												key);
+					}
 
-                } else if (itemReport.Type == ReportsInfo.Type.Robocalls) {
-                    itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToTextFile(dataTableMainData,
-                                                            subject,
-                                                            itemReport.TemplateFileName);
+				} else if (itemReport.Type == ReportsInfo.Type.Robocalls) {
+					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToTextFile(dataTableMainData,
+															subject,
+															itemReport.TemplateFileName);
 
-                } else if (itemReport.Type == ReportsInfo.Type.PriceListToSite) {
-                    itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(
-                        dataTableMainData,
-                        subject,
-                        itemReport.TemplateFileName,
-                        type: itemReport.Type);
-                    fileToUpload = ExcelHandlers.ExcelGeneral.WriteDataTableToTextFile(
-                        dataTableMainData, 
-                        "BzPriceListToUpload", 
-                        saveAsJson: true);
+				} else if (itemReport.Type == ReportsInfo.Type.PriceListToSite) {
+					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(
+						dataTableMainData,
+						subject,
+						itemReport.TemplateFileName,
+						type: itemReport.Type);
+					fileToUpload = ExcelHandlers.ExcelGeneral.WriteDataTableToTextFile(
+						dataTableMainData,
+						"BzPriceListToUpload",
+						saveAsJson: true);
 
-                } else if (itemReport.Type == ReportsInfo.Type.TimetableBz) {
-                    fileToUpload = ExcelHandlers.TimetableBz.PerformData(dataTableMainData);
+				} else if (itemReport.Type == ReportsInfo.Type.TimetableBz) {
+					fileToUpload = ExcelHandlers.TimetableBz.PerformData(dataTableMainData);
 
-                } else if (itemReport.Type == ReportsInfo.Type.UniqueServices ||
+				} else if (itemReport.Type == ReportsInfo.Type.UniqueServices ||
 					itemReport.Type == ReportsInfo.Type.UniqueServicesRegions) {
 					itemReport.FileResult = ExcelHandlers.UniqueServices.Process(dataTableMainData,
 														 dataTableUniqueServiceTotal,
@@ -417,6 +535,19 @@ namespace MISReports {
 														 itemReport.TemplateFileName,
 														 dateBeginStr + " - " + dateEndStr,
 														 itemReport.Type);
+
+				} else if (itemReport.Type == ReportsInfo.Type.AverageCheck) {
+					itemReport.FileResult =
+						ExcelHandlers.AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousWeek,
+							subjectAverageCheckPreviousWeek, itemReport.TemplateFileName);
+					itemReport.FileResultAverageCheckPreviousYear =
+						ExcelHandlers.AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousYear,
+							subjectAverageCheckPreviousYear, itemReport.TemplateFileName);
+
+				} else if (itemReport.Type == ReportsInfo.Type.CompetitiveGroups) {
+					itemReport.FileResult =
+						ExcelHandlers.CompetitiveGroups.WriteAverageCheckToExcel(
+							ItemCompetitiveGroups, subject, itemReport.TemplateFileName);
 
 				} else {
 					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
@@ -433,33 +564,41 @@ namespace MISReports {
 						case ReportsInfo.Type.FreeCellsWeek:
 							isPostProcessingOk = ExcelHandlers.FreeCells.Process(itemReport.FileResult, dateBeginOriginal.Value, itemReport.DateEnd);
 							break;
+
 						case ReportsInfo.Type.UnclosedProtocolsWeek:
 						case ReportsInfo.Type.UnclosedProtocolsMonth:
 							isPostProcessingOk = ExcelHandlers.UnclosedProtocols.Process(itemReport.FileResult);
 							break;
+
 						case ReportsInfo.Type.MESUsage:
 							isPostProcessingOk = ExcelHandlers.MesUsage.Process(itemReport.FileResult);
 							break;
+
 						case ReportsInfo.Type.OnlineAccountsUsage:
 							isPostProcessingOk = ExcelHandlers.OnlineAccounts.Process(itemReport.FileResult);
 							break;
+
 						case ReportsInfo.Type.TelemedicineOnlyIngosstrakh:
 						case ReportsInfo.Type.TelemedicineAll:
 							isPostProcessingOk = ExcelHandlers.Telemedicine.Process(itemReport.FileResult);
 							break;
+
 						case ReportsInfo.Type.NonAppearance:
 							isPostProcessingOk = ExcelHandlers.NonAppearance.Process(itemReport.FileResult, dataTableMainData);
 							break;
+
 						case ReportsInfo.Type.VIP_MSSU:
 						case ReportsInfo.Type.VIP_Moscow:
 						case ReportsInfo.Type.VIP_MSKM:
 						case ReportsInfo.Type.VIP_PND:
 							isPostProcessingOk = ExcelHandlers.VIP.Process(itemReport.FileResult, itemReport.PreviousFile);
 							break;
+
 						case ReportsInfo.Type.RegistryMarks:
 							isPostProcessingOk = ExcelHandlers.RegistryMarks.Process(
 								itemReport.FileResult, dataTableMainData, dateBeginOriginal.Value);
 							break;
+
 						case ReportsInfo.Type.Workload:
 							bool isAllOk = true;
 							Logging.ToLog("Пост-обработка");
@@ -475,20 +614,36 @@ namespace MISReports {
 
 							isPostProcessingOk = isAllOk;
 							break;
+
                         case ReportsInfo.Type.PriceListToSite:
                             isPostProcessingOk = ExcelHandlers.PriceListToSite.Process(itemReport.FileResult);
                             break;
+
                         case ReportsInfo.Type.GBooking:
 						case ReportsInfo.Type.PersonalAccountSchedule:
 						case ReportsInfo.Type.ProtocolViewCDBSyncEvent:
 							isPostProcessingOk = ExcelHandlers.ExcelGeneral.CopyFormatting(itemReport.FileResult);
 							break;
+
                         case ReportsInfo.Type.FssInfo:
                             isPostProcessingOk = ExcelHandlers.FssInfo.Process(itemReport.FileResult);
                             break;
+
                         case ReportsInfo.Type.RecordsFromInsuranceCompanies:
                             isPostProcessingOk = ExcelHandlers.RecordsFromInsuranceCompanies.Process(itemReport.FileResult);
                             break;
+
+						case ReportsInfo.Type.AverageCheck:
+							isPostProcessingOk = ExcelHandlers.AverageCheck.Process(
+								itemReport.FileResult, parameters, parametersAverageCheckPreviousWeek);
+							isPostProcessingOk &= ExcelHandlers.AverageCheck.Process(
+								itemReport.FileResultAverageCheckPreviousYear, parameters, parametersAverageCheckPreviousYear);
+							break;
+
+						case ReportsInfo.Type.CompetitiveGroups:
+							isPostProcessingOk = ExcelHandlers.CompetitiveGroups.Process(itemReport.FileResult, parameters);
+							break;
+
 						default:
 							break;
 					}
@@ -544,9 +699,9 @@ namespace MISReports {
 
 		public static string SaveFileToNetworkFolder(string localFile, string folderToSave) {
 			string fileName = Path.GetFileName(localFile);
-			string destFile = Path.Combine(itemReport.FolderToSave, fileName);
+			string destFile = Path.Combine(folderToSave, fileName);
 			File.Copy(localFile, destFile, true);
-			return "<a href=\"" + itemReport.FolderToSave + "\">" + itemReport.FolderToSave + "</a>";
+			return "<a href=\"" + itemReport.FolderToSave + "\">" + folderToSave + "</a>";
 		}
 
 		private static void SaveSettings() {

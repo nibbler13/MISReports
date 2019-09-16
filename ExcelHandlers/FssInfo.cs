@@ -109,19 +109,19 @@ namespace MISReports.ExcelHandlers {
 
             pivotTable.PivotFields("Год").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
             pivotTable.PivotFields("Год").Position = 1;
-            pivotTable.PivotFields("Год").AutoSort(Excel.XlSortOrder.xlDescending, "Год");
+            //pivotTable.PivotFields("Год").AutoSort(Excel.XlSortOrder.xlDescending, "Год");
 
             pivotTable.PivotFields("Квартал").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
             pivotTable.PivotFields("Квартал").Position = 2;
-            pivotTable.PivotFields("Квартал").AutoSort(Excel.XlSortOrder.xlDescending, "Квартал");
+            //pivotTable.PivotFields("Квартал").AutoSort(Excel.XlSortOrder.xlDescending, "Квартал");
 
             pivotTable.PivotFields("Месяц").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
             pivotTable.PivotFields("Месяц").Position = 3;
-            pivotTable.PivotFields("Месяц").AutoSort(Excel.XlSortOrder.xlDescending, "Месяц");
+            //pivotTable.PivotFields("Месяц").AutoSort(Excel.XlSortOrder.xlDescending, "Месяц");
 
             pivotTable.PivotFields("Неделя").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
             pivotTable.PivotFields("Неделя").Position = 4;
-            pivotTable.PivotFields("Неделя").AutoSort(Excel.XlSortOrder.xlDescending, "Неделя");
+            //pivotTable.PivotFields("Неделя").AutoSort(Excel.XlSortOrder.xlDescending, "Неделя");
 
             pivotTable.AddDataField(pivotTable.PivotFields("Номер ЛН"),
                 "Кол-во Номер ЛН", Excel.XlConsolidationFunction.xlCount);

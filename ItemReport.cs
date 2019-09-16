@@ -19,6 +19,7 @@ namespace MISReports {
 		public DateTime DateBegin { get; private set; }
 		public DateTime DateEnd { get; private set; }
 		public string FileResult { get; set; }
+		public string FileResultAverageCheckPreviousYear { get; set; }
 
 		public ItemReport(string reportName) {
 			if (reportName.Equals(ReportsInfo.Type.FreeCellsDay.ToString())) {
@@ -182,6 +183,18 @@ namespace MISReports {
 				SqlQuery = Properties.Settings.Default.MisDbSqlGetRecordsFromInsuranceCompanies;
 				TemplateFileName = Properties.Settings.Default.TemplateRecordsFromInsuranceCompanies;
 				MailTo = Properties.Settings.Default.MailToRecordsFromInsuranceCompanies;
+
+			} else if (reportName.Equals(ReportsInfo.Type.AverageCheck.ToString())) {
+				Type = ReportsInfo.Type.AverageCheck;
+				SqlQuery = Properties.Settings.Default.MisDbSqlGetAverageCheck;
+				TemplateFileName = Properties.Settings.Default.TemplateAverageCheck;
+				MailTo = Properties.Settings.Default.MailToAverageCheck;
+
+			} else if (reportName.Equals(ReportsInfo.Type.CompetitiveGroups.ToString())) {
+				Type = ReportsInfo.Type.CompetitiveGroups;
+				SqlQuery = Properties.Settings.Default.MisDbSqlGetAverageCheck;
+				TemplateFileName = Properties.Settings.Default.TemplateCompetitiveGroups;
+				MailTo = Properties.Settings.Default.MailToAverageCheck;
 
 			} else
 				IsSettingsLoaded = false;

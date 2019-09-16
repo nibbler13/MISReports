@@ -19,7 +19,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 namespace MISReports.ExcelHandlers {
 	class ExcelGeneral {
 		//============================ NPOI Excel ============================
-		private static bool CreateNewIWorkbook(string resultFilePrefix, string templateFileName,
+		protected static bool CreateNewIWorkbook(string resultFilePrefix, string templateFileName,
 			out IWorkbook workbook, out ISheet sheet, out string resultFile, string sheetName) {
 			workbook = null;
 			sheet = null;
@@ -191,8 +191,6 @@ namespace MISReports.ExcelHandlers {
 
 			return columnName;
 		}
-
-
 
 		public static string WriteDataTableToExcel(DataTable dataTable, string resultFilePrefix, string templateFileName,
 			string sheetName = "", bool createNew = true, string workloadFilial = "", ReportsInfo.Type? type = null) {

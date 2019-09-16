@@ -7,7 +7,7 @@ using System.Net.Mime;
 
 namespace MISReports {
 	public class SystemMail {
-		public static void SendMail (string subject, string body, string receiver, string attachmentPath = "") {
+		public static void SendMail (string subject, string body, string receiver, string[] attachmentsPath = null) {
 			Logging.ToLog("Отправка сообщения, тема: " + subject + ", текст: " + body);
 			Logging.ToLog("Получатели: " + receiver);
 
@@ -46,26 +46,30 @@ namespace MISReports {
 				if (message.IsBodyHtml)
 					body = body.Replace(Environment.NewLine, "<br>");
 				
-				if (!string.IsNullOrEmpty(attachmentPath) && File.Exists(attachmentPath)) {
-					Attachment attachment = new Attachment(attachmentPath);
+				if (attachmentsPath != null) 
+					foreach (string attachmentPath in attachmentsPath) {
+						if (string.IsNullOrEmpty(attachmentPath) || !File.Exists(attachmentPath))
+							continue;
 
-					if (message.IsBodyHtml && attachmentPath.EndsWith(".jpg")) {
-						attachment.ContentDisposition.Inline = true;
+						Attachment attachment = new Attachment(attachmentPath, MediaTypeNames.Application.Octet);
 
-						LinkedResource inline = new LinkedResource(attachmentPath, MediaTypeNames.Image.Jpeg);
-						inline.ContentId = Guid.NewGuid().ToString();
+						if (message.IsBodyHtml && attachmentPath.EndsWith(".jpg")) {
+							attachment.ContentDisposition.Inline = true;
 
-						body = body.Replace("Фотография с камеры терминала:", "Фотография с камеры терминала:<br>" +
-							string.Format(@"<img src=""cid:{0}"" />", inline.ContentId));
+							LinkedResource inline = new LinkedResource(attachmentPath, MediaTypeNames.Image.Jpeg);
+							inline.ContentId = Guid.NewGuid().ToString();
 
-						AlternateView avHtml = AlternateView.CreateAlternateViewFromString(body, null, MediaTypeNames.Text.Html);
-						avHtml.LinkedResources.Add(inline);
+							body = body.Replace("Фотография с камеры терминала:", "Фотография с камеры терминала:<br>" +
+								string.Format(@"<img src=""cid:{0}"" />", inline.ContentId));
 
-						message.AlternateViews.Add(avHtml);
-					} else
-						message.Attachments.Add(attachment);
-				}
+							AlternateView avHtml = AlternateView.CreateAlternateViewFromString(body, null, MediaTypeNames.Text.Html);
+							avHtml.LinkedResources.Add(inline);
 
+							message.AlternateViews.Add(avHtml);
+						} else
+							message.Attachments.Add(attachment);
+					}
+				
 				message.From = from;
 				message.Subject = subject;
 				message.Body = body;
@@ -82,6 +86,10 @@ namespace MISReports {
 
 				client.Send(message);
 				client.Dispose();
+
+				foreach (Attachment attach in message.Attachments)
+					attach.Dispose();
+
 				message.Dispose();
 				Logging.ToLog("Письмо отправлено успешно");
 			} catch (Exception e) {

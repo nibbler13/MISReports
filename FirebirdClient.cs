@@ -8,6 +8,12 @@ namespace MISReports {
 	public class FirebirdClient {
 		private FbConnection connection;
 
+
+
+
+
+
+
 		public FirebirdClient(string ipAddress, string baseName, string user, string pass) {
 			FbConnectionStringBuilder cs = new FbConnectionStringBuilder {
 				DataSource = ipAddress,
@@ -21,6 +27,10 @@ namespace MISReports {
 			connection = new FbConnection(cs.ToString());
 			IsConnectionOpened();
 		}
+
+
+
+
 
 		public void Close() {
 			connection.Close();

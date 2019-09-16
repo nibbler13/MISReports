@@ -31,7 +31,9 @@ namespace MISReports {
 			ProtocolViewCDBSyncEvent,
             FssInfo,
             TimetableBz,
-            RecordsFromInsuranceCompanies
+            RecordsFromInsuranceCompanies,
+			AverageCheck,
+			CompetitiveGroups
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -59,8 +61,10 @@ namespace MISReports {
 			{ Type.ProtocolViewCDBSyncEvent, "Отчет по просмотрам ИБ и синхронизации с ЦБД" },
 			{ Type.FssInfo, "Отчет по выданным ЭЛН" },
             { Type.TimetableBz, "Расписание работы врачей" },
-            { Type.RecordsFromInsuranceCompanies, "Отчет по записям из страховых компаний" }
-        };
+            { Type.RecordsFromInsuranceCompanies, "Отчет по записям из страховых компаний" },
+            { Type.AverageCheck, "Отчет по среднему чеку" },
+			{ Type.CompetitiveGroups, "Отчет по конкурентным группам" }
+		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
 			{ Type.FreeCellsDay, "Каждый день в 7:10" },
@@ -77,7 +81,7 @@ namespace MISReports {
 			{ Type.VIP_MSKM, "Каждый день в 8:04 и 15:04" },
 			{ Type.VIP_PND, "Каждый день в 15:06" },
 			{ Type.RegistryMarks, "Каждый понедельник в 7:10" },
-			{ Type.Workload, "" },
+			{ Type.Workload, "Каждый месяц, 10 числа в 6:00" },
 			{ Type.Robocalls, "Каждый день в 15:00" },
 			{ Type.UniqueServices, "Каждый понедельник в 7:57" },
 			{ Type.UniqueServicesRegions, "Каждый понедельник в 7:50" },
@@ -85,9 +89,11 @@ namespace MISReports {
 			{ Type.GBooking, "Каждый день в 6:10" },
 			{ Type.PersonalAccountSchedule, "Каждый день в 10:05" },
 			{ Type.ProtocolViewCDBSyncEvent, "Каждый день в 0:00" },
-			{ Type.FssInfo, "Каждый понедельник в 7:45" },
+			{ Type.FssInfo, "Каждый понедельник в 11:10" },
 			{ Type.TimetableBz, "" },
-			{ Type.RecordsFromInsuranceCompanies, "Каждый понедельник в 3:00" }
+			{ Type.RecordsFromInsuranceCompanies, "Каждый понедельник в 3:00" },
+			{ Type.AverageCheck, "Каждый понедельник в 6:25" },
+			{ Type.CompetitiveGroups, "Каждый месяц, 1 числа в 6:40" }
 		};
 	}
 }
