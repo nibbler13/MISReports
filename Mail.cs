@@ -79,10 +79,11 @@ namespace MISReports {
 
 				SmtpClient client = new SmtpClient(Properties.Settings.Default.MailSmtpServer, 25);
 				client.UseDefaultCredentials = false;
+				client.DeliveryMethod = SmtpDeliveryMethod.Network;
+				client.EnableSsl = false;
 				client.Credentials = new System.Net.NetworkCredential(
 					Properties.Settings.Default.MailUser,
-					Properties.Settings.Default.MailPassword,
-					Properties.Settings.Default.MailDomain);
+					Properties.Settings.Default.MailPassword);
 
 				client.Send(message);
 				client.Dispose();

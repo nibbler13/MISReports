@@ -62,8 +62,25 @@ namespace MISReports {
 			{ "Уфа", string.Empty }
 		};
 
-
-
+		private static Tuple<string, string, string>[] licenseStatisticsDBs = 
+			new Tuple<string, string, string>[] {
+				 new Tuple<string, string, string>("172.16.9.9", "Central", "99_ЦБД"),
+				 new Tuple<string, string, string>("172.16.225.2", "mssu", "12_Сущевcкий Вал"),
+				 new Tuple<string, string, string>("172.16.225.2", "mskt", "06_Кутузовский"),
+				 new Tuple<string, string, string>("172.16.210.203", "web", "Расписание для сайта"),
+				 new Tuple<string, string, string>("172.16.225.2", "msn", "02_Мясницкая"),
+				 new Tuple<string, string, string>("172.16.9.10", "central-report", "99_ЦБД (Отчеты}"),
+				 new Tuple<string, string, string>("172.16.190.6", "dentbase", "01_МДМ"),
+				 new Tuple<string, string, string>("172.16.203.2", "spb", "03_СП-Б"),
+				 new Tuple<string, string, string>("172.16.127.2", "sretenka", "05_Сретенка"),
+				 new Tuple<string, string, string>("172.17.5.2", "snp", "07_Скорая"),
+				 new Tuple<string, string, string>("172.16.3.2", "krasn", "08_Краснодар"),
+				 new Tuple<string, string, string>("172.16.153.2", "ufa", "09_УФА"),
+				 new Tuple<string, string, string>("172.16.158.2", "kazan", "10_Казань"),
+				 new Tuple<string, string, string>("172.17.3.2", "yekuk", "15_К-Уральский"),
+				 new Tuple<string, string, string>("172.17.100.2", "sctrk", "17_Сочи"),
+				 new Tuple<string, string, string>("172.17.10.2", "call_center", "97_Информационный центр")
+		};
 
 		public static void Main(string[] args) {
 			Logging.ToLog("Старт");
@@ -116,6 +133,9 @@ namespace MISReports {
 
 			SaveSettings();
 
+			if (Debugger.IsAttached)
+				return;
+
 			if (!string.IsNullOrEmpty(itemReport.FolderToSave))
 				SaveReportToFolder();
 
@@ -127,9 +147,6 @@ namespace MISReports {
 					Environment.NewLine + Environment.NewLine + itemReport.MailTo,
 					"Отправка сообщения", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
 					return;
-			
-			//if (Debugger.IsAttached)
-			//	return;
 
 			string[] attachments;
 
@@ -217,6 +234,32 @@ namespace MISReports {
 						dataTableMainData = dataTablePart;
 					else
 						dataTableMainData.Merge(dataTablePart);
+				}
+
+				return;
+			}
+
+			if (itemReport.Type == ReportsInfo.Type.LicenseStatistics) {
+				dataTableMainData = new DataTable();
+				dataTableMainData.Columns.Add(new DataColumn("DB", typeof(string)));
+				dataTableMainData.Columns.Add(new DataColumn("DATE", typeof(DateTime)));
+				dataTableMainData.Columns.Add(new DataColumn("COUNT", typeof(int)));
+				foreach (Tuple<string, string, string> item in licenseStatisticsDBs) {
+					string dbName = item.Item1 + ":" + item.Item2 + "@" + item.Item3;
+					Logging.ToLog("Получение данных из бд: " + dbName);
+					try {
+						firebirdClient = new FirebirdClient(
+							item.Item1, 
+							item.Item2, 
+							Properties.Settings.Default.MisDbUser, 
+							Properties.Settings.Default.MisDbPassword);
+
+						DataTable dataTable = firebirdClient.GetDataTable(itemReport.SqlQuery, new Dictionary<string, object>());
+						dataTableMainData.Rows.Add(new object[] {dbName, DateTime.Now, dataTable.Rows[0][0] });
+					} catch (Exception e) {
+						Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+						dataTableMainData.Rows.Add(new object[] { dbName, DateTime.Now, -1 });
+					}
 				}
 
 				return;

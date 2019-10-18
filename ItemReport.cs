@@ -196,6 +196,13 @@ namespace MISReports {
 				TemplateFileName = Properties.Settings.Default.TemplateCompetitiveGroups;
 				MailTo = Properties.Settings.Default.MailToAverageCheck;
 
+			} else if (reportName.Equals(ReportsInfo.Type.LicenseStatistics.ToString())) {
+				Type = ReportsInfo.Type.LicenseStatistics;
+				SqlQuery = Properties.Settings.Default.MisDbSqlGetLicenseStatistics;
+				TemplateFileName = Properties.Settings.Default.TemplageLicenseStatistics;
+				MailTo = Properties.Settings.Default.MailToLicenseStatistics;
+				FolderToSave = Properties.Settings.Default.FolderToSaveLicenseStatistics;
+
 			} else
 				IsSettingsLoaded = false;
 

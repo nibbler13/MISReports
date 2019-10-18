@@ -17,7 +17,7 @@ using System.Windows;
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace MISReports.ExcelHandlers {
-	class ExcelGeneral {
+	public class ExcelGeneral {
 		//============================ NPOI Excel ============================
 		protected static bool CreateNewIWorkbook(string resultFilePrefix, string templateFileName,
 			out IWorkbook workbook, out ISheet sheet, out string resultFile, string sheetName) {
@@ -460,11 +460,11 @@ namespace MISReports.ExcelHandlers {
 			}
 		}
 
-		protected static void AddInteriorColor(Excel.Range range, Excel.XlThemeColor xlThemeColor) {
+		protected static void AddInteriorColor(Excel.Range range, Excel.XlThemeColor xlThemeColor, double tintAndShade = 0.799981688894314) {
 			range.Interior.Pattern = Excel.Constants.xlSolid;
 			range.Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
 			range.Interior.ThemeColor = xlThemeColor;
-			range.Interior.TintAndShade = 0.799981688894314;
+			range.Interior.TintAndShade = tintAndShade;
 			range.Interior.PatternTintAndShade = 0;
 		}
 

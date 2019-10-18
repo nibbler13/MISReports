@@ -44,6 +44,8 @@ namespace MISReports.ExcelHandlers {
 				ws.Range["Y2:Y2"].Select();
 				xlApp.Selection.AutoFill(ws.Range["Y2:Y" + ws.UsedRange.Rows.Count]);
 
+				xlApp.ScreenUpdating = false;
+
 				List<string> deptsToExclude = new List<string> {
 					"АНЕСТЕЗИОЛОГИЯ-РЕАНИМАТОЛОГИЯ",
 					"ДЕЖУРНЫЙ ВРАЧ",
@@ -84,11 +86,44 @@ namespace MISReports.ExcelHandlers {
 					"Фельдшер"
 				};
 
-				for (int row = 2; row < ws.UsedRange.Rows.Count; row++) {
+				string filialNameBlock = string.Empty;
+				string departmentBlock = string.Empty;
+				int firstRowBlock = 0;
+				int firstRowFilial = 0;
+				int row = 0;
+
+				for (row = 2; row <= ws.UsedRange.Rows.Count + 1; row++) {
+					Console.WriteLine("row: " + row + " / " + ws.UsedRange.Rows.Count);
+
 					try {
 						string department = ws.Range["F" + row].Value2;
-						string docPost = ws.Range["K" + row].Value2;
-						string filialCode = Convert.ToString(ws.Range["C" + row].Value2);
+						string filialName = Convert.ToString(ws.Range["D" + row].Value2);
+
+						if (department == null)
+							department = string.Empty;
+
+						if (string.IsNullOrEmpty(departmentBlock)) {
+							departmentBlock = department;
+							filialNameBlock = filialName;
+							firstRowBlock = row;
+							firstRowFilial = row;
+						} else if (!departmentBlock.Equals(department) && filialNameBlock.Equals(filialName)) {
+							Console.WriteLine("DepartmentTotals: " + departmentBlock);
+							CreateDepartmentTotals(wb, ws, xlApp, firstRowBlock, ref row, deptsToExclude.Contains(departmentBlock));
+							departmentBlock = department;
+							firstRowBlock = row;
+						} else if (!filialNameBlock.Equals(filialName)) {
+							Console.WriteLine("FilialTotals: " + filialNameBlock);
+							CreateDepartmentTotals(wb, ws, xlApp, firstRowFilial, ref row, false, isMethodic1Total: true);
+							CreateDepartmentTotals(wb, ws, xlApp, firstRowFilial, ref row, false, isMethodic2Total: true);
+							filialNameBlock = filialName;
+							departmentBlock = department;
+							firstRowBlock = row;
+							firstRowFilial = row;
+						}
+
+						if (string.IsNullOrEmpty(department))
+							continue;
 
 						if (department.ToLower().Equals("рефлексотерапия")) {
 							double filID = ws.Range["C" + row].Value;
@@ -110,14 +145,12 @@ namespace MISReports.ExcelHandlers {
 							}
 						}
 
-						if (string.IsNullOrEmpty(department))
-							continue;
-
 						if (deptsToExclude.Contains(department)) {
 							ws.Range["AL" + row].Value2 = 1;
 							continue;
 						}
 
+						string docPost = ws.Range["K" + row].Value2;
 						if (string.IsNullOrEmpty(docPost))
 							continue;
 
@@ -134,8 +167,8 @@ namespace MISReports.ExcelHandlers {
 						}
 
 						if (docPost.Equals("Рентгенолаборант") &&
-							!filialCode.Equals("17") &&
-							!filialCode.Equals("15")) {
+							!filialName.Equals("17") &&
+							!filialName.Equals("15")) {
 							ws.Range["AL" + row].Value2 = 1;
 							continue;
 						}
@@ -149,6 +182,10 @@ namespace MISReports.ExcelHandlers {
 					}
 				}
 
+				row--;
+				CreateDepartmentTotals(wb, ws, xlApp, 2, ref row, false, isMethodic1Total: true, isGeneralTotal:true);
+				CreateDepartmentTotals(wb, ws, xlApp, 2, ref row, false, isMethodic2Total: true, isGeneralTotal:true);
+
 				ws.Columns["AM:AM"].Select();
 				xlApp.Selection.FormatConditions.Add(Excel.XlFormatConditionType.xlExpression, Formula1: "=ДЛСТР(СЖПРОБЕЛЫ(AM1))=0");
 				xlApp.Selection.FormatConditions(xlApp.Selection.FormatConditions.Count).SetFirstPriority();
@@ -156,17 +193,8 @@ namespace MISReports.ExcelHandlers {
 				xlApp.Selection.FormatConditions(1).Interior.ThemeColor = Excel.XlThemeColor.xlThemeColorDark1;
 				xlApp.Selection.FormatConditions(1).Interior.TintAndShade = 0;
 
-				//xlApp.Selection.FormatConditions.Add(Excel.XlFormatConditionType.xlCellValue, Excel.XlFormatConditionOperator.xlLess, "=20");
-				//xlApp.Selection.FormatConditions(2).Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
-				//xlApp.Selection.FormatConditions(2).Interior.ThemeColor = Excel.XlThemeColor.xlThemeColorAccent1;
-				//xlApp.Selection.FormatConditions(2).Interior.TintAndShade = 0.799981688894314;
-
-				//xlApp.Selection.FormatConditions.Add(Excel.XlFormatConditionType.xlCellValue, Excel.XlFormatConditionOperator.xlGreater, "=150");
-				//xlApp.Selection.FormatConditions(3).Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
-				//xlApp.Selection.FormatConditions(3).Interior.Color = 65535;
-				//xlApp.Selection.FormatConditions(3).Interior.TintAndShade = 0;
-
 				ws.Range["A1"].Select();
+				xlApp.ActiveWindow.SmallScroll(-10000);
 
 				xlApp.ActiveWindow.ScrollColumn = 8;
 			} catch (Exception e) {
@@ -179,9 +207,173 @@ namespace MISReports.ExcelHandlers {
 				Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
+			xlApp.ScreenUpdating = true;
 			SaveAndCloseWorkbook(xlApp, wb, ws);
 
 			return true;
+		}
+
+		private static void CreateDepartmentTotals(Excel.Workbook wb,
+											 Excel.Worksheet ws,
+											 Excel.Application xlApp,
+											 int firstRowBlock,
+											 ref int nextBlockFirstRow,
+											 bool isNeedToIgnore,
+											 bool isMethodic1Total = false,
+											 bool isMethodic2Total = false,
+											 bool isGeneralTotal = false) {
+			Console.WriteLine("Создание итогов по отделению, isMethodic1Total: " + isMethodic1Total + 
+				", isMethodic2Total: " + isMethodic2Total + 
+				", isGeneralTotal: " + isGeneralTotal);
+
+			//Добавление пустой строки для итогов
+			ws.Rows[nextBlockFirstRow + ":" + nextBlockFirstRow].Select();
+			xlApp.Selection.Insert(Excel.XlInsertShiftDirection.xlShiftDown, Excel.XlInsertFormatOrigin.xlFormatFromLeftOrAbove);
+
+			//Если итоги для методики №2, то предыдущая строка с данными -2 от текущей
+			int prevRow = nextBlockFirstRow - 1;
+			if (isMethodic2Total)
+				prevRow--;
+
+			//Копирование форматов предыдущей строки
+			ws.Range["A" + prevRow + ":AM" + prevRow].Select();
+			xlApp.Selection.Copy();
+			ws.Range["A" + nextBlockFirstRow + ":AM" + nextBlockFirstRow].PasteSpecial(Excel.XlPasteType.xlPasteFormats);
+
+			//Копирование заголовков предыдущей строки
+			ws.Range["A" + firstRowBlock + ":F" + firstRowBlock].Select();
+			xlApp.Selection.Copy();
+			ws.Range["A" + nextBlockFirstRow + ":F" + nextBlockFirstRow].Select();
+			xlApp.ActiveSheet.Paste();
+
+			//Изменение имени отделения
+			string departmentTotalName = ws.Range["F" + nextBlockFirstRow].Value2 + " - ИТОГО";
+			if (isMethodic1Total)
+				departmentTotalName = "_Методика №1 ИТОГО";
+			else if (isMethodic2Total)
+				departmentTotalName = "_Методика №2 ИТОГО";
+
+			ws.Range["F" + nextBlockFirstRow].Value2 = departmentTotalName;
+
+			//Добавление толстой границы
+			AddBoldBorder(ws.Range["A" + firstRowBlock + ":AM" + nextBlockFirstRow]);
+
+			if (isMethodic1Total || isMethodic2Total)
+				AddBoldBorder(ws.Range["A" + nextBlockFirstRow + ":AM" + nextBlockFirstRow]);
+			
+			//Выделение строки итогов цветом
+			double tintAndShade = 0.799981688894314;
+			if (isMethodic1Total || isMethodic2Total)
+				tintAndShade = 0.599993896298105;
+			
+			if (isGeneralTotal)
+				tintAndShade = 0.399975585192419;
+
+			AddInteriorColor(ws.Range["A" + nextBlockFirstRow + ":K" + nextBlockFirstRow], Excel.XlThemeColor.xlThemeColorAccent6, tintAndShade);
+
+			//Формулы для объединения значений базовых данных
+			string formulaSumIfLeft = "=SUMIF($AL" + firstRowBlock + ":$AL" + prevRow + ",\"<>1\",L" + firstRowBlock + ":L" + prevRow + ")";
+			string formulaSumIfRight = "=SUMIF($AL" + firstRowBlock + ":$AL" + prevRow + ",\"<>1\",AD" + firstRowBlock + ":AD" + prevRow + ")";
+
+			if (isMethodic1Total || isMethodic2Total) {
+				formulaSumIfLeft =
+					"=SUMIFS(L" + firstRowBlock + ":L" + prevRow +
+					",$AL" + firstRowBlock + ":$AL" + prevRow +
+					",\"<>1\",$F" + firstRowBlock + ":$F" + prevRow +
+					",\"* - ИТОГО\",$AK" + firstRowBlock + ":$AK" + prevRow + ",\"";
+				formulaSumIfRight = "=SUMIFS(AD" + firstRowBlock + ":AD" + prevRow +
+					",$AL" + firstRowBlock + ":$AL" + prevRow +
+					",\"<>1\",$F" + firstRowBlock + ":$F" + prevRow +
+					",\"* - ИТОГО\",$AK" + firstRowBlock + ":$AK" + prevRow + ",\"";
+
+				if (isMethodic1Total) {
+					formulaSumIfLeft += "=1\"";
+					formulaSumIfRight += "=1\"";
+				} else if (isMethodic2Total) {
+					formulaSumIfLeft += "<>1\"";
+					formulaSumIfRight += "<>1\"";
+				}
+
+				formulaSumIfLeft += ")";
+				formulaSumIfRight += ")";
+			}
+
+			//Протягивание формул на соседние ячейки
+			ws.Range["L" + nextBlockFirstRow].Formula = formulaSumIfLeft;
+			ws.Range["L" + nextBlockFirstRow].Select();
+			xlApp.Selection.AutoFill(ws.Range["L" + nextBlockFirstRow + ":X" + nextBlockFirstRow]);
+
+			ws.Range["AD" + nextBlockFirstRow].Formula = formulaSumIfRight;
+			ws.Range["AD" + nextBlockFirstRow].Select();
+			xlApp.Selection.AutoFill(ws.Range["AD" + nextBlockFirstRow + ":AI" + nextBlockFirstRow]);
+
+			//План по кол-ву пациентов для отделения для обычных отделений и итогов по методике 2
+			if (!isMethodic1Total) {
+				ws.Range["Z" + nextBlockFirstRow].Formula = "=(L" + nextBlockFirstRow + "-N" + nextBlockFirstRow + ")*Y" + nextBlockFirstRow;
+				ws.Range["Z" + nextBlockFirstRow].AddComment("План по кол-ву пациентов для отделения");
+			}
+
+			//Протягивание формул для итогов отделения
+			if (!isMethodic1Total && !isMethodic2Total) {
+				string[] rangesToFill = new string[] { "Y@:Y$", "AA@:AC$", "AJ@:AK$", "AM@:AM$" };
+				foreach (string rangeToFill in rangesToFill) {
+					string rangeSrc = rangeToFill.Replace("@", prevRow.ToString()).Replace("$", prevRow.ToString());
+					string rangeDst = rangeToFill.Replace("@", prevRow.ToString()).Replace("$", nextBlockFirstRow.ToString());
+
+					ws.Range[rangeSrc].Select();
+					xlApp.Selection.AutoFill(ws.Range[rangeDst], Excel.XlAutoFillType.xlFillValues);
+
+					//Снятие сообщения об ошибках с ячеек
+					foreach (Excel.Range cell in ws.Range["AD" + firstRowBlock + ":AJ" + nextBlockFirstRow].Cells)
+						if (cell.Errors.Item[Excel.XlErrorChecks.xlInconsistentFormula].Value)
+							cell.Errors.Item[Excel.XlErrorChecks.xlInconsistentFormula].Ignore = true;
+				}
+			}
+
+			//Установка отметки Не учитывать для отделения
+			if (isNeedToIgnore)
+				ws.Range["AL" + nextBlockFirstRow].Value2 = 1;
+
+			if (isMethodic1Total) {
+				//Установка отметки Расчет по методике №1
+				ws.Range["AK" + nextBlockFirstRow].Value2 = 1;
+
+				//Формула расчета загрузки для итогов методики №1
+				string formulaCount = "=IF(AL" + nextBlockFirstRow + "=1,\"\",IF(AK" + nextBlockFirstRow + 
+					"=1,AJ" + nextBlockFirstRow +",IFERROR(AG" + nextBlockFirstRow + 
+					"*100/((L" + nextBlockFirstRow + "-N" + nextBlockFirstRow + 
+					")*Y" + nextBlockFirstRow + "),0)))";
+				ws.Range["AM" + nextBlockFirstRow].Formula = formulaCount;
+
+				string formulaCount1 = "=IFERROR(AI" + nextBlockFirstRow + "*100/AH" + nextBlockFirstRow +",0)";
+				ws.Range["AJ" + nextBlockFirstRow].Formula = formulaCount1;
+			} else if (isMethodic2Total) {
+				//Формула расчета плана по кол-ву пациентов для итогов методики №2
+				string formulaSumPlan = "=SUMIFS(Z" + firstRowBlock + ":Z" + prevRow +
+					",$AL" + firstRowBlock + ":$AL" + prevRow +
+					",\"<>1\",$F" + firstRowBlock + ":$F" + prevRow +
+					",\"* - ИТОГО\",$AK" + firstRowBlock + ":$AK" + prevRow + ",\"<>1\")";
+				ws.Range["Z" + nextBlockFirstRow].Formula = formulaSumPlan;
+
+				//Формула расчета загрузки для итогов методики №2
+				string formulaCount = "=IF(AL" + nextBlockFirstRow + "=1,\"\",IF(AK" +
+					nextBlockFirstRow + "=1,AJ" + nextBlockFirstRow + ",IFERROR(AG" +
+					nextBlockFirstRow + "*100/Z" + nextBlockFirstRow + ",0)))";
+				ws.Range["AM" + nextBlockFirstRow].Formula = formulaCount;
+			}
+
+			if (isMethodic1Total || isMethodic2Total)
+				//Снятие уведомления об ошибке в формуле
+				if (ws.Range["AM" + nextBlockFirstRow].Errors.Item[Excel.XlErrorChecks.xlInconsistentFormula].Value)
+					ws.Range["AM" + nextBlockFirstRow].Errors.Item[Excel.XlErrorChecks.xlInconsistentFormula].Ignore = true;
+
+			//Замена имени отделения для общих итогов
+			if (isGeneralTotal) {
+				ws.Range["B" + nextBlockFirstRow + ":E" + nextBlockFirstRow].Value2 = string.Empty;
+				ws.Range["D" + nextBlockFirstRow].Value2 = "Все клиники";
+			}
+
+			nextBlockFirstRow++;
 		}
 
 		private static void WorkloadAddPivotTable(Excel.Workbook wb, Excel.Worksheet ws, Excel.Application xlApp) {
@@ -217,6 +409,12 @@ namespace MISReports.ExcelHandlers {
 			pivotTable.HasAutoFormat = false;
 			pivotTable.ShowTableStyleColumnStripes = true;
 			pivotTable.TableStyle2 = "PivotStyleMedium2";
+			pivotTable.ColumnGrand = false;
+			pivotTable.RowGrand = false;
+
+			foreach (Excel.PivotItem item in pivotTable.PivotFields("ОТДЕЛЕНИЕ").PivotItems())
+				if (!item.Name.Contains("ИТОГО"))
+					item.Visible = false;
 
 			wsPivote.Columns["B:N"].Select();
 			xlApp.Selection.FormatConditions.AddColorScale(3);
