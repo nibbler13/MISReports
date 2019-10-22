@@ -34,7 +34,8 @@ namespace MISReports {
             RecordsFromInsuranceCompanies,
 			AverageCheck,
 			CompetitiveGroups,
-			LicenseStatistics
+			LicenseStatistics,
+			TreatmentsDetails
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -65,7 +66,8 @@ namespace MISReports {
             { Type.RecordsFromInsuranceCompanies, "Отчет по записям из страховых компаний" },
             { Type.AverageCheck, "Отчет по среднему чеку" },
 			{ Type.CompetitiveGroups, "Отчет по конкурентным группам" },
-			{ Type.LicenseStatistics, "Статистика по лицензиям" }
+			{ Type.LicenseStatistics, "Статистика по лицензиям" },
+			{ Type.TreatmentsDetails, "Детальный отчет по приемам" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -96,7 +98,8 @@ namespace MISReports {
 			{ Type.RecordsFromInsuranceCompanies, "Каждый понедельник в 3:00" },
 			{ Type.AverageCheck, "Каждый понедельник в 6:25" },
 			{ Type.CompetitiveGroups, "Каждый месяц, 1 числа в 6:40" },
-			{ Type.LicenseStatistics, "Каждый день, с 8:00 до 21:00 с интервалом 2 часа" }
+			{ Type.LicenseStatistics, "Каждый день, с 8:00 до 21:00 с интервалом 2 часа" },
+			{ Type.TreatmentsDetails, "" }
 		};
 	}
 }

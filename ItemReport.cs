@@ -203,6 +203,12 @@ namespace MISReports {
 				MailTo = Properties.Settings.Default.MailToLicenseStatistics;
 				FolderToSave = Properties.Settings.Default.FolderToSaveLicenseStatistics;
 
+			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetails.ToString())) {
+				Type = ReportsInfo.Type.TreatmentsDetails;
+				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
+				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
+
 			} else
 				IsSettingsLoaded = false;
 

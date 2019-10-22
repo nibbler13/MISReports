@@ -86,6 +86,7 @@
     <Compile Include="ExcelHandlers\RecordsFromInsuranceCompanies.cs" />
     <Compile Include="ExcelHandlers\Telemedicine.cs" />
     <Compile Include="ExcelHandlers\TimetableBz.cs" />
+    <Compile Include="ExcelHandlers\TreatmentsDetails.cs" />
     <Compile Include="ExcelHandlers\UnclosedProtocols.cs" />
     <Compile Include="ExcelHandlers\UniqueServices.cs" />
     <Compile Include="ExcelHandlers\VIP.cs" />
@@ -107,6 +108,7 @@
     <Compile Include="ReportsInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".editorconfig" />
     <None Include="App.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

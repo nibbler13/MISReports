@@ -417,6 +417,9 @@ namespace MISReports {
 
 			if (itemReport.Type == ReportsInfo.Type.CompetitiveGroups)
 				ItemCompetitiveGroups = ExcelHandlers.CompetitiveGroups.PerformData(dataTableMainData);
+
+			if (itemReport.Type == ReportsInfo.Type.TreatmentsDetails)
+				ExcelHandlers.TreatmentsDetails.PerformDataTable(ref dataTableMainData);
 		}
 
 		private static int GetIso8601WeekOfYear(DateTime time) {
