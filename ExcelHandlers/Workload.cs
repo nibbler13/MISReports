@@ -33,16 +33,16 @@ namespace MISReports.ExcelHandlers {
 
 				ws = wb.Sheets["Расчет"];
 				ws.Activate();
-				ws.Range["AA2:AM2"].Select();
-				xlApp.Selection.AutoFill(ws.Range["AA2:AM" + ws.UsedRange.Rows.Count]);
-				ws.Range["AA3:AM3"].Select();
-				xlApp.Selection.AutoFill(ws.Range["AA2:AM3"]);
-				ws.Range["A2:Z2"].Select();
+				ws.Range["AB2:AO2"].Select();
+				xlApp.Selection.AutoFill(ws.Range["AB2:AO" + ws.UsedRange.Rows.Count]);
+				ws.Range["AB3:AO3"].Select();
+				xlApp.Selection.AutoFill(ws.Range["AB2:AO3"]);
+				ws.Range["A2:AA2"].Select();
 				xlApp.Selection.Copy();
-				ws.Range["A3:Z" + ws.UsedRange.Rows.Count].Select();
+				ws.Range["A3:AA" + ws.UsedRange.Rows.Count].Select();
 				xlApp.Selection.PasteSpecial(Excel.XlPasteType.xlPasteFormats);
-				ws.Range["Y2:Y2"].Select();
-				xlApp.Selection.AutoFill(ws.Range["Y2:Y" + ws.UsedRange.Rows.Count]);
+				ws.Range["Z2:Z2"].Select();
+				xlApp.Selection.AutoFill(ws.Range["Z2:Z" + ws.UsedRange.Rows.Count]);
 
 				xlApp.ScreenUpdating = false;
 
@@ -131,8 +131,8 @@ namespace MISReports.ExcelHandlers {
 								double chairsCount = 2;
 								if (filID == 5) {
 									chairsCount = 3;
-									ws.Range["Y" + row].Value2 = "4";
-									ws.Range["Y" + row].Interior.ColorIndex = 45;
+									ws.Range["Z" + row].Value2 = "4";
+									ws.Range["Z" + row].Interior.ColorIndex = 45;
 								}
 
 								double timeDS = ws.Range["L" + row].Value2;
@@ -146,7 +146,7 @@ namespace MISReports.ExcelHandlers {
 						}
 
 						if (deptsToExclude.Contains(department)) {
-							ws.Range["AL" + row].Value2 = 1;
+							ws.Range["AN" + row].Value2 = 1;
 							continue;
 						}
 
@@ -161,7 +161,7 @@ namespace MISReports.ExcelHandlers {
 								deptLow.Contains("грязелечение") ||
 								deptLow.Contains("лечебная физкультура") ||
 								deptLow.Contains("медицинская реабилитация"))) {
-								ws.Range["AL" + row].Value2 = 1;
+								ws.Range["AN" + row].Value2 = 1;
 								continue;
 							}
 						}
@@ -169,13 +169,13 @@ namespace MISReports.ExcelHandlers {
 						if (docPost.Equals("Рентгенолаборант") &&
 							!filialName.Equals("17") &&
 							!filialName.Equals("15")) {
-							ws.Range["AL" + row].Value2 = 1;
+							ws.Range["AN" + row].Value2 = 1;
 							continue;
 						}
 
 						if (docPost.Equals("Мануальный терапевт") &&
 							((string)ws.Range["H" + row].Value2).StartsWith("Пеньтковский"))
-							ws.Range["AL" + row].Value2 = 1;
+							ws.Range["AN" + row].Value2 = 1;
 
 					} catch (Exception e) {
 						Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
@@ -186,8 +186,8 @@ namespace MISReports.ExcelHandlers {
 				CreateDepartmentTotals(wb, ws, xlApp, 2, ref row, false, isMethodic1Total: true, isGeneralTotal:true);
 				CreateDepartmentTotals(wb, ws, xlApp, 2, ref row, false, isMethodic2Total: true, isGeneralTotal:true);
 
-				ws.Columns["AM:AM"].Select();
-				xlApp.Selection.FormatConditions.Add(Excel.XlFormatConditionType.xlExpression, Formula1: "=ДЛСТР(СЖПРОБЕЛЫ(AM1))=0");
+				ws.Columns["AO:AO"].Select();
+				xlApp.Selection.FormatConditions.Add(Excel.XlFormatConditionType.xlExpression, Formula1: "=ДЛСТР(СЖПРОБЕЛЫ(AO1))=0");
 				xlApp.Selection.FormatConditions(xlApp.Selection.FormatConditions.Count).SetFirstPriority();
 				xlApp.Selection.FormatConditions(1).Interior.PatternColorIndex = Excel.Constants.xlAutomatic;
 				xlApp.Selection.FormatConditions(1).Interior.ThemeColor = Excel.XlThemeColor.xlThemeColorDark1;
@@ -236,9 +236,9 @@ namespace MISReports.ExcelHandlers {
 				prevRow--;
 
 			//Копирование форматов предыдущей строки
-			ws.Range["A" + prevRow + ":AM" + prevRow].Select();
+			ws.Range["A" + prevRow + ":AO" + prevRow].Select();
 			xlApp.Selection.Copy();
-			ws.Range["A" + nextBlockFirstRow + ":AM" + nextBlockFirstRow].PasteSpecial(Excel.XlPasteType.xlPasteFormats);
+			ws.Range["A" + nextBlockFirstRow + ":AO" + nextBlockFirstRow].PasteSpecial(Excel.XlPasteType.xlPasteFormats);
 
 			//Копирование заголовков предыдущей строки
 			ws.Range["A" + firstRowBlock + ":F" + firstRowBlock].Select();
@@ -256,10 +256,10 @@ namespace MISReports.ExcelHandlers {
 			ws.Range["F" + nextBlockFirstRow].Value2 = departmentTotalName;
 
 			//Добавление толстой границы
-			AddBoldBorder(ws.Range["A" + firstRowBlock + ":AM" + nextBlockFirstRow]);
+			AddBoldBorder(ws.Range["A" + firstRowBlock + ":AO" + nextBlockFirstRow]);
 
 			if (isMethodic1Total || isMethodic2Total)
-				AddBoldBorder(ws.Range["A" + nextBlockFirstRow + ":AM" + nextBlockFirstRow]);
+				AddBoldBorder(ws.Range["A" + nextBlockFirstRow + ":AO" + nextBlockFirstRow]);
 			
 			//Выделение строки итогов цветом
 			double tintAndShade = 0.799981688894314;
@@ -272,19 +272,19 @@ namespace MISReports.ExcelHandlers {
 			AddInteriorColor(ws.Range["A" + nextBlockFirstRow + ":K" + nextBlockFirstRow], Excel.XlThemeColor.xlThemeColorAccent6, tintAndShade);
 
 			//Формулы для объединения значений базовых данных
-			string formulaSumIfLeft = "=SUMIF($AL" + firstRowBlock + ":$AL" + prevRow + ",\"<>1\",L" + firstRowBlock + ":L" + prevRow + ")";
-			string formulaSumIfRight = "=SUMIF($AL" + firstRowBlock + ":$AL" + prevRow + ",\"<>1\",AD" + firstRowBlock + ":AD" + prevRow + ")";
+			string formulaSumIfLeft = "=SUMIF($AN" + firstRowBlock + ":$AN" + prevRow + ",\"<>1\",L" + firstRowBlock + ":L" + prevRow + ")";
+			string formulaSumIfRight = "=SUMIF($AN" + firstRowBlock + ":$AN" + prevRow + ",\"<>1\",AE" + firstRowBlock + ":AE" + prevRow + ")";
 
 			if (isMethodic1Total || isMethodic2Total) {
 				formulaSumIfLeft =
 					"=SUMIFS(L" + firstRowBlock + ":L" + prevRow +
-					",$AL" + firstRowBlock + ":$AL" + prevRow +
+					",$AN" + firstRowBlock + ":$AN" + prevRow +
 					",\"<>1\",$F" + firstRowBlock + ":$F" + prevRow +
-					",\"* - ИТОГО\",$AK" + firstRowBlock + ":$AK" + prevRow + ",\"";
-				formulaSumIfRight = "=SUMIFS(AD" + firstRowBlock + ":AD" + prevRow +
-					",$AL" + firstRowBlock + ":$AL" + prevRow +
+					",\"* - ИТОГО\",$AM" + firstRowBlock + ":$AM" + prevRow + ",\"";
+				formulaSumIfRight = "=SUMIFS(AE" + firstRowBlock + ":AE" + prevRow +
+					",$AN" + firstRowBlock + ":$AN" + prevRow +
 					",\"<>1\",$F" + firstRowBlock + ":$F" + prevRow +
-					",\"* - ИТОГО\",$AK" + firstRowBlock + ":$AK" + prevRow + ",\"";
+					",\"* - ИТОГО\",$AM" + firstRowBlock + ":$AM" + prevRow + ",\"";
 
 				if (isMethodic1Total) {
 					formulaSumIfLeft += "=1\"";
@@ -301,21 +301,21 @@ namespace MISReports.ExcelHandlers {
 			//Протягивание формул на соседние ячейки
 			ws.Range["L" + nextBlockFirstRow].Formula = formulaSumIfLeft;
 			ws.Range["L" + nextBlockFirstRow].Select();
-			xlApp.Selection.AutoFill(ws.Range["L" + nextBlockFirstRow + ":X" + nextBlockFirstRow]);
+			xlApp.Selection.AutoFill(ws.Range["L" + nextBlockFirstRow + ":Y" + nextBlockFirstRow]);
 
-			ws.Range["AD" + nextBlockFirstRow].Formula = formulaSumIfRight;
-			ws.Range["AD" + nextBlockFirstRow].Select();
-			xlApp.Selection.AutoFill(ws.Range["AD" + nextBlockFirstRow + ":AI" + nextBlockFirstRow]);
+			ws.Range["AE" + nextBlockFirstRow].Formula = formulaSumIfRight;
+			ws.Range["AE" + nextBlockFirstRow].Select();
+			xlApp.Selection.AutoFill(ws.Range["AE" + nextBlockFirstRow + ":AK" + nextBlockFirstRow]);
 
 			//План по кол-ву пациентов для отделения для обычных отделений и итогов по методике 2
 			if (!isMethodic1Total) {
-				ws.Range["Z" + nextBlockFirstRow].Formula = "=(L" + nextBlockFirstRow + "-N" + nextBlockFirstRow + ")*Y" + nextBlockFirstRow;
-				ws.Range["Z" + nextBlockFirstRow].AddComment("План по кол-ву пациентов для отделения");
+				ws.Range["AA" + nextBlockFirstRow].Formula = "=(L" + nextBlockFirstRow + "-N" + nextBlockFirstRow + ")*Z" + nextBlockFirstRow;
+				ws.Range["AA" + nextBlockFirstRow].AddComment("План по кол-ву пациентов для отделения");
 			}
 
 			//Протягивание формул для итогов отделения
 			if (!isMethodic1Total && !isMethodic2Total) {
-				string[] rangesToFill = new string[] { "Y@:Y$", "AA@:AC$", "AJ@:AK$", "AM@:AM$" };
+				string[] rangesToFill = new string[] { "Z@:Z$", "AB@:AD$", "AL@:AM$", "AO@:AO$" };
 				foreach (string rangeToFill in rangesToFill) {
 					string rangeSrc = rangeToFill.Replace("@", prevRow.ToString()).Replace("$", prevRow.ToString());
 					string rangeDst = rangeToFill.Replace("@", prevRow.ToString()).Replace("$", nextBlockFirstRow.ToString());
@@ -324,7 +324,7 @@ namespace MISReports.ExcelHandlers {
 					xlApp.Selection.AutoFill(ws.Range[rangeDst], Excel.XlAutoFillType.xlFillValues);
 
 					//Снятие сообщения об ошибках с ячеек
-					foreach (Excel.Range cell in ws.Range["AD" + firstRowBlock + ":AJ" + nextBlockFirstRow].Cells)
+					foreach (Excel.Range cell in ws.Range["AE" + firstRowBlock + ":AL" + nextBlockFirstRow].Cells)
 						if (cell.Errors.Item[Excel.XlErrorChecks.xlInconsistentFormula].Value)
 							cell.Errors.Item[Excel.XlErrorChecks.xlInconsistentFormula].Ignore = true;
 				}
@@ -332,40 +332,40 @@ namespace MISReports.ExcelHandlers {
 
 			//Установка отметки Не учитывать для отделения
 			if (isNeedToIgnore)
-				ws.Range["AL" + nextBlockFirstRow].Value2 = 1;
+				ws.Range["AN" + nextBlockFirstRow].Value2 = 1;
 
 			if (isMethodic1Total) {
 				//Установка отметки Расчет по методике №1
-				ws.Range["AK" + nextBlockFirstRow].Value2 = 1;
+				ws.Range["AM" + nextBlockFirstRow].Value2 = 1;
 
 				//Формула расчета загрузки для итогов методики №1
-				string formulaCount = "=IF(AL" + nextBlockFirstRow + "=1,\"\",IF(AK" + nextBlockFirstRow + 
-					"=1,AJ" + nextBlockFirstRow +",IFERROR(AG" + nextBlockFirstRow + 
+				string formulaCount = "=IF(AN" + nextBlockFirstRow + "=1,\"\",IF(AM" + nextBlockFirstRow + 
+					"=1,AL" + nextBlockFirstRow +",IFERROR(AI" + nextBlockFirstRow + 
 					"*100/((L" + nextBlockFirstRow + "-N" + nextBlockFirstRow + 
-					")*Y" + nextBlockFirstRow + "),0)))";
-				ws.Range["AM" + nextBlockFirstRow].Formula = formulaCount;
+					")*Z" + nextBlockFirstRow + "),0)))";
+				ws.Range["AO" + nextBlockFirstRow].Formula = formulaCount;
 
-				string formulaCount1 = "=IFERROR(AI" + nextBlockFirstRow + "*100/AH" + nextBlockFirstRow +",0)";
-				ws.Range["AJ" + nextBlockFirstRow].Formula = formulaCount1;
+				string formulaCount1 = "=IFERROR(AK" + nextBlockFirstRow + "*100/AJ" + nextBlockFirstRow +",0)";
+				ws.Range["AL" + nextBlockFirstRow].Formula = formulaCount1;
 			} else if (isMethodic2Total) {
 				//Формула расчета плана по кол-ву пациентов для итогов методики №2
-				string formulaSumPlan = "=SUMIFS(Z" + firstRowBlock + ":Z" + prevRow +
-					",$AL" + firstRowBlock + ":$AL" + prevRow +
+				string formulaSumPlan = "=SUMIFS(AA" + firstRowBlock + ":AA" + prevRow +
+					",$AN" + firstRowBlock + ":$AN" + prevRow +
 					",\"<>1\",$F" + firstRowBlock + ":$F" + prevRow +
-					",\"* - ИТОГО\",$AK" + firstRowBlock + ":$AK" + prevRow + ",\"<>1\")";
-				ws.Range["Z" + nextBlockFirstRow].Formula = formulaSumPlan;
+					",\"* - ИТОГО\",$AM" + firstRowBlock + ":$AM" + prevRow + ",\"<>1\")";
+				ws.Range["AA" + nextBlockFirstRow].Formula = formulaSumPlan;
 
 				//Формула расчета загрузки для итогов методики №2
-				string formulaCount = "=IF(AL" + nextBlockFirstRow + "=1,\"\",IF(AK" +
-					nextBlockFirstRow + "=1,AJ" + nextBlockFirstRow + ",IFERROR(AG" +
-					nextBlockFirstRow + "*100/Z" + nextBlockFirstRow + ",0)))";
-				ws.Range["AM" + nextBlockFirstRow].Formula = formulaCount;
+				string formulaCount = "=IF(AN" + nextBlockFirstRow + "=1,\"\",IF(AM" +
+					nextBlockFirstRow + "=1,AL" + nextBlockFirstRow + ",IFERROR(AI" +
+					nextBlockFirstRow + "*100/AA" + nextBlockFirstRow + ",0)))";
+				ws.Range["AO" + nextBlockFirstRow].Formula = formulaCount;
 			}
 
 			if (isMethodic1Total || isMethodic2Total)
 				//Снятие уведомления об ошибке в формуле
-				if (ws.Range["AM" + nextBlockFirstRow].Errors.Item[Excel.XlErrorChecks.xlInconsistentFormula].Value)
-					ws.Range["AM" + nextBlockFirstRow].Errors.Item[Excel.XlErrorChecks.xlInconsistentFormula].Ignore = true;
+				if (ws.Range["AO" + nextBlockFirstRow].Errors.Item[Excel.XlErrorChecks.xlInconsistentFormula].Value)
+					ws.Range["AO" + nextBlockFirstRow].Errors.Item[Excel.XlErrorChecks.xlInconsistentFormula].Ignore = true;
 
 			//Замена имени отделения для общих итогов
 			if (isGeneralTotal) {

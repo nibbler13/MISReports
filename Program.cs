@@ -50,16 +50,16 @@ namespace MISReports {
         private static string priceListToSiteEmptyFields = string.Empty;
 
 		private static readonly Dictionary<string, string> workloadResultFiles = new Dictionary<string, string> {
-			{ "_Общий", string.Empty },
-			{ "Казань", string.Empty },
-			{ "Красн", string.Empty },
-			{ "К-УРАЛ", string.Empty },
-			{ "МДМ", string.Empty },
-			{ "М-СРЕТ", string.Empty },
-			{ "Сочи", string.Empty },
-			{ "С-Пб", string.Empty },
-			{ "СУЩ", string.Empty },
-			{ "Уфа", string.Empty }
+			//{ "_Общий", string.Empty },
+			//{ "Казань", string.Empty },
+			//{ "Красн", string.Empty },
+			//{ "К-УРАЛ", string.Empty },
+			{ "МДМ", string.Empty }//,
+			//{ "М-СРЕТ", string.Empty },
+			//{ "Сочи", string.Empty },
+			//{ "С-Пб", string.Empty },
+			//{ "СУЩ", string.Empty },
+			//{ "Уфа", string.Empty }
 		};
 
 		private static Tuple<string, string, string>[] licenseStatisticsDBs = 
