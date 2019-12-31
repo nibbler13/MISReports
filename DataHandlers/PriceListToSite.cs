@@ -64,30 +64,33 @@ namespace MISReports.ExcelHandlers {
 		private static bool IsNeedToExclude(DataRow dataRow, DataTable exclusions) {
 			bool isNeedToExclude = false;
 
-			if (exclusions != null) {
-				try {
-					string[] typesToExclude = new string[] { "ГРУППА", "ПОДГРУППА" };
-					foreach (string excludeType in typesToExclude) {
-						string valueToCheck = dataRow[excludeType].ToString();
-						if (string.IsNullOrEmpty(valueToCheck) ||
-							string.IsNullOrWhiteSpace(valueToCheck))
-							continue;
+			if (exclusions == null)
+				return isNeedToExclude;
 
-						EnumerableRowCollection<DataRow> exclusionsSearchGroup =
-							from row in exclusions.AsEnumerable()
-							where row.Field<string>(1) != null && row.Field<string>(1).ToLower().Equals(valueToCheck.ToLower())
-							select row;
+			try {
+				string[] typesToExclude = new string[] { "ГРУППА", "ПОДГРУППА", "КОД УСЛУГИ" };
+				foreach (string excludeType in typesToExclude) {
+					string valueToCheck = dataRow[excludeType].ToString();
 
-						if (exclusionsSearchGroup != null && exclusionsSearchGroup.Count() > 0)
-							foreach (DataRow excludeRow in exclusionsSearchGroup)
-								if (excludeRow[0].ToString().ToLower().Equals(excludeType.ToLower())) {
-									isNeedToExclude = true;
-									break;
-								}
-					}
-				} catch (Exception e) {
-					Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
+					if (string.IsNullOrEmpty(valueToCheck) ||
+						string.IsNullOrWhiteSpace(valueToCheck))
+						continue;
+
+					EnumerableRowCollection<DataRow> exclusionsSearchGroup =
+						from row in exclusions.AsEnumerable()
+						where row.Field<string>(1) != null && row.Field<string>(1).ToLower().Equals(valueToCheck.ToLower())
+						select row;
+
+					if (exclusionsSearchGroup != null && exclusionsSearchGroup.Count() > 0)
+						foreach (DataRow excludeRow in exclusionsSearchGroup)
+							if (excludeRow[0].ToString().ToLower().Equals(excludeType.ToLower())) {
+								Console.WriteLine("Excluded: " + valueToCheck);
+								isNeedToExclude = true;
+								break;
+							}
 				}
+			} catch (Exception e) {
+				Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			return isNeedToExclude;

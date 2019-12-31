@@ -7,7 +7,7 @@ using System.Net.Mime;
 
 namespace MISReports {
 	public class SystemMail {
-		public static void SendMail (string subject, string body, string receiver, string[] attachmentsPath = null) {
+		public static void SendMail (string subject, string body, string receiver, string[] attachmentsPath = null, bool addSignature = true) {
 			Logging.ToLog("Отправка сообщения, тема: " + subject + ", текст: " + body);
 			Logging.ToLog("Получатели: " + receiver);
 
@@ -18,8 +18,8 @@ namespace MISReports {
 				string appName = Assembly.GetExecutingAssembly().GetName().Name;
 
 				MailAddress from = new MailAddress(
-					Properties.Settings.Default.MailUser + "@" + 
-					Properties.Settings.Default.MailDomain, appName);
+					Properties.Settings.Default.MailUser + "@" + Properties.Settings.Default.MailDomain, 
+					appName);
 
 				List<MailAddress> mailAddressesTo = new List<MailAddress>();
 
@@ -30,11 +30,12 @@ namespace MISReports {
 				} else
 					mailAddressesTo.Add(new MailAddress(receiver));
 				
-				body += Environment.NewLine + Environment.NewLine + 
-					"___________________________________________" + Environment.NewLine +
-					"Это автоматически сгенерированное сообщение" + Environment.NewLine + 
-					"Просьба не отвечать на него" + Environment.NewLine +
- 					"Имя системы: " + Environment.MachineName;
+				if (addSignature)
+					body += Environment.NewLine + Environment.NewLine + 
+						"___________________________________________" + Environment.NewLine +
+						"Это автоматически сгенерированное сообщение" + Environment.NewLine + 
+						"Просьба не отвечать на него" + Environment.NewLine +
+ 						"Имя системы: " + Environment.MachineName;
 
 				MailMessage message = new MailMessage();
 
@@ -77,7 +78,7 @@ namespace MISReports {
 				if (!string.IsNullOrEmpty(Properties.Settings.Default.MailCopy))
 					message.CC.Add(Properties.Settings.Default.MailCopy);
 
-				SmtpClient client = new SmtpClient(Properties.Settings.Default.MailSmtpServer, 25);
+				SmtpClient client = new SmtpClient(Properties.Settings.Default.MailSmtpServer, 587);
 				client.UseDefaultCredentials = false;
 				client.DeliveryMethod = SmtpDeliveryMethod.Network;
 				client.EnableSsl = false;
@@ -95,6 +96,9 @@ namespace MISReports {
 				Logging.ToLog("Письмо отправлено успешно");
 			} catch (Exception e) {
 				Logging.ToLog("SendMail exception: " + e.Message + Environment.NewLine + e.StackTrace);
+
+				if (e.InnerException != null)
+					Logging.ToLog("SendMail inner exception: " + e.InnerException.Message + Environment.NewLine + e.InnerException.StackTrace);
 			}
 		}
 	}

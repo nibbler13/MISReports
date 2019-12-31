@@ -50,16 +50,36 @@ namespace MISReports {
         private static string priceListToSiteEmptyFields = string.Empty;
 
 		private static readonly Dictionary<string, string> workloadResultFiles = new Dictionary<string, string> {
-			//{ "_Общий", string.Empty },
-			//{ "Казань", string.Empty },
-			//{ "Красн", string.Empty },
-			//{ "К-УРАЛ", string.Empty },
-			{ "МДМ", string.Empty }//,
-			//{ "М-СРЕТ", string.Empty },
-			//{ "Сочи", string.Empty },
-			//{ "С-Пб", string.Empty },
-			//{ "СУЩ", string.Empty },
-			//{ "Уфа", string.Empty }
+			{ "_Общий", string.Empty },
+			{ "Казань", string.Empty },
+			{ "Красн", string.Empty },
+			{ "К-УРАЛ", string.Empty },
+			{ "МДМ", string.Empty },
+			{ "М-СРЕТ", string.Empty },
+			{ "Сочи", string.Empty },
+			{ "С-Пб", string.Empty },
+			{ "СУЩ", string.Empty },
+			{ "Уфа", string.Empty }
+		};
+
+		private static readonly List<ReportsInfo.Type> TreatmentsDetailsType = new List<ReportsInfo.Type> {
+			ReportsInfo.Type.TreatmentsDetailsAbsolut,
+			ReportsInfo.Type.TreatmentsDetailsAlfa,
+			ReportsInfo.Type.TreatmentsDetailsAlliance,
+			ReportsInfo.Type.TreatmentsDetailsBestdoctor,
+			ReportsInfo.Type.TreatmentsDetailsEnergogarant,
+			ReportsInfo.Type.TreatmentsDetailsIngosstrakhAdult,
+			ReportsInfo.Type.TreatmentsDetailsIngosstrakhKid,
+			ReportsInfo.Type.TreatmentsDetailsLiberty,
+			ReportsInfo.Type.TreatmentsDetailsMetlife,
+			ReportsInfo.Type.TreatmentsDetailsRenessans,
+			ReportsInfo.Type.TreatmentsDetailsReso,
+			ReportsInfo.Type.TreatmentsDetailsRosgosstrakh,
+			ReportsInfo.Type.TreatmentsDetailsSmp,
+			ReportsInfo.Type.TreatmentsDetailsSogaz,
+			ReportsInfo.Type.TreatmentsDetailsSoglasie,
+			ReportsInfo.Type.TreatmentsDetailsVsk,
+			ReportsInfo.Type.TreatmentsDetailsVtb,
 		};
 
 		private static Tuple<string, string, string>[] licenseStatisticsDBs = 
@@ -107,10 +127,17 @@ namespace MISReports {
 				return;
 			}
 
-			CreateReport(itemReport);
+			if (itemReport.Type == ReportsInfo.Type.TreatmentsDetailsAll) {
+				foreach (ReportsInfo.Type type in TreatmentsDetailsType) {
+					itemReport = new ItemReport(type.ToString());
+					ParseDateInterval(args);
+					CreateReport(itemReport);
+				}
+			} else
+				CreateReport(itemReport);
 		}
 
-		public static void CreateReport(ItemReport itemReportToCreate) {
+		public static void CreateReport(ItemReport itemReportToCreate, bool? needToAskToSend = null) {
 			itemReport = itemReportToCreate;
 
 			FirebirdClient firebirdClient = new FirebirdClient(
@@ -142,7 +169,7 @@ namespace MISReports {
 			if (itemReport.UploadToServer)
 				UploadFile();
 
-			if (Logging.bw != null)
+			if (needToAskToSend.HasValue && needToAskToSend.Value)
 				if (MessageBox.Show("Отправить сообщение с отчетом следующим адресатам?" +
 					Environment.NewLine + Environment.NewLine + itemReport.MailTo,
 					"Отправка сообщения", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No)
@@ -214,6 +241,16 @@ namespace MISReports {
 			subject = ReportsInfo.AcceptedParameters[itemReport.Type] + " с " + dateBeginStr + " по " + dateEndStr;
 			Logging.ToLog(subject);
 
+			if (itemReport.Type == ReportsInfo.Type.TasksForItilium) {
+				dataTableMainData = ExcelHandlers.ExcelGeneral.ReadExcelFile(@"C:\Temp\Работы_январь_МИС.xlsx", "Лист1");
+				return;
+			}
+
+			if (itemReport.Type == ReportsInfo.Type.MicroSipContactsBook) {
+				dataTableMainData = ExcelHandlers.MicroSipContactsBook.ReadContactsFile();
+				return;
+			}
+			
 			if (itemReport.Type == ReportsInfo.Type.RegistryMarks)
 				dateBeginStr = "01.09.2018";
 
@@ -269,6 +306,9 @@ namespace MISReports {
 				{ "@dateBegin", dateBeginStr },
 				{ "@dateEnd", dateEndStr }
 			};
+
+			if (itemReport.Type.ToString().StartsWith("TreatmentsDetails"))
+				itemReport.SqlQuery = itemReport.SqlQuery.Replace("@jids", itemReport.JIDS);
 
 			Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + dateBeginStr + " по " + dateEndStr);
 
@@ -358,57 +398,102 @@ namespace MISReports {
                 ExcelHandlers.FssInfo.PerformData(ref dataTableMainData);
 
 			if (itemReport.Type == ReportsInfo.Type.AverageCheck) {
-				int reportWeekNumber = GetIso8601WeekOfYear(dateBeginOriginal.Value);
-				int previousWeekNumber = GetIso8601WeekOfYear(dateBeginOriginal.Value.Date.AddDays(-1));
+				if (itemReport.DateBegin.Day == 1 &&
+					itemReport.DateEnd.Day == DateTime.DaysInMonth(itemReport.DateBegin.Year, itemReport.DateBegin.Month) &&
+					itemReport.DateBegin.Month == itemReport.DateEnd.Month &&
+					itemReport.DateBegin.Year == itemReport.DateEnd.Year) {
+					CultureInfo cultureInfoRU = CultureInfo.CreateSpecificCulture("ru");
 
-				if (previousWeekNumber > reportWeekNumber)
-					subjectAverageCheckPreviousWeek = ReportsInfo.AcceptedParameters[itemReport.Type] + 
-						", неделя " + reportWeekNumber + " " + 
-						DateTime.Now.Year + " и неделя " + previousWeekNumber + " год " + (DateTime.Now.Year - 1);
-				else
-					subjectAverageCheckPreviousWeek = ReportsInfo.AcceptedParameters[itemReport.Type] + 
-						", недели " + reportWeekNumber + ", " + 
-						previousWeekNumber + " год " + DateTime.Now.Year;
+					if (itemReport.DateBegin.Month == 1) {
+						subjectAverageCheckPreviousWeek = ReportsInfo.AcceptedParameters[itemReport.Type] + ", месяц " +
+							new DateTime(itemReport.DateBegin.Year - 1, 12, 1).ToString("MMMM", cultureInfoRU) +
+							" год " + (itemReport.DateBegin.Year - 1) + " и месяц " +
+							itemReport.DateBegin.ToString("MMMM", cultureInfoRU) + " год " + itemReport.DateBegin.Year;
 
-				subjectAverageCheckPreviousYear = ReportsInfo.AcceptedParameters[itemReport.Type] + 
-					", неделя " + reportWeekNumber + " год " + 
-					DateTime.Now.Year + ", " + (DateTime.Now.Year - 1);
+						parametersAverageCheckPreviousWeek = new Dictionary<string, object> {
+							{ "@dateBegin", new DateTime(itemReport.DateBegin.Year - 1, 12, 1).ToShortDateString() },
+							{ "@dateEnd", new DateTime(itemReport.DateBegin.Year - 1, 12, 
+								DateTime.DaysInMonth(itemReport.DateBegin.Year - 1, 12)).ToShortDateString() }
+						};
 
-				double totalDays = (itemReport.DateEnd - dateBeginOriginal.Value).TotalDays;
+					} else {
+						subjectAverageCheckPreviousWeek = ReportsInfo.AcceptedParameters[itemReport.Type] + ", месяца " +
+							new DateTime(itemReport.DateBegin.Year, itemReport.DateBegin.Month - 1, 1).ToString("MMMM", cultureInfoRU) +
+							", " + itemReport.DateBegin.ToString("MMMM", cultureInfoRU) + " год " + itemReport.DateBegin.Year;
 
-				#region previous week
-				parametersAverageCheckPreviousWeek = new Dictionary<string, object> {
-					{ "@dateBegin", dateBeginOriginal.Value.AddDays(
-						-1 * (totalDays + 1)).ToShortDateString() },
-					{ "@dateEnd", dateBeginOriginal.Value.AddDays(-1).ToShortDateString() }
-				};
+						parametersAverageCheckPreviousWeek = new Dictionary<string, object> {
+							{ "@dateBegin", new DateTime(itemReport.DateBegin.Year, itemReport.DateBegin.Month - 1, 1).ToShortDateString() },
+							{ "@dateEnd", new DateTime(itemReport.DateBegin.Year, itemReport.DateBegin.Month - 1, 
+								DateTime.DaysInMonth(itemReport.DateBegin.Year, itemReport.DateBegin.Month - 1)).ToShortDateString() }
+						};
+					}
 
+					subjectAverageCheckPreviousYear = ReportsInfo.AcceptedParameters[itemReport.Type] + ", месяц " + 
+						itemReport.DateBegin.ToString("MMMM", cultureInfoRU) + " год " + 
+						itemReport.DateBegin.Year + ", " + (itemReport.DateBegin.Year - 1);
+
+					parametersAverageCheckPreviousYear = new Dictionary<string, object> {
+						{ "@dateBegin", new DateTime(itemReport.DateBegin.Year - 1, itemReport.DateBegin.Month, 1).ToShortDateString() },
+						{ "@dateEnd", new DateTime(itemReport.DateBegin.Year - 1, itemReport.DateBegin.Month, 
+							DateTime.DaysInMonth(itemReport.DateBegin.Year - 1, itemReport.DateBegin.Month)).ToShortDateString() }
+					};
+
+				} else {
+					#region previousWeek
+					int reportWeekNumber = GetIso8601WeekOfYear(dateBeginOriginal.Value);
+					int previousWeekNumber = GetIso8601WeekOfYear(dateBeginOriginal.Value.Date.AddDays(-1));
+
+					if (previousWeekNumber > reportWeekNumber)
+						subjectAverageCheckPreviousWeek = ReportsInfo.AcceptedParameters[itemReport.Type] +
+							", неделя " + reportWeekNumber + " " +
+							DateTime.Now.Year + " и неделя " + previousWeekNumber + " год " + (DateTime.Now.Year - 1);
+					else
+						subjectAverageCheckPreviousWeek = ReportsInfo.AcceptedParameters[itemReport.Type] +
+							", недели " + reportWeekNumber + ", " +
+							previousWeekNumber + " год " + DateTime.Now.Year;
+
+					subjectAverageCheckPreviousYear = ReportsInfo.AcceptedParameters[itemReport.Type] +
+						", неделя " + reportWeekNumber + " год " +
+						DateTime.Now.Year + ", " + (DateTime.Now.Year - 1);
+
+					double totalDays = (itemReport.DateEnd - dateBeginOriginal.Value).TotalDays;
+
+					parametersAverageCheckPreviousWeek = new Dictionary<string, object> {
+						{ "@dateBegin", dateBeginOriginal.Value.AddDays(
+							-1 * (totalDays + 1)).ToShortDateString() },
+						{ "@dateEnd", dateBeginOriginal.Value.AddDays(-1).ToShortDateString() }
+					};
+					#endregion
+
+					#region previousYear
+					DateTime previousYearWeekFirstDay = FirstDateOfWeekISO8601(dateBeginOriginal.Value.AddYears(-1).Year, reportWeekNumber);
+
+					parametersAverageCheckPreviousYear = new Dictionary<string, object> {
+						{ "@dateBegin", previousYearWeekFirstDay.ToShortDateString()},
+						{ "@dateEnd", previousYearWeekFirstDay.AddDays(totalDays).ToShortDateString() }
+					};
+					#endregion
+				}
+
+
+				#region previousWeek
 				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " +
 					parametersAverageCheckPreviousWeek["@dateBegin"] +
 					" по " + parametersAverageCheckPreviousWeek["@dateEnd"]);
 				dataTableAverageCheckPreviousWeek = firebirdClient.GetDataTable(
 					itemReport.SqlQuery, parametersAverageCheckPreviousWeek);
-				//dataTableAverageCheckPreviousWeek = dataTableMainData.Clone(); 
 				Logging.ToLog("Получено строк: " + dataTableAverageCheckPreviousWeek.Rows.Count);
 
 				itemAverageCheckPreviousWeek = ExcelHandlers.AverageCheck.PerformData(dataTableMainData, dataTableAverageCheckPreviousWeek);
 				#endregion
 
 
-				#region previous year
-				DateTime previousYearWeekFirstDay = FirstDateOfWeekISO8601(dateBeginOriginal.Value.AddYears(-1).Year, reportWeekNumber);
-
-				parametersAverageCheckPreviousYear = new Dictionary<string, object> {
-					{ "@dateBegin", previousYearWeekFirstDay.ToShortDateString()},
-					{ "@dateEnd", previousYearWeekFirstDay.AddDays(totalDays).ToShortDateString() }
-				};
-
+				#region previousYear
 				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " +
 					parametersAverageCheckPreviousYear["@dateBegin"] +
 					" по " + parametersAverageCheckPreviousYear["@dateEnd"]);
 				dataTableAverageCheckPreviousYear = firebirdClient.GetDataTable(
 					itemReport.SqlQuery, parametersAverageCheckPreviousYear);
-				//dataTableAverageCheckPreviousYear = dataTableMainData.Clone();
 				Logging.ToLog("Получено строк: " + dataTableAverageCheckPreviousYear.Rows.Count);
 
 				itemAverageCheckPreviousYear = ExcelHandlers.AverageCheck.PerformData(dataTableMainData, dataTableAverageCheckPreviousYear);
@@ -418,8 +503,10 @@ namespace MISReports {
 			if (itemReport.Type == ReportsInfo.Type.CompetitiveGroups)
 				ItemCompetitiveGroups = ExcelHandlers.CompetitiveGroups.PerformData(dataTableMainData);
 
-			if (itemReport.Type == ReportsInfo.Type.TreatmentsDetails)
-				ExcelHandlers.TreatmentsDetails.PerformDataTable(ref dataTableMainData);
+			if (itemReport.Type.ToString().StartsWith("TreatmentsDetails")) {
+				ExcelHandlers.TreatmentsDetails treatmentsDetails = new ExcelHandlers.TreatmentsDetails();
+				treatmentsDetails.PerformDataTable(dataTableMainData, itemReport.Type);
+			}
 		}
 
 		private static int GetIso8601WeekOfYear(DateTime time) {
@@ -568,8 +655,8 @@ namespace MISReports {
 						"BzPriceListToUpload",
 						saveAsJson: true);
 
-				} else if (itemReport.Type == ReportsInfo.Type.TimetableBz) {
-					fileToUpload = ExcelHandlers.TimetableBz.PerformData(dataTableMainData);
+				} else if (itemReport.Type == ReportsInfo.Type.TimetableToProdoctorovRu) {
+					fileToUpload = ExcelHandlers.TimetableToProdoctorovRu.PerformData(dataTableMainData);
 
 				} else if (itemReport.Type == ReportsInfo.Type.UniqueServices ||
 					itemReport.Type == ReportsInfo.Type.UniqueServicesRegions) {
@@ -595,6 +682,16 @@ namespace MISReports {
 						ExcelHandlers.CompetitiveGroups.WriteAverageCheckToExcel(
 							ItemCompetitiveGroups, subject, itemReport.TemplateFileName);
 
+				} else if (itemReport.Type == ReportsInfo.Type.TimetableToSite) {
+					fileToUpload = ExcelHandlers.TimetableToSite.ParseAndWriteToJson(dataTableMainData);
+					itemReport.FileResult = fileToUpload;
+
+				} else if (itemReport.Type == ReportsInfo.Type.MicroSipContactsBook) {
+					itemReport.FileResult = ExcelHandlers.MicroSipContactsBook.WriteToFile(dataTableMainData);
+
+				} else if (itemReport.Type == ReportsInfo.Type.TasksForItilium) {
+					itemReport.FileResult = ExcelHandlers.TasksForItilium.SendTasks(dataTableMainData);
+
 				} else {
 					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
 														 subject,
@@ -602,7 +699,9 @@ namespace MISReports {
 														 type: itemReport.Type);
 				}
 
-				if (File.Exists(itemReport.FileResult) || itemReport.Type == ReportsInfo.Type.Workload) {
+				if (File.Exists(itemReport.FileResult) ||
+					itemReport.Type == ReportsInfo.Type.Workload ||
+					itemReport.Type == ReportsInfo.Type.TasksForItilium) {
 					bool isPostProcessingOk = true;
 
 					switch (itemReport.Type) {
@@ -694,11 +793,17 @@ namespace MISReports {
 							break;
 					}
 
+					if (itemReport.Type.ToString().StartsWith("TreatmentsDetails"))
+						isPostProcessingOk = ExcelHandlers.ExcelGeneral.CopyFormatting(itemReport.FileResult);
+
 					if (isPostProcessingOk) {
 						body = "Отчет во вложении";
 						Logging.ToLog("Данные сохранены в файл: " + (itemReport.Type == ReportsInfo.Type.Workload ?
 							string.Join("; ", workloadResultFiles.Values) :
 							itemReport.FileResult));
+
+						if (itemReport.Type == ReportsInfo.Type.TasksForItilium)
+							body = itemReport.FileResult;
 					} else {
 						body = "Не удалось выполнить обработку Excel книги";
 						hasError = true;
@@ -746,6 +851,13 @@ namespace MISReports {
 		public static string SaveFileToNetworkFolder(string localFile, string folderToSave) {
 			string fileName = Path.GetFileName(localFile);
 			string destFile = Path.Combine(folderToSave, fileName);
+			if (File.Exists(destFile))
+				try {
+					File.Delete(destFile);
+				} catch (Exception e) {
+					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+				}
+
 			File.Copy(localFile, destFile, true);
 			return "<a href=\"" + itemReport.FolderToSave + "\">" + folderToSave + "</a>";
 		}
@@ -827,9 +939,15 @@ namespace MISReports {
 			if (itemReport.Type == ReportsInfo.Type.PriceListToSite) {
 				url = "https://klinikabudzdorov.ru/export/price/file_input.php";
 				method = WebRequestMethods.Http.Post;
-			} else if (itemReport.Type == ReportsInfo.Type.TimetableBz) {
+
+			} else if (itemReport.Type == ReportsInfo.Type.TimetableToProdoctorovRu) {
 				PostDataToServer();
 				return;
+
+			} else if (itemReport.Type == ReportsInfo.Type.TimetableToSite) {
+				url = "https://klinikabudzdorov.ru/export/schedule/file_input.php";
+				method = WebRequestMethods.Http.Post;
+
 			} else {
 				Logging.ToLog("Не заданы параметры, возврат");
 				return;
@@ -846,6 +964,9 @@ namespace MISReports {
                     Logging.ToLog(response);
 
                     body += Environment.NewLine + response;
+
+					if (itemReport.Type == ReportsInfo.Type.TimetableToSite)
+						body = response;
 
                     if (!string.IsNullOrEmpty(priceListToSiteEmptyFields))
                         body += Environment.NewLine + Environment.NewLine +

@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MISReports.ExcelHandlers {
-    class TimetableBz : ExcelGeneral {
+    class TimetableToProdoctorovRu : ExcelGeneral {
         public static string PerformData(DataTable dataTable) {
             Dictionary<string, Dictionary<string, ItemDoctor>> data = new Dictionary<string, Dictionary<string, ItemDoctor>>();
             ItemTimetable itemTimetable = new ItemTimetable();

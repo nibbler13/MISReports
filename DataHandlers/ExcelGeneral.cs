@@ -490,8 +490,10 @@ namespace MISReports.ExcelHandlers {
 								new object[] { null, null, null, "TABLE" });
 							sheetName = dtSchema.Rows[0].Field<string>("TABLE_NAME");
 							conn.Close();
-						} else
-							sheetName += "$";
+						} else {
+							if (!sheetName.EndsWith("$"))
+								sheetName += "$";
+						}
 
 						comm.CommandText = "Select * from [" + sheetName + "]";
 						comm.Connection = conn;
@@ -509,9 +511,33 @@ namespace MISReports.ExcelHandlers {
 			return dataTable;
 		}
 
+		public static List<string> ReadSheetNames(string file) {
+			List<string> sheetNames = new List<string>();
 
-        //=============================== MISC ================================
-        public static string ColumnIndexToColumnLetter(int colIndex) {
+			using (OleDbConnection conn = new OleDbConnection()) {
+				conn.ConnectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" + file + ";Mode=Read;" +
+					"Extended Properties='Excel 12.0 Xml;HDR=NO;'";
+
+				using (OleDbCommand comm = new OleDbCommand()) {
+					conn.Open();
+					DataTable dtSchema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
+						new object[] { null, null, null, "TABLE" });
+					foreach (DataRow row in dtSchema.Rows) {
+						string name = row.Field<string>("TABLE_NAME");
+						if (name.Contains("FilterDatabase"))
+							continue;
+
+						sheetNames.Add(name);
+					}
+				}
+			}
+
+			return sheetNames;
+		}
+
+
+		//=============================== MISC ================================
+		public static string ColumnIndexToColumnLetter(int colIndex) {
             int div = colIndex;
             string colLetter = String.Empty;
             int mod = 0;
