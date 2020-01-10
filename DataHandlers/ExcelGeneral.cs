@@ -59,7 +59,27 @@ namespace MISReports.ExcelHandlers {
 		}
 
 		public static string GetResultFilePath(string resultFilePrefix, string templateFileName = "", bool isPlainText = false) {
-			string resultPath = Path.Combine(Program.AssemblyDirectory, "Results");
+			string resultPath = string.Empty;
+
+			Uri uriStartup = null;
+			try {
+				uriStartup = Application.Current.StartupUri;
+			} catch (Exception) {}
+
+			if (uriStartup != null) {
+				resultPath = @"C:\Temp\";
+				if (!Directory.Exists(resultPath)) {
+					try {
+						Directory.CreateDirectory(resultPath);
+					} catch (Exception) {
+						resultPath = Path.GetTempPath();
+					}
+				} 
+			} else
+				resultPath = Program.AssemblyDirectory;
+
+			resultPath = Path.Combine(resultPath, "MISReportsResults");
+
 			if (!Directory.Exists(resultPath))
 				Directory.CreateDirectory(resultPath);
 

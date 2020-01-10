@@ -127,17 +127,30 @@ namespace MISReports {
 				return;
 			}
 
-			if (itemReport.Type == ReportsInfo.Type.TreatmentsDetailsAll) {
-				foreach (ReportsInfo.Type type in TreatmentsDetailsType) {
-					itemReport = new ItemReport(type.ToString());
-					ParseDateInterval(args);
-					CreateReport(itemReport);
-				}
-			} else
+			//if (itemReport.Type == ReportsInfo.Type.TreatmentsDetailsAll) {
+			//	foreach (ReportsInfo.Type type in TreatmentsDetailsType) {
+			//		itemReport = new ItemReport(type.ToString());
+			//		ParseDateInterval(args);
+			//		CreateReport(itemReport);
+			//	}
+			//} else
 				CreateReport(itemReport);
 		}
 
 		public static void CreateReport(ItemReport itemReportToCreate, bool? needToAskToSend = null) {
+			if (itemReportToCreate.Type == ReportsInfo.Type.TreatmentsDetailsAll) {
+				foreach (ReportsInfo.Type type in TreatmentsDetailsType) {
+					ItemReport report = new ItemReport(type.ToString());
+					report.SetPeriod(itemReportToCreate.DateBegin, itemReportToCreate.DateEnd);
+					CreateReport(report, needToAskToSend);
+
+					if (File.Exists(report.FileResult))
+						itemReportToCreate.FileResult = report.FileResult;
+				}
+
+				return;
+			}
+
 			itemReport = itemReportToCreate;
 
 			FirebirdClient firebirdClient = new FirebirdClient(
