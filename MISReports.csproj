@@ -75,6 +75,7 @@
   <ItemGroup>
     <Compile Include="DataHandlers\AverageCheck.cs" />
     <Compile Include="DataHandlers\CompetitiveGroups.cs" />
+    <Compile Include="DataHandlers\FirstTimeVisitPatients.cs" />
     <Compile Include="DataHandlers\FreeCells.cs" />
     <Compile Include="DataHandlers\FssInfo.cs" />
     <Compile Include="DataHandlers\MesUsage.cs" />

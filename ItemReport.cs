@@ -192,7 +192,7 @@ namespace MISReports {
 
 			} else if (reportName.Equals(ReportsInfo.Type.CompetitiveGroups.ToString())) {
 				Type = ReportsInfo.Type.CompetitiveGroups;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetAverageCheck;
+				SqlQuery = Properties.Settings.Default.MisDbSqlGetCompetitiveGroups;
 				TemplateFileName = Properties.Settings.Default.TemplateCompetitiveGroups;
 				MailTo = Properties.Settings.Default.MailToAverageCheck;
 
@@ -379,6 +379,12 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.TasksForItilium.ToString())) {
 				Type = ReportsInfo.Type.TasksForItilium;
 				MailTo = Properties.Settings.Default.MailToTasksForItilium;
+
+			} else if (reportName.Equals(ReportsInfo.Type.FirstTimeVisitPatients.ToString())) {
+				Type = ReportsInfo.Type.FirstTimeVisitPatients;
+				SqlQuery = Properties.Settings.Default.MisDbSqlGetFirstTimeVisitPatients;
+				MailTo = Properties.Settings.Default.MailToFirstTimeVisitPatients;
+				TemplateFileName = Properties.Settings.Default.TemplateFirstTimeVisitPatients;
 
 			} else
 				IsSettingsLoaded = false;

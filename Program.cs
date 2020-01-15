@@ -802,6 +802,10 @@ namespace MISReports {
 							isPostProcessingOk = ExcelHandlers.CompetitiveGroups.Process(itemReport.FileResult, parameters);
 							break;
 
+						case ReportsInfo.Type.FirstTimeVisitPatients:
+							isPostProcessingOk = ExcelHandlers.FirstTimeVisitPatients.Process(itemReport.FileResult, dataTableMainData);
+							break;
+
 						default:
 							break;
 					}

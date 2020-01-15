@@ -67,15 +67,15 @@ namespace MISReports.ExcelHandlers {
 			string columnsToHide;
 
 			if (sheetName.Contains("МСК")) {
-				rangesWithFormula = new string[] { "AG7:AZ7" };
+				rangesWithFormula = new string[] { "AQ7:BJ7" };
 				columnsToHide = "M:V";
 
 			} else if (sheetName.Contains("СПБ+Уфа")) {
-				rangesWithFormula = new string[] { "O7:V7" };
+				rangesWithFormula = new string[] { "S7:Z7" };
 				columnsToHide = "G:J";
 
 			} else if (sheetName.Contains("КРД+Сочи+КУрал+Казань")) {
-				rangesWithFormula = new string[] { "AA7:AP7" };
+				rangesWithFormula = new string[] { "AI7:AX7" };
 				columnsToHide = "K:R";
 
 			} else {
@@ -154,6 +154,7 @@ namespace MISReports.ExcelHandlers {
 			public double? Cost { get; set; }
 			public double? DiscountedCost { get; set; }
 			public int? ServicesCount { get; set; }
+			public int? UniqPatientsFirstTime { get; set; }
 			public int? UniqPatientsCount { get; set; }
 			public int? TreatmentsCount { get; set; }
 		}
@@ -188,10 +189,17 @@ namespace MISReports.ExcelHandlers {
 					int treatmentsCount = Convert.ToInt32(dataRow["UNI_TREAT"].ToString());
 					double discountedCost = Convert.ToDouble(dataRow["DISC_SUM_SERV"].ToString());
 
-					if (channel.Equals("Физики факт")) {
+					if (filial.Equals("СУЩ") && department.Equals("ГАСТРОЭНТЕРОЛОГИЯ"))
+						Console.WriteLine("");
+
+					bool isFirstVisit = false;
+					if (channel.Contains("перв"))
+						isFirstVisit = true;
+
+					if (channel.StartsWith("Физики факт")) {
 						channel = "Физики";
 						program = "Факт";
-					} else if (channel.Equals("Физики аванс")) {
+					} else if (channel.StartsWith("Физики аванс")) {
 						channel = "Физики";
 						program = "Аванс";
 					}
@@ -245,11 +253,30 @@ namespace MISReports.ExcelHandlers {
 						continue;
 					}
 
-					itemData.ServicesCount = servicesCount;
-					itemData.DiscountedCost = discountedCost;
-					itemData.Cost = cost;
-					itemData.UniqPatientsCount = uniqPatientsCount;
-					itemData.TreatmentsCount = treatmentsCount;
+					if (itemData.ServicesCount.HasValue)
+						itemData.ServicesCount += servicesCount;
+					else
+						itemData.ServicesCount = servicesCount;
+
+					if (itemData.DiscountedCost.HasValue)
+						itemData.DiscountedCost += discountedCost;
+					else
+						itemData.DiscountedCost = discountedCost;
+
+					if (itemData.Cost.HasValue)
+						itemData.Cost += cost;
+					else
+						itemData.Cost = cost;
+
+					if (isFirstVisit)
+						itemData.UniqPatientsFirstTime = uniqPatientsCount;
+					else
+						itemData.UniqPatientsCount = uniqPatientsCount;
+
+					if (itemData.TreatmentsCount.HasValue)
+						itemData.TreatmentsCount += treatmentsCount;
+					else
+						itemData.TreatmentsCount = treatmentsCount;
 				} catch (Exception e) {
 					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 				}
@@ -313,7 +340,6 @@ namespace MISReports.ExcelHandlers {
 				foreach (KeyValuePair<string, ItemGroup> groupNew in competitiveGroups.Programs[program].Groups) {
 					foreach (KeyValuePair<string, ItemDepartment> departmentNew in groupNew.Value.Departments)
 						CheckAndWriteDataToRow(
-							sheetName,
 							sheet,
 							groupNew.Key,
 							departmentNew.Key,
@@ -324,7 +350,6 @@ namespace MISReports.ExcelHandlers {
 							ref rowNumber);
 
 					CheckAndWriteDataToRow(
-						sheetName,
 						sheet,
 						groupNew.Key + " - ИТОГО",
 						string.Empty,
@@ -336,7 +361,6 @@ namespace MISReports.ExcelHandlers {
 				}
 
 				CheckAndWriteDataToRow(
-					sheetName,
 					sheet,
 					"ИТОГО",
 					string.Empty,
@@ -353,8 +377,7 @@ namespace MISReports.ExcelHandlers {
 			return resultFile;
 		}
 
-		private static void CheckAndWriteDataToRow(string sheetName,
-							   ISheet sheet,
+		private static void CheckAndWriteDataToRow(ISheet sheet,
 							   string groupName,
 							   string departmentName,
 							   string[] filialNames,
@@ -362,39 +385,36 @@ namespace MISReports.ExcelHandlers {
 							   string channelRight,
 							   Dictionary<string, ItemFilial> filials,
 							   ref int rowNumber) {
-			List<ItemData> items = new List<ItemData>();
+			List<Tuple<string, ItemData>> items = new List<Tuple<string, ItemData>>();
 			bool hasData = false;
 
 			foreach (string filialName in filialNames) {
 				if (!filials.ContainsKey(filialName)) {
-					items.Add(null);
-					items.Add(null);
+					items.Add(new Tuple<string, ItemData>(channelLeft, null));
+					items.Add(new Tuple<string, ItemData>(channelRight, null));
 					continue;
 				}
 
 				ItemFilial itemFilial = filials[filialName];
 
 				if (itemFilial.Channels.ContainsKey(channelLeft)) {
-					items.Add(itemFilial.Channels[channelLeft]);
+					items.Add(new Tuple<string, ItemData> ( channelLeft, itemFilial.Channels[channelLeft] ));
 					hasData = true;
 				} else
-					items.Add(null);
+					items.Add(new Tuple<string, ItemData>(channelLeft, null));
 
 				if (itemFilial.Channels.ContainsKey(channelRight)) {
-					items.Add(itemFilial.Channels[channelRight]);
+					items.Add(new Tuple<string, ItemData>(channelRight, itemFilial.Channels[channelRight]));
 					hasData = true;
 				} else
-					items.Add(null);
+					items.Add(new Tuple<string, ItemData>(channelRight, null));
 			}
 
 			if (!hasData)
 				return;
 
 			try {
-				object[] values = GenerateValuesToWrite(sheetName,
-					   groupName,
-					   departmentName,
-					   items);
+				object[] values = GenerateValuesToWrite(groupName, departmentName, items);
 				AverageCheck.WriteOutValues(values, sheet, ref rowNumber);
 			} catch (Exception e) {
 				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
@@ -403,29 +423,45 @@ namespace MISReports.ExcelHandlers {
 
 
 
-		private static object[] GenerateValuesToWrite(string sheetName,
-												string group,
-												string department,
-												List<ItemData> items) {
+		private static object[] GenerateValuesToWrite(string group, string department, List<Tuple<string, ItemData>> items) {
 			List<object> valuesDiscountedCost = new List<object>();
 			List<object> valuesServicesCount = new List<object>();
 			List<object> valuesUniquePatients = new List<object>();
 
-			foreach (ItemData item in items) {
-				if (item == null) {
+			foreach (Tuple<string, ItemData> item in items) {
+				if (item.Item2 == null) {
 					valuesDiscountedCost.Add(null);
 					valuesServicesCount.Add(null);
 					valuesUniquePatients.Add(null);
+
+					if (!item.Item1.Equals("ДМС")) {
+						valuesUniquePatients.Add(null);
+						valuesUniquePatients.Add(null);
+					}
+
 					continue;
 				}
 
-				valuesDiscountedCost.Add(item.DiscountedCost ?? null);
-				valuesServicesCount.Add(item.ServicesCount ?? null);
-				valuesUniquePatients.Add(item.UniqPatientsCount ?? null);
+				valuesDiscountedCost.Add(item.Item2.DiscountedCost ?? null);
+				valuesServicesCount.Add(item.Item2.ServicesCount ?? null);
+				valuesUniquePatients.Add(item.Item2.UniqPatientsCount ?? null);
+
+				if (!item.Item1.Equals("ДМС")) {
+					valuesUniquePatients.Add(item.Item2.UniqPatientsFirstTime ?? null);
+
+					if (item.Item2.UniqPatientsCount == null && item.Item2.UniqPatientsFirstTime == null)
+						valuesUniquePatients.Add(null);
+					else {
+						int patientCount = item.Item2.UniqPatientsCount ?? 0;
+						int patientFirstTime = item.Item2.UniqPatientsFirstTime ?? 0;
+						valuesUniquePatients.Add(patientCount + patientFirstTime);
+					}
+				}
 			}
 
 			List<object> objects = new List<object>() { group, department };
-			foreach (List<object> list in new List<object>[] { valuesDiscountedCost, valuesServicesCount, valuesUniquePatients })
+			List<object>[] values = new List<object>[] { valuesDiscountedCost, valuesServicesCount, valuesUniquePatients };
+			foreach (List<object> list in values)
 				foreach (object value in list)
 					objects.Add(value);
 

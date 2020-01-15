@@ -56,7 +56,8 @@ namespace MISReports {
 			TreatmentsDetailsAll,
 			TimetableToSite,
 			MicroSipContactsBook,
-			TasksForItilium
+			TasksForItilium,
+			FirstTimeVisitPatients
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -109,7 +110,8 @@ namespace MISReports {
 			{ Type.TreatmentsDetailsAll, "Детальный отчет по приемам" },
 			{ Type.TimetableToSite, "Выгрузка расписания на сайт klinikabudzdorov.ru" },
 			{ Type.MicroSipContactsBook, "Справочик контактов для MicroSip" },
-			{ Type.TasksForItilium, "Задачи на январь 2020" }
+			{ Type.TasksForItilium, "Задачи на январь 2020" },
+			{Type.FirstTimeVisitPatients, "Отчет по первичным пациентам" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -162,7 +164,8 @@ namespace MISReports {
 			{ Type.TreatmentsDetailsAll, "Каждый четверг в 7:00" },
 			{ Type.TimetableToSite, "" },
 			{ Type.MicroSipContactsBook, "Каждый день в 1:00" },
-			{ Type.TasksForItilium, "Каждый день в 9:00" }
+			{ Type.TasksForItilium, "Каждый день в 9:00" },
+			{Type.FirstTimeVisitPatients, "Каждый понедельник в 5:00, каждый месяц" }
 		};
 	}
 }
