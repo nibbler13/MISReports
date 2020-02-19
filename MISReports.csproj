@@ -94,7 +94,6 @@
     <Compile Include="DataHandlers\VIP.cs" />
     <Compile Include="DataHandlers\Workload.cs" />
     <Compile Include="DataHandlers\RegistryMarks.cs" />
-    <Compile Include="ItemMESUsageTreatment.cs" />
     <Compile Include="DataHandlers\ExcelGeneral.cs" />
     <Compile Include="ItemReport.cs" />
     <Compile Include="Program.cs" />

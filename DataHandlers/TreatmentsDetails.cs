@@ -23,33 +23,10 @@ namespace MISReports.ExcelHandlers {
 		private List<string> servicesCodesMRTKids = new List<string>();
 		private List<string> servicesCodesKT = new List<string>();
 		private List<string> servicesCodesKLKT = new List<string>();
-		private List<string> servicesCodesPNDAdult = new List<string>();
-		private List<string> servicesCodesPNDKids = new List<string>();
 		private List<string> mkbCodesUninsured = new List<string>();
 		private int i = 0;
 		private int maxKidAge = 0;
 		private string fileNameCodes;
-
-		//public enum CompanyName {
-		//	АбсолютСтрахование,
-		//	Альфастрахование,
-		//	Альянс,
-		//	БестДоктор,
-		//	ВСК,
-		//	ВТБ,
-		//	ДругиеСК,
-		//	ИнгосстрахВзр,
-		//	ИнгосстрахДет,
-		//	ЛибертиСтрахование,
-		//	Метлайф,
-		//	Росгосстрах,
-		//	Ренессанс,
-		//	РЕСО,
-		//	СМПСтрахование,
-		//	СОГАЗ,
-		//	Согласие,
-		//	Энергогарант
-		//}
 
 		public void PerformDataTable(DataTable dataTable, ReportsInfo.Type type) {
 			if (dataTable == null)
@@ -58,6 +35,7 @@ namespace MISReports.ExcelHandlers {
 			this.dataTable = dataTable;
 
 			switch (type) {
+				#region Absolut
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -93,11 +71,14 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Alfa
 				//------------
 				//checked 14.11.2019
 				//------------
 				case ReportsInfo.Type.TreatmentsDetailsAlfa:
+				case ReportsInfo.Type.TreatmentsDetailsAlfaSpb:
 					rules = new List<Func<bool>> {
 						RuleZeroCost,
 						RuleGarantyMail,
@@ -111,7 +92,6 @@ namespace MISReports.ExcelHandlers {
 						RuleMRTGeneral,
 						RuleKT,
 						RuleKLKT,
-						RulePNDAdult,
 						RuleDoubles,
 						RuleUninsured
 					};
@@ -127,12 +107,13 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "МРТ", servicesCodesMRTGeneral);
 					ReadWorksheetColumn0(fileNameCodes, "КТ", servicesCodesKT);
 					ReadWorksheetColumn0(fileNameCodes, "КЛКТ", servicesCodesKLKT);
-					ReadWorksheetColumn0(fileNameCodes, "ПНД Взрослые", servicesCodesPNDAdult);
 					ReadWorksheetColumn0(fileNameCodes, "Дубли", servicesCodesDoubles);
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Alliance
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -140,6 +121,7 @@ namespace MISReports.ExcelHandlers {
 					rules = new List<Func<bool>> { 
 						RuleZeroCost,
 						RuleGarantyMailAlliance,
+						RuleGarantyMail,
 						RulePrepaidExpense,
 						RuleProgramForPregnant,
 						RuleServicesForPregnant,
@@ -147,7 +129,8 @@ namespace MISReports.ExcelHandlers {
 						RuleVaccineGeneral,
 						RuleDroppers,
 						RuleDoubles,
-						RuleUninsured
+						RuleUninsured,
+						RuleMedo
 					};
 
 					fileNameCodes = 
@@ -161,11 +144,15 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region BestDoctor
 				//------------
 				//checked 14.11.2019
 				//------------
 				case ReportsInfo.Type.TreatmentsDetailsBestdoctor:
+				case ReportsInfo.Type.TreatmentsDetailsBestDoctorSpb:
+				case ReportsInfo.Type.TreatmentsDetailsBestDoctorUfa:
 					rules = new List<Func<bool>> {
 						RuleZeroCost,
 						RuleGarantyMail,
@@ -195,7 +182,9 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Vsk
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -228,7 +217,9 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Vtb
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -264,7 +255,9 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Other
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -280,8 +273,6 @@ namespace MISReports.ExcelHandlers {
 						RuleVaccineFlu,
 						RuleVaccineAdult,
 						RuleVaccineKids,
-						RulePNDKids,
-						RulePNDAdult,
 						RuleMaterityInspection,
 						RuleDroppers,
 						RuleDoubles,
@@ -296,15 +287,15 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "ВакцинацияГрипп", servicesCodesVaccineFlu);
 					ReadWorksheetColumn0(fileNameCodes, "ВакцинацияВзрослые", servicesCodesVaccineAdult);
 					ReadWorksheetColumn0(fileNameCodes, "ВакцинацияНацкалендарь", servicesCodesVaccineKids);
-					ReadWorksheetColumn0(fileNameCodes, "ПНД дети", servicesCodesPNDKids);
-					ReadWorksheetColumn0(fileNameCodes, "ПНД взрослые", servicesCodesPNDAdult);
 					ReadWorksheetColumn0(fileNameCodes, "ДекретированныеОсмотры", servicesCodesMaternityInspection);
 					ReadWorksheetColumn0(fileNameCodes, "Капельницы", servicesCodesDroppers);
 					ReadWorksheetColumn0(fileNameCodes, "Дубли", servicesCodesDoubles);
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 					
 					break;
+				#endregion
 
+				#region IngosstrakhAdult
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -321,7 +312,6 @@ namespace MISReports.ExcelHandlers {
 						RuleServicesForPregnant,
 						RuleVaccineFlu,
 						RuleVaccineAdult,
-						RulePNDAdult,
 						RuleMRTGeneral,
 						RuleKT,
 						RuleDroppers,
@@ -336,7 +326,6 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "БеременностьУслуги", servicesCodesPregnant);
 					ReadWorksheetColumn0(fileNameCodes, "ВакцинацияГрипп", servicesCodesVaccineFlu);
 					ReadWorksheetColumn0(fileNameCodes, "ВакцинацияВзрослые", servicesCodesVaccineAdult);
-					ReadWorksheetColumn0(fileNameCodes, "ПНД взрослые", servicesCodesPNDAdult);
 					ReadWorksheetColumn0(fileNameCodes, "МРТ", servicesCodesMRTGeneral);
 					ReadWorksheetColumn0(fileNameCodes, "КТ", servicesCodesKT);
 					ReadWorksheetColumn0(fileNameCodes, "Капельницы", servicesCodesDroppers);
@@ -344,7 +333,38 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region IngosstrakhRegions
+				//------------
+				//checked 04.02.2020
+				//------------
+				case ReportsInfo.Type.TreatmentsDetailsIngosstrakhSochi:
+				case ReportsInfo.Type.TreatmentsDetailsIngosstrakhKrasnodar:
+				case ReportsInfo.Type.TreatmentsDetailsIngosstrakhUfa:
+				case ReportsInfo.Type.TreatmentsDetailsIngosstrakhSpb:
+				case ReportsInfo.Type.TreatmentsDetailsIngosstrakhKazan:
+					rules = new List<Func<bool>> {
+						RuleZeroCost,
+						RulePrepaidExpense,
+						RuleGarantyMail,
+						RuleProgramForPregnant,
+						RuleGoldStandard,
+						RuleEarlyDiagnostic,
+						RuleVaccineFlu,
+						RuleWorldwideInsurance,
+						RuleDroppers,
+						RulePreSurgery,
+						RuleKT,
+						RuleMRTGeneral,
+						RuleFranchise,
+						RuleVIP
+					};
+
+					break;
+				#endregion
+
+				#region IngosstrakhKid
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -361,8 +381,6 @@ namespace MISReports.ExcelHandlers {
 						RuleMRTGeneral,
 						RuleMRTKids,
 						RuleKT,
-						RulePNDKids,
-						RulePNDAdult,
 						RuleDroppers,
 						RuleDoubles,
 						RuleUninsured
@@ -378,14 +396,14 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "МРТ", servicesCodesMRTGeneral);
 					ReadWorksheetColumn0(fileNameCodes, "МРТ дети", servicesCodesMRTKids);
 					ReadWorksheetColumn0(fileNameCodes, "КТ", servicesCodesKT);
-					ReadWorksheetColumn0(fileNameCodes, "ПНД дети", servicesCodesPNDKids);
-					ReadWorksheetColumn0(fileNameCodes, "ПНД взрослые", servicesCodesPNDAdult);
 					ReadWorksheetColumn0(fileNameCodes, "Капельницы", servicesCodesDroppers);
 					ReadWorksheetColumn0(fileNameCodes, "Дубли", servicesCodesDoubles);
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 									   
 					break;
+				#endregion
 
+				#region Liberty
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -421,7 +439,9 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Metlife
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -457,7 +477,9 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Rossgostrakh
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -493,7 +515,9 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Renessans
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -522,7 +546,9 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Reso
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -553,7 +579,9 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Smp
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -589,11 +617,14 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Sogaz
 				//------------
 				//checked 14.11.2019
 				//------------
 				case ReportsInfo.Type.TreatmentsDetailsSogaz:
+				case ReportsInfo.Type.TreatmentsDetailsSogazUfa:
 					rules = new List<Func<bool>> {
 						RuleZeroCost,
 						RuleGarantyMail,
@@ -625,7 +656,9 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Soglasie
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -660,7 +693,9 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
+				#region Energogarant
 				//------------
 				//checked 14.11.2019
 				//------------
@@ -696,10 +731,17 @@ namespace MISReports.ExcelHandlers {
 					ReadWorksheetColumn0(fileNameCodes, "Нестраховые", mkbCodesUninsured);
 
 					break;
+				#endregion
 
 				default:
 					break;
 			}
+
+			rules.Add(RulePndAdultByDepartment);
+			rules.Add(RulePndKidByDepartment);
+			rules.Add(RuleMrtByDepartment);
+			rules.Add(RuleMsktByDepartment);
+			rules.Add(RuleSmpByDepartment);
 
 			for (i = 0; i < dataTable.Rows.Count; i++) {
 				try {
@@ -710,6 +752,8 @@ namespace MISReports.ExcelHandlers {
 
 					foreach (Func<bool> rule in rules) 
 						if (rule()) break;
+
+					RuleChangeDentalDepartment();
 				} catch (Exception e) {
 					Logging.ToLog(e.ToString() + Environment.NewLine + e.StackTrace);
 				}
@@ -738,6 +782,86 @@ namespace MISReports.ExcelHandlers {
 			}
 		}
 
+		private bool RulePreSurgery() {
+			string kodoper = dataRow["KODOPER"].ToString();
+			if (kodoper.Equals("325719")) { //Комплекс исследований маркеров инфекций: ВИЧ, Сифилис, Гепатит В, Гепатит С
+				dataRow["COMMENT_3"] = "Предгоспитальная подготовка";
+				return true;
+			}
+
+			return false;
+		}
+
+		private bool RuleMrtByDepartment() {
+			string department = dataRow["DEPNAME"].ToString().ToLower();
+			if (department.Contains("мрт")) {
+				dataRow["COMMENT_3"] = "МРТ";
+				return true;
+			}
+
+			return false;
+		}
+
+		private bool RuleMsktByDepartment() {
+			string department = dataRow["DEPNAME"].ToString().ToLower();
+			if (department.Contains("мультиспиральная компьютерная томография")) {
+				dataRow["COMMENT_3"] = "КТ";
+				return true;
+			}
+
+			return false;
+		}
+
+		private bool RuleSmpByDepartment() {
+			string department = dataRow["DEPNAME"].ToString().ToLower();
+			if (department.Contains("скорая медицинская помощь")) {
+				dataRow["COMMENT_3"] = "СМП";
+				return true;
+			}
+
+			return false;
+		}
+
+		private bool RulePndAdultByDepartment() {
+			string department = dataRow["DEPNAME"].ToString().ToLower();
+			if (department.Equals("помощь на дому")) {
+				dataRow["COMMENT_3"] = "ПНД взр";
+				return true;
+			}
+
+			return false;
+		}
+
+		private bool RulePndKidByDepartment() {
+			string department = dataRow["DEPNAME"].ToString().ToLower();
+			if (department.Equals("помощь на дому детское") ||
+				department.Equals("узкие специалисты на дому")) {
+				dataRow["COMMENT_3"] = "ПНД дет";
+				return true;
+			}
+
+			return false;
+		}
+
+		private void RuleChangeDentalDepartment() {
+			string cr_depname = dataRow["CR_DEPNAME"].ToString().ToLower();
+			if (cr_depname.Equals("стоматология") ||
+				cr_depname.Equals("стоматология детская")) {
+				string department = dataRow["DEPNAME"].ToString().ToLower();
+				if (department.Equals("рентген"))
+					dataRow["DEPNAME"] = dataRow["CR_DEPNAME"];
+			}
+		}
+
+		private bool RuleMedo() {
+			string programType = dataRow["PRG"].ToString().ToLower();
+			if (programType.Contains("медо")) {
+				dataRow["COMMENT_3"] = "МЕДО";
+				return true;
+			}
+
+			return false;
+		}
 
 		private bool RuleZeroCost() {
 			string amountrub_a = dataRow["AMOUNTRUB_A"].ToString();
@@ -758,10 +882,11 @@ namespace MISReports.ExcelHandlers {
 
 			return false;
 		}
+
 		private bool RuleGarantyMailAlliance() {
 			string programType = dataRow["PRG"].ToString().ToLower();
-			if (programType.TrimStart(' ').TrimEnd(' ').Equals("гарантийное письмо")) {
-				dataRow["COMMENT_3"] = "ГП";
+			if (programType.Contains("гарантийное письмо") && programType.Contains("ашан")) {
+				dataRow["COMMENT_3"] = "ГП АШАН";
 				return true;
 			}
 
@@ -872,26 +997,6 @@ namespace MISReports.ExcelHandlers {
 			string serviceKodoper = dataRow["KODOPER"].ToString();
 			if (servicesCodesKLKT.Contains(serviceKodoper)) {
 				dataRow["COMMENT_3"] = "КЛКТ";
-				return true;
-			}
-
-			return false;
-		}
-
-		private bool RulePNDAdult() {
-			string serviceKodoper = dataRow["KODOPER"].ToString();
-			if (servicesCodesPNDAdult.Contains(serviceKodoper)) {
-				dataRow["COMMENT_3"] = "ПНД взрослые";
-				return true;
-			}
-
-			return false;
-		}
-
-		private bool RulePNDKids() {
-			string serviceKodoper = dataRow["KODOPER"].ToString();
-			if (servicesCodesPNDKids.Contains(serviceKodoper)) {
-				dataRow["COMMENT_3"] = "ПНД дети";
 				return true;
 			}
 

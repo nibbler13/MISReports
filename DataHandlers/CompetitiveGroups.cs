@@ -442,7 +442,7 @@ namespace MISReports.ExcelHandlers {
 					continue;
 				}
 
-				valuesDiscountedCost.Add(item.Item2.DiscountedCost ?? null);
+				valuesDiscountedCost.Add(item.Item2.DiscountedCost ?? null); //DiscountedCost
 				valuesServicesCount.Add(item.Item2.ServicesCount ?? null);
 				valuesUniquePatients.Add(item.Item2.UniqPatientsCount ?? null);
 

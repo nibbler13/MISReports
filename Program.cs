@@ -65,6 +65,7 @@ namespace MISReports {
 		private static readonly List<ReportsInfo.Type> TreatmentsDetailsType = new List<ReportsInfo.Type> {
 			ReportsInfo.Type.TreatmentsDetailsAbsolut,
 			ReportsInfo.Type.TreatmentsDetailsAlfa,
+			ReportsInfo.Type.TreatmentsDetailsAlfaSpb,
 			ReportsInfo.Type.TreatmentsDetailsAlliance,
 			ReportsInfo.Type.TreatmentsDetailsBestdoctor,
 			ReportsInfo.Type.TreatmentsDetailsEnergogarant,
@@ -80,6 +81,14 @@ namespace MISReports {
 			ReportsInfo.Type.TreatmentsDetailsSoglasie,
 			ReportsInfo.Type.TreatmentsDetailsVsk,
 			ReportsInfo.Type.TreatmentsDetailsVtb,
+			ReportsInfo.Type.TreatmentsDetailsIngosstrakhSochi,
+			ReportsInfo.Type.TreatmentsDetailsIngosstrakhKrasnodar,
+			ReportsInfo.Type.TreatmentsDetailsIngosstrakhUfa,
+			ReportsInfo.Type.TreatmentsDetailsIngosstrakhSpb,
+			ReportsInfo.Type.TreatmentsDetailsIngosstrakhKazan,
+			ReportsInfo.Type.TreatmentsDetailsBestDoctorSpb,
+			ReportsInfo.Type.TreatmentsDetailsBestDoctorUfa,
+			ReportsInfo.Type.TreatmentsDetailsSogazUfa,
 		};
 
 		private static Tuple<string, string, string>[] licenseStatisticsDBs = 
@@ -152,6 +161,11 @@ namespace MISReports {
 			}
 
 			itemReport = itemReportToCreate;
+
+			Logging.ToLog(
+				"Создание подключения к БД: " + 
+				Properties.Settings.Default.MisDbAddress + ":" + 
+				Properties.Settings.Default.MisDbName);
 
 			FirebirdClient firebirdClient = new FirebirdClient(
 				Properties.Settings.Default.MisDbAddress,
@@ -247,7 +261,7 @@ namespace MISReports {
 
 		private static void LoadData(FirebirdClient firebirdClient) {
 			dateBeginOriginal = itemReport.DateBegin;
-			itemReport.SetPeriod(itemReport.DateBegin.AddDays((-1 * itemReport.DateBegin.Day) + 1), itemReport.DateEnd);
+			//itemReport.SetPeriod(itemReport.DateBegin.AddDays((-1 * itemReport.DateBegin.Day) + 1), itemReport.DateEnd);
 
 			dateBeginStr = dateBeginOriginal.Value.ToShortDateString();
 			dateEndStr = itemReport.DateEnd.ToShortDateString();
@@ -268,22 +282,39 @@ namespace MISReports {
 				dateBeginStr = "01.09.2018";
 
 			if (itemReport.Type == ReportsInfo.Type.MESUsage) {
-				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + itemReport.DateBegin.ToShortDateString() + " по " + dateEndStr);
-				for (int i = 0; itemReport.DateBegin.AddDays(i) <= itemReport.DateEnd; i++) {
-					string dayToGetData = itemReport.DateBegin.AddDays(i).ToShortDateString();
-					Logging.ToLog("Получение данных за день: " + dayToGetData);
+				int daysToLoad = (itemReport.DateEnd - itemReport.DateBegin).Days;
+				List<DateTime> startDatesToLoad = new List<DateTime> {
+					itemReport.DateBegin.AddDays(-1 * daysToLoad - 1),
+					itemReport.DateBegin
+				};
 
-					Dictionary<string, object> parametersMes = new Dictionary<string, object>() {
-						{ "@dateBegin", dayToGetData },
-						{ "@dateEnd", dayToGetData }
-					};
+				for (int i = 0; i < startDatesToLoad.Count; i++) {
+					string dateStartStr = startDatesToLoad[i].ToShortDateString();
+					string dateEndStr = startDatesToLoad[i].AddDays(daysToLoad).ToShortDateString();
+					Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + 
+						dateStartStr + " по " + dateEndStr);
+					string period = (i + 1) + ". " + dateStartStr + "-" + dateEndStr;
 
-					DataTable dataTablePart = firebirdClient.GetDataTable(itemReport.SqlQuery, parametersMes);
+					for (int y = 0; y <= daysToLoad; y++) {
+						string dayToGetData = startDatesToLoad[i].AddDays(y).ToShortDateString();
+						Logging.ToLog("Получение данных за день: " + dayToGetData);
 
-					if (dataTableMainData == null)
-						dataTableMainData = dataTablePart;
-					else
-						dataTableMainData.Merge(dataTablePart);
+						Dictionary<string, object> parametersMes = new Dictionary<string, object>() {
+							{ "@dateBegin", dayToGetData },
+							{ "@dateEnd", dayToGetData }
+						};
+
+						DataTable dataTablePart = firebirdClient.GetDataTable(itemReport.SqlQuery, parametersMes);
+						Logging.ToLog("Получено строк: " + dataTablePart.Rows.Count);
+
+						foreach (DataRow row in dataTablePart.Rows)
+							row["PERIOD"] = period;
+
+						if (dataTableMainData == null)
+							dataTableMainData = dataTablePart;
+						else
+							dataTableMainData.Merge(dataTablePart);
+					}
 				}
 
 				return;
@@ -610,9 +641,7 @@ namespace MISReports {
 				}
 
 				if (itemReport.Type == ReportsInfo.Type.MESUsage) {
-					Dictionary<string, ItemMESUsageTreatment> treatments =
-						ParseMESUsageDataTableToTreatments(dataTableMainData);
-					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteMesUsageTreatmentsToExcel(treatments,
+					itemReport.FileResult = ExcelHandlers.MesUsage.WriteMesUsageTreatmentsToExcel(dataTableMainData,
 																  subject,
 																  itemReport.TemplateFileName);
 
@@ -1003,129 +1032,5 @@ namespace MISReports {
                 Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
             }
         }
-
-
-
-
-		public static Dictionary<string, ItemMESUsageTreatment> ParseMESUsageDataTableToTreatments(DataTable dataTable) {
-			Dictionary<string, ItemMESUsageTreatment> treatments = new Dictionary<string, ItemMESUsageTreatment>();
-
-			foreach (DataRow row in dataTable.Rows) {
-				try {
-					string treatcode = row["TREATCODE"].ToString();
-					string mid = row["MID"].ToString();
-					string listMES = row["LISTMES"].ToString();
-					string listReferrals = row["LISTREFERRALS"].ToString();
-					string listAllReferrals = row["LISTALLREFERRALS"].ToString();
-					string[] arrayMES = new string[0];
-					string[] arrayReferrals = new string[0];
-					string[] arrayAllReferrals = new string[0];
-					if (!string.IsNullOrEmpty(listMES))
-						arrayMES = listMES.Split(';');
-					if (!string.IsNullOrEmpty(listReferrals))
-						arrayReferrals = listReferrals.Split(';');
-					if (!string.IsNullOrEmpty(listAllReferrals))
-						arrayAllReferrals = listAllReferrals.Split(';');
-
-					if (treatments.ContainsKey(treatcode)) {
-						foreach (KeyValuePair<string, int> pair in ParseMes(arrayMES))
-							treatments[treatcode].DictMES.Add(pair.Key, pair.Value);
-
-						if (string.IsNullOrEmpty(mid))
-							treatments[treatcode].ListReferralsFromDoc.AddRange(arrayReferrals);
-						else
-							treatments[treatcode].ListReferralsFromMes.AddRange(arrayReferrals);
-					} else {
-						ItemMESUsageTreatment treatment = new ItemMESUsageTreatment() {
-							TREATDATE = row["TREATDATE"].ToString(),
-							CLIENTNAME = row["CLIENTNAME"].ToString(),
-							HISTNUM = row["HISTNUM"].ToString(),
-							DOCNAME = row["DOCNAME"].ToString(),
-							FILIAL = row["FILIAL"].ToString(),
-							DEPNAME = row["DEPNAME"].ToString(),
-							MKBCODE = row["MKBCODE"].ToString(),
-							AGE = row["AGE"].ToString(),
-							AGNAME = row["AGNAME"].ToString(),
-							AGNUM = row["AGNUM"].ToString(),
-							SERVICE_TYPE = row["LISTALLSERVICES"].ToString().ToUpper().Contains("ПЕРВИЧНЫЙ") ? "Первичный" : "Повторный",
-							PAYMENT_TYPE = string.IsNullOrEmpty(row["GRNAME"].ToString()) ? "Страховая компания \\ Безнал" : "Наличный расчет"
-						};
-
-						if (string.IsNullOrEmpty(mid))
-							treatment.ListReferralsFromDoc.AddRange(arrayReferrals);
-						else
-							treatment.ListReferralsFromMes.AddRange(arrayReferrals);
-
-						treatment.DictMES = ParseMes(arrayMES);
-						treatment.DictAllReferrals = ParseAllReferrals(arrayAllReferrals);
-						treatments.Add(treatcode, treatment);
-					}
-				} catch (Exception e) {
-					Logging.ToLog(e.Message);
-				}
-			}
-
-			return treatments;
-		}
-
-		private static Dictionary<string, ItemMESUsageTreatment.ReferralDetails> ParseAllReferrals(string[] valuesArray) {
-			Dictionary<string, ItemMESUsageTreatment.ReferralDetails> keyValuePairs =
-				new Dictionary<string, ItemMESUsageTreatment.ReferralDetails>();
-
-			foreach (string item in valuesArray) {
-				if (!item.Contains(":"))
-					continue;
-
-				try {
-					string[] referral = item.Split(':');
-					if (referral.Length < 3)
-						continue;
-
-					string referralCode = referral[0];
-
-					if (keyValuePairs.ContainsKey(referralCode))
-						continue;
-
-					int.TryParse(referral[1], out int referralStatus);
-					int.TryParse(referral[2], out int refType);
-					ItemMESUsageTreatment.ReferralDetails referralDetails = new ItemMESUsageTreatment.ReferralDetails() {
-						Schid = referralCode,
-						IsCompleted = referralStatus,
-						RefType = refType
-					};
-
-					keyValuePairs.Add(referralCode, referralDetails);
-				} catch (Exception e) {
-					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
-				}
-			}
-
-			return keyValuePairs;
-		}
-
-		private static Dictionary<string, int> ParseMes(string[] valuesArray) {
-			Dictionary<string, int> keyValuePairs = new Dictionary<string, int>();
-
-			foreach (string item in valuesArray) {
-				if (!item.Contains(":"))
-					continue;
-
-				try {
-					string[] referral = item.Split(':');
-					string referralCode = referral[0];
-
-					if (keyValuePairs.ContainsKey(referralCode))
-						continue;
-
-					int.TryParse(referral[1], out int referralStatus);
-					keyValuePairs.Add(referralCode, referralStatus);
-				} catch (Exception e) {
-					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
-				}
-			}
-
-			return keyValuePairs;
-		}
-
 	}
 }

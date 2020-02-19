@@ -426,10 +426,10 @@ namespace MISReports.ExcelHandlers {
 					filial,
 					group,
 					department,
-					dataLeft.PreviousDiscountedCost ?? null,
-					dataRight.PreviousDiscountedCost ?? null,
-					dataLeft.CurrentDiscountedCost ?? null,
-					dataRight.CurrentDiscountedCost ?? null,
+					dataLeft.PreviousDiscountedCost ?? null, //PreviousDiscountedCost
+					dataRight.PreviousDiscountedCost ?? null, //PreviousDiscountedCost
+					dataLeft.CurrentDiscountedCost ?? null, //CurrentDiscountedCost
+					dataRight.CurrentDiscountedCost ?? null, //CurrentDiscountedCost
 					null,
 					null,
 					dataLeft.PreviousServicesCount ?? null,
@@ -446,8 +446,8 @@ namespace MISReports.ExcelHandlers {
 					filial,
 					group,
 					department,
-					dataLeft.PreviousDiscountedCost ?? null,
-					dataLeft.CurrentDiscountedCost ?? null,
+					dataLeft.PreviousDiscountedCost ?? null, //PreviousDiscountedCost
+					dataLeft.CurrentDiscountedCost ?? null, //CurrentDiscountedCost
 					null,
 					dataLeft.PreviousServicesCount ?? null,
 					dataLeft.CurrentServicesCount ?? null,

@@ -107,12 +107,16 @@ namespace MISReports.ExcelHandlers {
 							filialNameBlock = filialName;
 							firstRowBlock = row;
 							firstRowFilial = row;
-						} else if (!departmentBlock.Equals(department) && filialNameBlock.Equals(filialName)) {
+						} 
+						
+						if (!departmentBlock.Equals(department)) {
 							Console.WriteLine("DepartmentTotals: " + departmentBlock);
 							CreateDepartmentTotals(wb, ws, xlApp, firstRowBlock, ref row, deptsToExclude.Contains(departmentBlock));
 							departmentBlock = department;
 							firstRowBlock = row;
-						} else if (!filialNameBlock.Equals(filialName)) {
+						} 
+						
+						if (!filialNameBlock.Equals(filialName)) {
 							Console.WriteLine("FilialTotals: " + filialNameBlock);
 							CreateDepartmentTotals(wb, ws, xlApp, firstRowFilial, ref row, false, isMethodic1Total: true);
 							CreateDepartmentTotals(wb, ws, xlApp, firstRowFilial, ref row, false, isMethodic2Total: true);
