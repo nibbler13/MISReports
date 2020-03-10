@@ -11,7 +11,7 @@ namespace MISReports.ExcelHandlers {
 	class FreeCells : ExcelGeneral {
 
 		//============================ FreeCells ============================
-		public static bool Process(string resultFile, DateTime dateBeginOriginal, DateTime dateEnd) {
+		public static bool Process(string resultFile, DateTime dateBeginOriginal, DateTime dateEnd, bool removeCrossing = false) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb,
 				out Excel.Worksheet ws))
 				return false;
@@ -25,7 +25,7 @@ namespace MISReports.ExcelHandlers {
 			}
 
 			try {
-				AddPivotTableFreeCells(wb, ws, xlApp, false, dateBeginOriginal);
+				AddPivotTableFreeCells(wb, ws, xlApp, false, dateBeginOriginal, removeCrossing: removeCrossing);
 				//wb.Sheets["Данные"].Activate();
 				//AddPivotTableFreeCells(wb, ws, xlApp, true, dateBeginOriginal, dateEnd);
 			} catch (Exception e) {
@@ -39,7 +39,7 @@ namespace MISReports.ExcelHandlers {
 		}
 
 		private static void AddPivotTableFreeCells(Excel.Workbook wb, Excel.Worksheet ws, Excel.Application xlApp,
-			bool isMonth, DateTime date, DateTime? dateMonthEnd = null) {
+			bool isMonth, DateTime date, DateTime? dateMonthEnd = null, bool removeCrossing = false) {
 			ws.Cells[1, 1].Select();
 
 			string sheetName;
@@ -55,24 +55,54 @@ namespace MISReports.ExcelHandlers {
 
 			pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
 
+			int position = 1;
 			pivotTable.PivotFields("Филиал").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Филиал").Position = 1;
+			pivotTable.PivotFields("Филиал").Position = position;
+			position++;
 
-			pivotTable.PivotFields("Пересечение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Пересечение").Position = 2;
+			if (!removeCrossing) {
+				pivotTable.PivotFields("Пересечение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+				pivotTable.PivotFields("Пересечение").Position = position;
+				position++;
+			}
 
 			pivotTable.PivotFields("Отделение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Отделение").Position = 3;
+			pivotTable.PivotFields("Отделение").Position = position;
+			position++;
 
 			pivotTable.PivotFields("Врач").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Врач").Position = 4;
+			pivotTable.PivotFields("Врач").Position = position;
+			position++;
 
 			pivotTable.PivotFields("Должность").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Должность").Position = 5;
+			pivotTable.PivotFields("Должность").Position = position;
+			position++;
 
 			pivotTable.AddDataField(pivotTable.PivotFields("Всего"), "(Всего)", Excel.XlConsolidationFunction.xlSum);
 			pivotTable.AddDataField(pivotTable.PivotFields("Занято"), "(Занято)", Excel.XlConsolidationFunction.xlSum);
-			pivotTable.AddDataField(pivotTable.PivotFields("% занятых слотов"), "(% занятых слотов)", Excel.XlConsolidationFunction.xlAverage);
+
+			pivotTable.CalculatedFields().Add("% занятых слотов", "='Занято'/'Всего'", true);
+			pivotTable.PivotFields("% занятых слотов").Orientation = Excel.XlPivotFieldOrientation.xlDataField;
+
+			pivotTable.PivotFields("Сумма по полю % занятых слотов").Caption =
+				" % занятых слотов";
+
+			//pivotTable.AddDataField(pivotTable.PivotFields("% занятых слотов"), "(% занятых слотов)", Excel.XlConsolidationFunction.xlAverage);
+
+			pivotTable.PivotFields(" % занятых слотов").NumberFormat = "0,00%";
+
+			//   ActiveSheet.PivotTables("PivotTable").CalculatedFields.Add "Поле2", _
+			//    "=Занято/Всего", True
+			//ActiveSheet.PivotTables("PivotTable").PivotFields("Поле2").Orientation = _
+			//    xlDataField
+			//Columns("F:F").Select
+			// Selection.Style = "Percent"
+			// Range("F3").Select
+
+
+
+
+
 
 			if (isMonth) {
 				CultureInfo cultureInfoOriginal = Thread.CurrentThread.CurrentCulture;
@@ -96,9 +126,10 @@ namespace MISReports.ExcelHandlers {
 			pivotTable.ColumnGrand = false;
 			pivotTable.DisplayFieldCaptions = false;
 
+			pivotTable.PivotFields("(Всего)").NumberFormat = "0,00";
 			pivotTable.PivotFields("(Занято)").NumberFormat = "0,00";
-			pivotTable.PivotFields("(% занятых слотов)").NumberFormat = "0,0%";
-			pivotTable.PivotSelect("'(% занятых слотов)'", Excel.XlPTSelectionMode.xlDataAndLabel, true);
+			//pivotTable.PivotFields("(% занятых слотов)").NumberFormat = "0,0%";
+			pivotTable.PivotSelect("' % занятых слотов'", Excel.XlPTSelectionMode.xlDataAndLabel, true);
 
 			xlApp.Selection.FormatConditions.AddColorScale(3);
 			xlApp.Selection.FormatConditions(xlApp.Selection.FormatConditions.Count).SetFirstPriority();
@@ -129,12 +160,14 @@ namespace MISReports.ExcelHandlers {
 			pivotTable.PivotFields("Порядок сортировки").LayoutForm = Excel.XlLayoutFormType.xlTabular;
 
 			pivotTable.PivotFields("Отделение").ShowDetail = false;
-			pivotTable.PivotFields("Пересечение").ShowDetail = false;
+
+			if (!removeCrossing)
+				pivotTable.PivotFields("Пересечение").ShowDetail = false;
+
 			pivotTable.PivotFields("Филиал").ShowDetail = false;
 
 			wsPivote.Range["A1"].Select();
 			wb.ShowPivotTableFieldList = false;
 		}
-
 	}
 }

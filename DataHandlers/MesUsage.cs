@@ -271,29 +271,29 @@ namespace MISReports.ExcelHandlers {
 					treat.AGE, //Возраст
 					treat.MKBCODE, //Код МКБ
 					necessaryServicesInMes, //Кол-во обязательных услуг согласно МЭС
-					//treat.DictMES.Count, //Всего услуг в МЭС
+					//treat.DictMES.Count, //Всего услуг в МЭС ---------------------------
 					hasAtLeastOneReferralByMes, //Есть направление, созданное с использованием МЭС
 					necessaryServiceReferralByMesInstrumental + necessaryServiceReferralByMesLaboratory, //Кол-во услуг в направлении с использованием МЭС
-					//necessaryServiceReferralByMesInstrumental, //Кол-во обязательных услуг в направлении с использованием МЭС (инструментальных)
-					//necessaryServiceReferralByMesLaboratory, //Кол-во обязательных услуг в направлении с использованием МЭС (лабораторных)
-					//necessaryServiceReferralCompletedByMesInstrumental, //Кол-во исполненных обязательных услуг в направлении МЭС (инструментальных)
-					//necessaryServiceReferralCompletedByMesLaboratory, //Кол-во исполненных обязательных услуг в направлении МЭС (лабораторных)
+					//necessaryServiceReferralByMesInstrumental, //Кол-во обязательных услуг в направлении с использованием МЭС (инструментальных) ---------------------------
+					//necessaryServiceReferralByMesLaboratory, //Кол-во обязательных услуг в направлении с использованием МЭС (лабораторных) ---------------------------
+					//necessaryServiceReferralCompletedByMesInstrumental, //Кол-во исполненных обязательных услуг в направлении МЭС (инструментальных) ---------------------------
+					//necessaryServiceReferralCompletedByMesLaboratory, //Кол-во исполненных обязательных услуг в направлении МЭС (лабораторных) ---------------------------
 					hasAtLeastOneReferralSelfMade, //Есть направление, созданное самостоятельно
 					necessaryServiceReferralSelfMadeInstrumental + necessaryServiceReferralSelfMadeLaboratory, //Кол-во услуг в направлении выставленных самостоятельно
-					//necessaryServiceReferralSelfMadeInstrumental, //Кол-во обязательных услуг в направлении выставленных самостоятельно (инструментальных)
-					//necessaryServiceReferralSelfMadeLaboratory, //Кол-во обязательных услуг в направлении выставленных самостоятельно (лабораторных)
-					//necessaryServiceReferralCompletedSelfMadeInstrumental, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (инструментальных)
-					//necessaryServiceReferralCompletedSelfMadeLaboratory, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (лабораторных)
-					//servicesAllReferralsInstrumental, //Всего услуг во всех направлениях (иснтрументальных)
-					//servicesAllReferralsLaboratory, //Всего услуг во всех направлениях (лабораторных)
-					//completedServicesInReferrals, //Кол-во выполненных услуг во всех направлениях
-					//serviceInReferralOutsideMes, //Кол-во услуг в направлениях, не входящих в МЭС
+					//necessaryServiceReferralSelfMadeInstrumental, //Кол-во обязательных услуг в направлении выставленных самостоятельно (инструментальных) ---------------------------
+					//necessaryServiceReferralSelfMadeLaboratory, //Кол-во обязательных услуг в направлении выставленных самостоятельно (лабораторных) ---------------------------
+					//necessaryServiceReferralCompletedSelfMadeInstrumental, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (инструментальных) ---------------------------
+					//necessaryServiceReferralCompletedSelfMadeLaboratory, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (лабораторных) ---------------------------
+					//servicesAllReferralsInstrumental, //Всего услуг во всех направлениях (иснтрументальных) ---------------------------
+					//servicesAllReferralsLaboratory, //Всего услуг во всех направлениях (лабораторных) ---------------------------
+					//completedServicesInReferrals, //Кол-во выполненных услуг во всех направлениях ---------------------------
+					//serviceInReferralOutsideMes, //Кол-во услуг в направлениях, не входящих в МЭС ---------------------------
 					necessaryServiceInMesUsedPercent, //% Соответствия обязательных услуг МЭС (обязательные во всех направлениях) / всего обязательных в мэс
 					necessaryServiceInMesUsedPercent == 1 ? 1 : 0, //Услуги из всех направлений соответсвуют обязательным услугам МЭС на 100%
 					treat.SERVICE_TYPE, //Тип приема
-					treat.PAYMENT_TYPE//, //Тип оплаты приема
-					//treat.AGNAME, //Наименование организации
-					//treat.AGNUM //Номер договора
+					treat.PAYMENT_TYPE, //Тип оплаты приема
+					//treat.AGNAME, //Наименование организации ---------------------------
+					//treat.AGNUM //Номер договора ---------------------------
 				};
 
 				foreach (object value in values) {

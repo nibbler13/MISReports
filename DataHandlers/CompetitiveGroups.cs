@@ -424,13 +424,13 @@ namespace MISReports.ExcelHandlers {
 
 
 		private static object[] GenerateValuesToWrite(string group, string department, List<Tuple<string, ItemData>> items) {
-			List<object> valuesDiscountedCost = new List<object>();
+			List<object> valuesCost = new List<object>();
 			List<object> valuesServicesCount = new List<object>();
 			List<object> valuesUniquePatients = new List<object>();
 
 			foreach (Tuple<string, ItemData> item in items) {
 				if (item.Item2 == null) {
-					valuesDiscountedCost.Add(null);
+					valuesCost.Add(null);
 					valuesServicesCount.Add(null);
 					valuesUniquePatients.Add(null);
 
@@ -442,7 +442,7 @@ namespace MISReports.ExcelHandlers {
 					continue;
 				}
 
-				valuesDiscountedCost.Add(item.Item2.DiscountedCost ?? null); //DiscountedCost
+				valuesCost.Add(item.Item2.Cost ?? null); //DiscountedCost
 				valuesServicesCount.Add(item.Item2.ServicesCount ?? null);
 				valuesUniquePatients.Add(item.Item2.UniqPatientsCount ?? null);
 
@@ -460,7 +460,7 @@ namespace MISReports.ExcelHandlers {
 			}
 
 			List<object> objects = new List<object>() { group, department };
-			List<object>[] values = new List<object>[] { valuesDiscountedCost, valuesServicesCount, valuesUniquePatients };
+			List<object>[] values = new List<object>[] { valuesCost, valuesServicesCount, valuesUniquePatients };
 			foreach (List<object> list in values)
 				foreach (object value in list)
 					objects.Add(value);

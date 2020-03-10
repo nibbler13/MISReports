@@ -284,7 +284,7 @@ namespace MISReports {
 			if (itemReport.Type == ReportsInfo.Type.MESUsage) {
 				int daysToLoad = (itemReport.DateEnd - itemReport.DateBegin).Days;
 				List<DateTime> startDatesToLoad = new List<DateTime> {
-					itemReport.DateBegin.AddDays(-1 * daysToLoad - 1),
+					//itemReport.DateBegin.AddDays(-1 * daysToLoad - 1),
 					itemReport.DateBegin
 				};
 
@@ -597,7 +597,8 @@ namespace MISReports {
 				Logging.ToLog("Запись данных в файл");
 
 				if (itemReport.Type == ReportsInfo.Type.FreeCellsDay ||
-					itemReport.Type == ReportsInfo.Type.FreeCellsWeek) {
+					itemReport.Type == ReportsInfo.Type.FreeCellsWeek ||
+					itemReport.Type == ReportsInfo.Type.FreeCellsMarketing) {
 					DataColumn dataColumn = dataTableMainData.Columns.Add("SortingOrder", typeof(int));
 					dataColumn.SetOrdinal(0);
 
@@ -833,6 +834,10 @@ namespace MISReports {
 
 						case ReportsInfo.Type.FirstTimeVisitPatients:
 							isPostProcessingOk = ExcelHandlers.FirstTimeVisitPatients.Process(itemReport.FileResult, dataTableMainData);
+							break;
+
+						case ReportsInfo.Type.FreeCellsMarketing:
+							isPostProcessingOk = ExcelHandlers.FreeCells.Process(itemReport.FileResult, dateBeginOriginal.Value, itemReport.DateEnd, true);
 							break;
 
 						default:

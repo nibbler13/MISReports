@@ -25,7 +25,7 @@ namespace MISReports.ExcelHandlers {
 		private List<string> servicesCodesKLKT = new List<string>();
 		private List<string> mkbCodesUninsured = new List<string>();
 		private int i = 0;
-		private int maxKidAge = 0;
+		//private int maxKidAge = 0;
 		private string fileNameCodes;
 
 		public void PerformDataTable(DataTable dataTable, ReportsInfo.Type type) {
@@ -83,7 +83,7 @@ namespace MISReports.ExcelHandlers {
 						RuleZeroCost,
 						RuleGarantyMail,
 						RulePrepaidExpense,
-						RuleKids,
+						//RuleKids,
 						RuleFranchise,
 						RuleVIP,
 						RuleProgramForPregnant,
@@ -96,7 +96,7 @@ namespace MISReports.ExcelHandlers {
 						RuleUninsured
 					};
 
-					maxKidAge = 17;
+					//maxKidAge = 17;
 
 					fileNameCodes =
 						@"\\mskv-fs-01\MSKV Files\Управление информационных технологий\08_Проекты\" +
@@ -557,7 +557,7 @@ namespace MISReports.ExcelHandlers {
 						RuleZeroCost,
 						RuleGarantyMail,
 						RulePrepaidExpense,
-						RuleKids,
+						//RuleKids,
 						RuleFranchise,
 						RuleVIP,
 						RuleProgramForPregnant,
@@ -628,6 +628,7 @@ namespace MISReports.ExcelHandlers {
 					rules = new List<Func<bool>> {
 						RuleZeroCost,
 						RuleGarantyMail,
+						RuleGarantyMailSogaz,
 						RulePrepaidExpense,
 						RuleFranchise,
 						RuleVIP,
@@ -883,6 +884,15 @@ namespace MISReports.ExcelHandlers {
 			return false;
 		}
 
+		private bool RuleGarantyMailSogaz() {
+			string programType = dataRow["PRG"].ToString().ToLower();
+			if (programType.Contains("гарантийные письма гоп")) {
+				dataRow["COMMENT_3"] = "ГОП";
+				return true;
+			}
+
+			return false;
+		}
 		private bool RuleGarantyMailAlliance() {
 			string programType = dataRow["PRG"].ToString().ToLower();
 			if (programType.Contains("гарантийное письмо") && programType.Contains("ашан")) {
@@ -1114,14 +1124,14 @@ namespace MISReports.ExcelHandlers {
 			return false;
 		}
 
-		private bool RuleKids() {
-			string age = dataRow["AGE"].ToString();
-			if (double.TryParse(age, out double ageParsed) && ageParsed <= maxKidAge) {
-				dataRow["COMMENT_3"] = "Дети";
-				return true;
-			}
+		//private bool RuleKids() {
+		//	string age = dataRow["AGE"].ToString();
+		//	if (double.TryParse(age, out double ageParsed) && ageParsed <= maxKidAge) {
+		//		dataRow["COMMENT_3"] = "Дети";
+		//		return true;
+		//	}
 
-			return false;
-		}
+		//	return false;
+		//}
 	}
 }

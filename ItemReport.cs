@@ -203,7 +203,7 @@ namespace MISReports {
 				MailTo = Properties.Settings.Default.MailToLicenseStatistics;
 				FolderToSave = Properties.Settings.Default.FolderToSaveLicenseStatistics;
 
-//-----------------------------------------------------------------------------------------------------
+				//-----------------------------------------------------------------------------------------------------
 				#region TreatmentsDetails
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAbsolut.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAbsolut;
@@ -439,7 +439,7 @@ namespace MISReports {
 				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
 				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
 				#endregion TreatmentsDetails
-//-----------------------------------------------------------------------------------------------------
+				//-----------------------------------------------------------------------------------------------------
 
 			} else if (reportName.Equals(ReportsInfo.Type.TimetableToSite.ToString())) {
 				Type = ReportsInfo.Type.TimetableToSite;
@@ -461,6 +461,12 @@ namespace MISReports {
 				SqlQuery = Properties.Settings.Default.MisDbSqlGetFirstTimeVisitPatients;
 				MailTo = Properties.Settings.Default.MailToFirstTimeVisitPatients;
 				TemplateFileName = Properties.Settings.Default.TemplateFirstTimeVisitPatients;
+
+			} else if (reportName.Equals(ReportsInfo.Type.FreeCellsMarketing.ToString())) {
+				Type = ReportsInfo.Type.FreeCellsMarketing;
+				SqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCellsMarketing;
+				MailTo = Properties.Settings.Default.MailToFreeCellsMarketing;
+				TemplateFileName = Properties.Settings.Default.TemplateFreeCells;
 
 			} else
 				IsSettingsLoaded = false;
