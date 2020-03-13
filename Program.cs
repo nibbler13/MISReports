@@ -281,10 +281,11 @@ namespace MISReports {
 			if (itemReport.Type == ReportsInfo.Type.RegistryMarks)
 				dateBeginStr = "01.09.2018";
 
-			if (itemReport.Type == ReportsInfo.Type.MESUsage) {
+			if (itemReport.Type == ReportsInfo.Type.MESUsage ||
+				itemReport.Type == ReportsInfo.Type.MESUsageFull) {
 				int daysToLoad = (itemReport.DateEnd - itemReport.DateBegin).Days;
 				List<DateTime> startDatesToLoad = new List<DateTime> {
-					//itemReport.DateBegin.AddDays(-1 * daysToLoad - 1),
+					//itemReport.DateBegin.AddDays(-1 * daysToLoad - 1),  //For week comparison
 					itemReport.DateBegin
 				};
 
@@ -642,9 +643,12 @@ namespace MISReports {
 				}
 
 				if (itemReport.Type == ReportsInfo.Type.MESUsage) {
-					itemReport.FileResult = ExcelHandlers.MesUsage.WriteMesUsageTreatmentsToExcel(dataTableMainData,
-																  subject,
-																  itemReport.TemplateFileName);
+					itemReport.FileResult = ExcelHandlers.MesUsage.WriteMesUsageTreatmentsToExcel(
+						dataTableMainData, subject, itemReport.TemplateFileName);
+
+				} else if (itemReport.Type == ReportsInfo.Type.MESUsageFull) {
+					itemReport.FileResult = ExcelHandlers.MesUsage.WriteMesUsageTreatmentsToExcel(
+						dataTableMainData, subject, itemReport.TemplateFileName, true);
 
 				} else if (itemReport.Type == ReportsInfo.Type.TelemedicineOnlyIngosstrakh) {
 					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
@@ -762,6 +766,10 @@ namespace MISReports {
 							isPostProcessingOk = ExcelHandlers.MesUsage.Process(itemReport.FileResult);
 							break;
 
+						case ReportsInfo.Type.MESUsageFull:
+							isPostProcessingOk = ExcelHandlers.MesUsage.Process(itemReport.FileResult, true);
+							break;
+
 						case ReportsInfo.Type.OnlineAccountsUsage:
 							isPostProcessingOk = ExcelHandlers.OnlineAccounts.Process(itemReport.FileResult);
 							break;
@@ -838,6 +846,10 @@ namespace MISReports {
 
 						case ReportsInfo.Type.FreeCellsMarketing:
 							isPostProcessingOk = ExcelHandlers.FreeCells.Process(itemReport.FileResult, dateBeginOriginal.Value, itemReport.DateEnd, true);
+							break;
+
+						case ReportsInfo.Type.EmergencyCallsQuantity:
+							isPostProcessingOk = ExcelHandlers.ExcelGeneral.CopyFormatting(itemReport.FileResult);
 							break;
 
 						default:

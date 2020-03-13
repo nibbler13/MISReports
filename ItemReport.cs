@@ -56,6 +56,12 @@ namespace MISReports {
 				TemplateFileName = Properties.Settings.Default.TemplateMESUsage;
 				FolderToSave = Properties.Settings.Default.FolderToSaveMESUsage;
 
+			} else if (reportName.Equals(ReportsInfo.Type.MESUsageFull.ToString())) {
+				Type = ReportsInfo.Type.MESUsageFull;
+				SqlQuery = Properties.Settings.Default.MisDbSqlGetMESUsage;
+				MailTo = Properties.Settings.Default.MailToMESUsage;
+				TemplateFileName = Properties.Settings.Default.TemplateMESUsageFull;
+
 			} else if (reportName.Equals(ReportsInfo.Type.OnlineAccountsUsage.ToString())) {
 				Type = ReportsInfo.Type.OnlineAccountsUsage;
 				SqlQuery = Properties.Settings.Default.MisDbSqlGetOnlineAccountsUsage;
@@ -467,6 +473,12 @@ namespace MISReports {
 				SqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCellsMarketing;
 				MailTo = Properties.Settings.Default.MailToFreeCellsMarketing;
 				TemplateFileName = Properties.Settings.Default.TemplateFreeCells;
+
+			} else if (reportName.Equals(ReportsInfo.Type.EmergencyCallsQuantity.ToString())) {
+				Type = ReportsInfo.Type.EmergencyCallsQuantity;
+				SqlQuery = Properties.Settings.Default.MisDbSqlGetEmergencyCallsQuantity;
+				MailTo = Properties.Settings.Default.MailToEmergencyCallsQuantity;
+				TemplateFileName = Properties.Settings.Default.TemplateEmergencyCallsQuantity;
 
 			} else
 				IsSettingsLoaded = false;

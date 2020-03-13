@@ -166,7 +166,7 @@ namespace MISReports.ExcelHandlers {
 
 
 		//============================ MesUsage ============================
-		public static string WriteMesUsageTreatmentsToExcel(DataTable dataTable, string resultFilePrefix, string templateFileName) {
+		public static string WriteMesUsageTreatmentsToExcel(DataTable dataTable, string resultFilePrefix, string templateFileName, bool isFullVersion = false) {
 			if (!CreateNewIWorkbook(resultFilePrefix, templateFileName, out IWorkbook workbook, out ISheet sheet, out string resultFile, string.Empty))
 				return string.Empty;
 
@@ -271,30 +271,53 @@ namespace MISReports.ExcelHandlers {
 					treat.AGE, //Возраст
 					treat.MKBCODE, //Код МКБ
 					necessaryServicesInMes, //Кол-во обязательных услуг согласно МЭС
-					//treat.DictMES.Count, //Всего услуг в МЭС ---------------------------
 					hasAtLeastOneReferralByMes, //Есть направление, созданное с использованием МЭС
 					necessaryServiceReferralByMesInstrumental + necessaryServiceReferralByMesLaboratory, //Кол-во услуг в направлении с использованием МЭС
-					//necessaryServiceReferralByMesInstrumental, //Кол-во обязательных услуг в направлении с использованием МЭС (инструментальных) ---------------------------
-					//necessaryServiceReferralByMesLaboratory, //Кол-во обязательных услуг в направлении с использованием МЭС (лабораторных) ---------------------------
-					//necessaryServiceReferralCompletedByMesInstrumental, //Кол-во исполненных обязательных услуг в направлении МЭС (инструментальных) ---------------------------
-					//necessaryServiceReferralCompletedByMesLaboratory, //Кол-во исполненных обязательных услуг в направлении МЭС (лабораторных) ---------------------------
 					hasAtLeastOneReferralSelfMade, //Есть направление, созданное самостоятельно
 					necessaryServiceReferralSelfMadeInstrumental + necessaryServiceReferralSelfMadeLaboratory, //Кол-во услуг в направлении выставленных самостоятельно
-					//necessaryServiceReferralSelfMadeInstrumental, //Кол-во обязательных услуг в направлении выставленных самостоятельно (инструментальных) ---------------------------
-					//necessaryServiceReferralSelfMadeLaboratory, //Кол-во обязательных услуг в направлении выставленных самостоятельно (лабораторных) ---------------------------
-					//necessaryServiceReferralCompletedSelfMadeInstrumental, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (инструментальных) ---------------------------
-					//necessaryServiceReferralCompletedSelfMadeLaboratory, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (лабораторных) ---------------------------
-					//servicesAllReferralsInstrumental, //Всего услуг во всех направлениях (иснтрументальных) ---------------------------
-					//servicesAllReferralsLaboratory, //Всего услуг во всех направлениях (лабораторных) ---------------------------
-					//completedServicesInReferrals, //Кол-во выполненных услуг во всех направлениях ---------------------------
-					//serviceInReferralOutsideMes, //Кол-во услуг в направлениях, не входящих в МЭС ---------------------------
 					necessaryServiceInMesUsedPercent, //% Соответствия обязательных услуг МЭС (обязательные во всех направлениях) / всего обязательных в мэс
 					necessaryServiceInMesUsedPercent == 1 ? 1 : 0, //Услуги из всех направлений соответсвуют обязательным услугам МЭС на 100%
 					treat.SERVICE_TYPE, //Тип приема
 					treat.PAYMENT_TYPE, //Тип оплаты приема
-					//treat.AGNAME, //Наименование организации ---------------------------
-					//treat.AGNUM //Номер договора ---------------------------
 				};
+
+				if (isFullVersion) {
+					values = new List<object>() {
+						treatment.Key, //Код лечения
+						1, //Прием
+						treat.PERIOD,
+						treat.TREATDATE, //Дата лечения
+						treat.FILIAL, //Филиал
+						treat.DEPNAME, //Подразделение
+						treat.DOCNAME, //ФИО врача
+						treat.HISTNUM, //Номер ИБ
+						treat.CLIENTNAME, //ФИО пациента
+						treat.AGE, //Возраст
+						treat.MKBCODE, //Код МКБ
+						necessaryServicesInMes, //Кол-во обязательных услуг согласно МЭС
+						treat.DictMES.Count, //Всего услуг в МЭС
+						hasAtLeastOneReferralByMes, //Есть направление, созданное с использованием МЭС
+						necessaryServiceReferralByMesInstrumental, //Кол-во обязательных услуг в направлении с использованием МЭС (инструментальных)
+						necessaryServiceReferralByMesLaboratory, //Кол-во обязательных услуг в направлении с использованием МЭС (лабораторных)
+						necessaryServiceReferralCompletedByMesInstrumental, //Кол-во исполненных обязательных услуг в направлении МЭС (инструментальных)
+						necessaryServiceReferralCompletedByMesLaboratory, //Кол-во исполненных обязательных услуг в направлении МЭС (лабораторных)
+						hasAtLeastOneReferralSelfMade, //Есть направление, созданное самостоятельно
+						necessaryServiceReferralSelfMadeInstrumental, //Кол-во обязательных услуг в направлении выставленных самостоятельно (инструментальных)
+						necessaryServiceReferralSelfMadeLaboratory, //Кол-во обязательных услуг в направлении выставленных самостоятельно (лабораторных)
+						necessaryServiceReferralCompletedSelfMadeInstrumental, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (инструментальных)
+						necessaryServiceReferralCompletedSelfMadeLaboratory, //Кол-во исполненных обязательных услуг в самостоятельно созданных направлениях (лабораторных)
+						servicesAllReferralsInstrumental, //Всего услуг во всех направлениях (иснтрументальных)
+						servicesAllReferralsLaboratory, //Всего услуг во всех направлениях (лабораторных)
+						completedServicesInReferrals, //Кол-во выполненных услуг во всех направлениях
+						serviceInReferralOutsideMes, //Кол-во услуг в направлениях, не входящих в МЭС
+						necessaryServiceInMesUsedPercent, //% Соответствия обязательных услуг МЭС (обязательные во всех направлениях) / всего обязательных в мэс
+						necessaryServiceInMesUsedPercent == 1 ? 1 : 0, //Услуги из всех направлений соответсвуют обязательным услугам МЭС на 100%
+						treat.SERVICE_TYPE, //Тип приема
+						treat.PAYMENT_TYPE, //Тип оплаты приема
+						treat.AGNAME, //Наименование организации
+						treat.AGNUM //Номер договора
+					};
+				}
 
 				foreach (object value in values) {
 					ICell cell = row.CreateCell(columnNumber);
@@ -319,7 +342,7 @@ namespace MISReports.ExcelHandlers {
 			return resultFile;
 		}
 
-		public static bool Process(string resultFile) {
+		public static bool Process(string resultFile, bool isFullVersion = false) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws))
 				return false;
 
@@ -334,11 +357,12 @@ namespace MISReports.ExcelHandlers {
 				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
-			try {
-				MesUsageAddPivotTable(wb, ws, xlApp);
-			} catch (Exception e) {
-				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
-			}
+			if (!isFullVersion) 
+				try {
+					MesUsageAddPivotTable(wb, ws, xlApp);
+				} catch (Exception e) {
+					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+				}
 
 			SaveAndCloseWorkbook(xlApp, wb, ws);
 

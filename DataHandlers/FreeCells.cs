@@ -165,6 +165,7 @@ namespace MISReports.ExcelHandlers {
 				pivotTable.PivotFields("Пересечение").ShowDetail = false;
 
 			pivotTable.PivotFields("Филиал").ShowDetail = false;
+			pivotTable.DisplayErrorString = true;
 
 			wsPivote.Range["A1"].Select();
 			wb.ShowPivotTableFieldList = false;

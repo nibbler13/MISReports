@@ -12,6 +12,7 @@ namespace MISReports {
 			UnclosedProtocolsWeek,
 			UnclosedProtocolsMonth,
 			MESUsage,
+			MESUsageFull,
 			OnlineAccountsUsage,
 			TelemedicineOnlyIngosstrakh,
 			TelemedicineAll,
@@ -67,7 +68,8 @@ namespace MISReports {
 			MicroSipContactsBook,
 			TasksForItilium,
 			FirstTimeVisitPatients,
-			FreeCellsMarketing
+			FreeCellsMarketing,
+			EmergencyCallsQuantity
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -76,6 +78,7 @@ namespace MISReports {
 			{ Type.UnclosedProtocolsWeek, "Отчет по неподписанным протоколам" },
 			{ Type.UnclosedProtocolsMonth, "Отчет по неподписанным протоколам" },
 			{ Type.MESUsage, "Отчет по использованию МЭС" },
+			{ Type.MESUsageFull, "Отчет по использованию МЭС (полный)" },
 			{ Type.OnlineAccountsUsage, "Отчет по записи на прием через личный кабинет" },
 			{ Type.TelemedicineOnlyIngosstrakh, "Отчет по приемам телемедицины - только Ингосстрах" },
 			{ Type.TelemedicineAll, "Отчет по приемам телемедицины - все типы оплаты" },
@@ -131,7 +134,8 @@ namespace MISReports {
 			{ Type.MicroSipContactsBook, "Справочик контактов для MicroSip" },
 			{ Type.TasksForItilium, "Задачи на январь 2020" },
 			{ Type.FirstTimeVisitPatients, "Отчет по первичным пациентам" },
-			{ Type.FreeCellsMarketing, "Отчет по свободным слотам для маркетинга" }
+			{ Type.FreeCellsMarketing, "Отчет по свободным слотам для маркетинга" },
+			{ Type.EmergencyCallsQuantity, "Отчет по количеству вызовов СМП" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -140,6 +144,7 @@ namespace MISReports {
 			{ Type.UnclosedProtocolsWeek, "Каждый понедельник в 10:00" },
 			{ Type.UnclosedProtocolsMonth, "Каждый месяц, 2 и 5 числа в 14:50" },
 			{ Type.MESUsage, "Каждый понедельник в 6:20" },
+			{ Type.MESUsageFull, "" },
 			{ Type.OnlineAccountsUsage, "Каждый месяц, 1 числа в 6:00" },
 			{ Type.TelemedicineOnlyIngosstrakh, "Каждый понедельник в 7:00" },
 			{ Type.TelemedicineAll, "Каждый понедельник в 6:00" },
@@ -195,7 +200,8 @@ namespace MISReports {
 			{ Type.MicroSipContactsBook, "Каждый день в 1:00" },
 			{ Type.TasksForItilium, "Каждый день в 9:00" },
 			{ Type.FirstTimeVisitPatients, "Каждый понедельник в 5:00, каждый месяц" },
-			{ Type.FreeCellsMarketing, "Каждый день в 7:20 и каждый понедельник в 6:10" }
+			{ Type.FreeCellsMarketing, "Каждый день в 7:20 и каждый понедельник в 6:10" },
+			{ Type.EmergencyCallsQuantity, "Каждый понедельник в 2:20 и каждое 1 число в 2:30" }
 		};
 	}
 }
