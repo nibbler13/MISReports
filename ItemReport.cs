@@ -190,11 +190,17 @@ namespace MISReports {
 				TemplateFileName = Properties.Settings.Default.TemplateRecordsFromInsuranceCompanies;
 				MailTo = Properties.Settings.Default.MailToRecordsFromInsuranceCompanies;
 
-			} else if (reportName.Equals(ReportsInfo.Type.AverageCheck.ToString())) {
-				Type = ReportsInfo.Type.AverageCheck;
+			} else if (reportName.Equals(ReportsInfo.Type.AverageCheckRegular.ToString())) {
+				Type = ReportsInfo.Type.AverageCheckRegular;
 				SqlQuery = Properties.Settings.Default.MisDbSqlGetAverageCheck;
 				TemplateFileName = Properties.Settings.Default.TemplateAverageCheck;
 				MailTo = Properties.Settings.Default.MailToAverageCheck;
+
+			} else if (reportName.Equals(ReportsInfo.Type.AverageCheckIGS.ToString())) {
+				Type = ReportsInfo.Type.AverageCheckIGS;
+				SqlQuery = Properties.Settings.Default.MisDbSqlGetAverageCheck;
+				TemplateFileName = Properties.Settings.Default.TemplateAverageCheck;
+				MailTo = Properties.Settings.Default.MailToAverageCheckIGS;
 
 			} else if (reportName.Equals(ReportsInfo.Type.CompetitiveGroups.ToString())) {
 				Type = ReportsInfo.Type.CompetitiveGroups;

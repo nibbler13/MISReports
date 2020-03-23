@@ -9,7 +9,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace MISReports.ExcelHandlers {
 	class AverageCheck : ExcelGeneral {
-		public static bool Process(string resultFile, Dictionary<string, object> periodCurrent, Dictionary<string, object> periodPrevious) {
+		public static bool Process(string resultFile, Dictionary<string, object> periodCurrent, Dictionary<string, object> periodPrevious = null) {
 			Logging.ToLog("Выполнение пост-обработки");
 
 			string[] sheetNames = new string[] { "Факт", "Аванс", "Аванс_ЛМС" };
@@ -82,11 +82,11 @@ namespace MISReports.ExcelHandlers {
 		}
 		#endregion
 
-		public static ItemAverageCheck PerformData(DataTable dataTableCurrent, DataTable dataTablePrevious) {
+		public static ItemAverageCheck PerformData(DataTable dataTableCurrent, DataTable dataTablePrevious = null) {
 			Logging.ToLog("Обработка данных");
 
-			if (dataTableCurrent.Columns.Count != 11 &&
-				dataTablePrevious.Columns.Count != 11) {
+			if (dataTableCurrent.Columns.Count != 11 ||
+				(dataTablePrevious != null && dataTablePrevious.Columns.Count != 11)) {
 				Logging.ToLog("Невозможно выполнить обработку таблицы, кол-во столбцов не равно 11");
 				return null;
 			}
@@ -94,7 +94,9 @@ namespace MISReports.ExcelHandlers {
 			ItemAverageCheck averageCheck = new ItemAverageCheck();
 
 			ParseDataTable(dataTableCurrent, averageCheck, true);
-			ParseDataTable(dataTablePrevious, averageCheck, false);
+
+			if (dataTablePrevious != null)
+				ParseDataTable(dataTablePrevious, averageCheck, false);
 
 			return averageCheck;
 		}
@@ -490,6 +492,9 @@ namespace MISReports.ExcelHandlers {
 		}
 
 		public static string GetPeriod(Dictionary<string, object> period) {
+			if (period == null)
+				return string.Empty;
+
 			return period["@dateBegin"].ToString() + "-" + period["@dateEnd"].ToString();
 		}
 

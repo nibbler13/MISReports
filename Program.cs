@@ -35,6 +35,7 @@ namespace MISReports {
 
 		private static ExcelHandlers.AverageCheck.ItemAverageCheck itemAverageCheckPreviousWeek = null;
 		private static ExcelHandlers.AverageCheck.ItemAverageCheck itemAverageCheckPreviousYear = null;
+		private static ExcelHandlers.AverageCheck.ItemAverageCheck itemAverageCheckIGS = null;
 		private static ExcelHandlers.CompetitiveGroups.ItemCompetitiveGroups ItemCompetitiveGroups = null;
 
 		private static string dateBeginStr = string.Empty;
@@ -204,7 +205,7 @@ namespace MISReports {
 
 			string[] attachments;
 
-			if (itemReport.Type == ReportsInfo.Type.AverageCheck)
+			if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular)
 				attachments = new string[] { itemReport.FileResult, itemReport.FileResultAverageCheckPreviousYear };
 			else
 				attachments = new string[] { itemReport.FileResult };
@@ -442,7 +443,7 @@ namespace MISReports {
             if (itemReport.Type == ReportsInfo.Type.FssInfo)
                 ExcelHandlers.FssInfo.PerformData(ref dataTableMainData);
 
-			if (itemReport.Type == ReportsInfo.Type.AverageCheck) {
+			if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular) {
 				if (itemReport.DateBegin.Day == 1 &&
 					itemReport.DateEnd.Day == DateTime.DaysInMonth(itemReport.DateBegin.Year, itemReport.DateBegin.Month) &&
 					itemReport.DateBegin.Month == itemReport.DateEnd.Month &&
@@ -544,6 +545,9 @@ namespace MISReports {
 				itemAverageCheckPreviousYear = ExcelHandlers.AverageCheck.PerformData(dataTableMainData, dataTableAverageCheckPreviousYear);
 				#endregion
 			}
+
+			if (itemReport.Type == ReportsInfo.Type.AverageCheckIGS)
+				itemAverageCheckIGS = ExcelHandlers.AverageCheck.PerformData(dataTableMainData);
 
 			if (itemReport.Type == ReportsInfo.Type.CompetitiveGroups)
 				ItemCompetitiveGroups = ExcelHandlers.CompetitiveGroups.PerformData(dataTableMainData);
@@ -716,13 +720,16 @@ namespace MISReports {
 														 dateBeginStr + " - " + dateEndStr,
 														 itemReport.Type);
 
-				} else if (itemReport.Type == ReportsInfo.Type.AverageCheck) {
+				} else if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular) {
 					itemReport.FileResult =
 						ExcelHandlers.AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousWeek,
 							subjectAverageCheckPreviousWeek, itemReport.TemplateFileName);
 					itemReport.FileResultAverageCheckPreviousYear =
 						ExcelHandlers.AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousYear,
 							subjectAverageCheckPreviousYear, itemReport.TemplateFileName);
+
+				} else if (itemReport.Type == ReportsInfo.Type.AverageCheckIGS) {
+					itemReport.FileResult = ExcelHandlers.AverageCheck.WriteAverageCheckToExcel(itemAverageCheckIGS, subject, itemReport.TemplateFileName);
 
 				} else if (itemReport.Type == ReportsInfo.Type.CompetitiveGroups) {
 					itemReport.FileResult =
@@ -829,11 +836,16 @@ namespace MISReports {
                             isPostProcessingOk = ExcelHandlers.RecordsFromInsuranceCompanies.Process(itemReport.FileResult);
                             break;
 
-						case ReportsInfo.Type.AverageCheck:
+						case ReportsInfo.Type.AverageCheckRegular:
 							isPostProcessingOk = ExcelHandlers.AverageCheck.Process(
 								itemReport.FileResult, parameters, parametersAverageCheckPreviousWeek);
 							isPostProcessingOk &= ExcelHandlers.AverageCheck.Process(
 								itemReport.FileResultAverageCheckPreviousYear, parameters, parametersAverageCheckPreviousYear);
+							break;
+
+						case ReportsInfo.Type.AverageCheckIGS:
+							isPostProcessingOk = ExcelHandlers.AverageCheck.Process(
+								itemReport.FileResult, parameters, null);
 							break;
 
 						case ReportsInfo.Type.CompetitiveGroups:
