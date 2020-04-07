@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MISReports.Properties;
+using NPOI.SS.Formula.Functions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,263 +25,265 @@ namespace MISReports {
 		public string JIDS { get; private set; }
 
 		public ItemReport(string reportName) {
+			Settings settings = Settings.Default;
+
 			if (reportName.Equals(ReportsInfo.Type.FreeCellsDay.ToString())) {
 				Type = ReportsInfo.Type.FreeCellsDay;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
-				MailTo = Properties.Settings.Default.MailToFreeCellsDay;
-				TemplateFileName = Properties.Settings.Default.TemplateFreeCells;
+				SqlQuery = settings.MisDbSqlGetFreeCells;
+				MailTo = settings.MailToFreeCellsDay;
+				TemplateFileName = settings.TemplateFreeCells;
 
 			} else if (reportName.Equals(ReportsInfo.Type.FreeCellsWeek.ToString())) {
 				Type = ReportsInfo.Type.FreeCellsWeek;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCells;
-				MailTo = Properties.Settings.Default.MailToFreeCellsWeek;
-				TemplateFileName = Properties.Settings.Default.TemplateFreeCells;
+				SqlQuery = settings.MisDbSqlGetFreeCells;
+				MailTo = settings.MailToFreeCellsWeek;
+				TemplateFileName = settings.TemplateFreeCells;
 
 			} else if (reportName.Equals(ReportsInfo.Type.UnclosedProtocolsWeek.ToString())) {
 				Type = ReportsInfo.Type.UnclosedProtocolsWeek;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
-				MailTo = Properties.Settings.Default.MailToUnclosedProtocolsWeek;
-				TemplateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
-				FolderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
+				SqlQuery = settings.MisDbSqlGetUnclosedProtocols;
+				MailTo = settings.MailToUnclosedProtocolsWeek;
+				TemplateFileName = settings.TemplateUnclosedProtocols;
+				FolderToSave = settings.FolderToSaveUnclosedProtocols;
 
 			} else if (reportName.Equals(ReportsInfo.Type.UnclosedProtocolsMonth.ToString())) {
 				Type = ReportsInfo.Type.UnclosedProtocolsMonth;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetUnclosedProtocols;
-				MailTo = Properties.Settings.Default.MailToUnclosedProtocolsMonth;
-				TemplateFileName = Properties.Settings.Default.TemplateUnclosedProtocols;
-				FolderToSave = Properties.Settings.Default.FolderToSaveUnclosedProtocols;
+				SqlQuery = settings.MisDbSqlGetUnclosedProtocols;
+				MailTo = settings.MailToUnclosedProtocolsMonth;
+				TemplateFileName = settings.TemplateUnclosedProtocols;
+				FolderToSave = settings.FolderToSaveUnclosedProtocols;
 
 			} else if (reportName.Equals(ReportsInfo.Type.MESUsage.ToString())) {
 				Type = ReportsInfo.Type.MESUsage;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetMESUsage;
-				MailTo = Properties.Settings.Default.MailToMESUsage;
-				TemplateFileName = Properties.Settings.Default.TemplateMESUsage;
-				FolderToSave = Properties.Settings.Default.FolderToSaveMESUsage;
+				SqlQuery = settings.MisDbSqlGetMESUsage;
+				MailTo = settings.MailToMESUsage;
+				TemplateFileName = settings.TemplateMESUsage;
+				FolderToSave = settings.FolderToSaveMESUsage;
 
 			} else if (reportName.Equals(ReportsInfo.Type.MESUsageFull.ToString())) {
 				Type = ReportsInfo.Type.MESUsageFull;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetMESUsage;
-				MailTo = Properties.Settings.Default.MailToMESUsage;
-				TemplateFileName = Properties.Settings.Default.TemplateMESUsageFull;
+				SqlQuery = settings.MisDbSqlGetMESUsage;
+				MailTo = settings.MailToMESUsage;
+				TemplateFileName = settings.TemplateMESUsageFull;
 
 			} else if (reportName.Equals(ReportsInfo.Type.OnlineAccountsUsage.ToString())) {
 				Type = ReportsInfo.Type.OnlineAccountsUsage;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetOnlineAccountsUsage;
-				MailTo = Properties.Settings.Default.MailToOnlineAccountsUsage;
-				TemplateFileName = Properties.Settings.Default.TemplateOnlineAccountsUsage;
+				SqlQuery = settings.MisDbSqlGetOnlineAccountsUsage;
+				MailTo = settings.MailToOnlineAccountsUsage;
+				TemplateFileName = settings.TemplateOnlineAccountsUsage;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TelemedicineOnlyIngosstrakh.ToString())) {
 				Type = ReportsInfo.Type.TelemedicineOnlyIngosstrakh;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
-				TemplateFileName = Properties.Settings.Default.TemplateTelemedicine;
-				MailTo = Properties.Settings.Default.MailToTelemedicineOnlyIngosstrakh;
+				SqlQuery = settings.MisDbSqlGetTelemedicine;
+				TemplateFileName = settings.TemplateTelemedicine;
+				MailTo = settings.MailToTelemedicineOnlyIngosstrakh;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TelemedicineAll.ToString())) {
 				Type = ReportsInfo.Type.TelemedicineAll;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTelemedicine;
-				TemplateFileName = Properties.Settings.Default.TemplateTelemedicine;
-				MailTo = Properties.Settings.Default.MailToTelemedicineAll;
+				SqlQuery = settings.MisDbSqlGetTelemedicine;
+				TemplateFileName = settings.TemplateTelemedicine;
+				MailTo = settings.MailToTelemedicineAll;
 
 			} else if (reportName.Equals(ReportsInfo.Type.NonAppearance.ToString())) {
 				Type = ReportsInfo.Type.NonAppearance;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetNonAppearance;
-				TemplateFileName = Properties.Settings.Default.TemplateNonAppearance;
-				MailTo = Properties.Settings.Default.MailToNonAppearance;
-				FolderToSave = Properties.Settings.Default.FolderToSaveNonAppearance;
+				SqlQuery = settings.MisDbSqlGetNonAppearance;
+				TemplateFileName = settings.TemplateNonAppearance;
+				MailTo = settings.MailToNonAppearance;
+				FolderToSave = settings.FolderToSaveNonAppearance;
 
 			} else if (reportName.Equals(ReportsInfo.Type.VIP_MSSU.ToString())) {
 				Type = ReportsInfo.Type.VIP_MSSU;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "12");
-				TemplateFileName = Properties.Settings.Default.TemplateVIP;
-				MailTo = Properties.Settings.Default.MailToVIP_MSSU;
-				PreviousFile = Properties.Settings.Default.PreviousFileVIP_MSSU;
+				SqlQuery = settings.MisDbSqlGetVIP.Replace("@filialList", "12");
+				TemplateFileName = settings.TemplateVIP;
+				MailTo = settings.MailToVIP_MSSU;
+				PreviousFile = settings.PreviousFileVIP_MSSU;
 
 			} else if (reportName.Equals(ReportsInfo.Type.VIP_Moscow.ToString())) {
 				Type = ReportsInfo.Type.VIP_Moscow;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1,5,12,6");
-				TemplateFileName = Properties.Settings.Default.TemplateVIP;
-				MailTo = Properties.Settings.Default.MailToVIP_Moscow;
-				PreviousFile = Properties.Settings.Default.PreviousFileVIP_Moscow;
+				SqlQuery = settings.MisDbSqlGetVIP.Replace("@filialList", "1,5,12,6");
+				TemplateFileName = settings.TemplateVIP;
+				MailTo = settings.MailToVIP_Moscow;
+				PreviousFile = settings.PreviousFileVIP_Moscow;
 
 			} else if (reportName.Equals(ReportsInfo.Type.VIP_MSKM.ToString())) {
 				Type = ReportsInfo.Type.VIP_MSKM;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "1");
-				TemplateFileName = Properties.Settings.Default.TemplateVIP;
-				MailTo = Properties.Settings.Default.MailToVIP_MSKM;
-				PreviousFile = Properties.Settings.Default.PreviousFileVIP_MSKM;
+				SqlQuery = settings.MisDbSqlGetVIP.Replace("@filialList", "1");
+				TemplateFileName = settings.TemplateVIP;
+				MailTo = settings.MailToVIP_MSKM;
+				PreviousFile = settings.PreviousFileVIP_MSKM;
 
 			} else if (reportName.Equals(ReportsInfo.Type.VIP_PND.ToString())) {
 				Type = ReportsInfo.Type.VIP_PND;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetVIP.Replace("@filialList", "6");
-				TemplateFileName = Properties.Settings.Default.TemplateVIP;
-				MailTo = Properties.Settings.Default.MailToVIP_PND;
-				PreviousFile = Properties.Settings.Default.PreviousFileVIP_PND;
+				SqlQuery = settings.MisDbSqlGetVIP.Replace("@filialList", "6");
+				TemplateFileName = settings.TemplateVIP;
+				MailTo = settings.MailToVIP_PND;
+				PreviousFile = settings.PreviousFileVIP_PND;
 
 			} else if (reportName.Equals(ReportsInfo.Type.RegistryMarks.ToString())) {
 				Type = ReportsInfo.Type.RegistryMarks;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetRegistryMarks;
-				TemplateFileName = Properties.Settings.Default.TemplateRegistryMarks;
-				MailTo = Properties.Settings.Default.MailToRegistryMarks;
+				SqlQuery = settings.MisDbSqlGetRegistryMarks;
+				TemplateFileName = settings.TemplateRegistryMarks;
+				MailTo = settings.MailToRegistryMarks;
 
 			} else if (reportName.Equals(ReportsInfo.Type.Workload.ToString())) {
 				Type = ReportsInfo.Type.Workload;
-				TemplateFileName = Properties.Settings.Default.TemplateWorkload;
-				MailTo = Properties.Settings.Default.MailToWorkload;
-				FolderToSave = Properties.Settings.Default.FolderToSaveWorkload;
+				TemplateFileName = settings.TemplateWorkload;
+				MailTo = settings.MailToWorkload;
+				FolderToSave = settings.FolderToSaveWorkload;
 
 			} else if (reportName.Equals(ReportsInfo.Type.Robocalls.ToString())) {
 				Type = ReportsInfo.Type.Robocalls;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetRobocalls;
-				TemplateFileName = Properties.Settings.Default.TemplateRobocalls;
-				MailTo = Properties.Settings.Default.MailToRobocalls;
+				SqlQuery = settings.MisDbSqlGetRobocalls;
+				TemplateFileName = settings.TemplateRobocalls;
+				MailTo = settings.MailToRobocalls;
 
 			} else if (reportName.Equals(ReportsInfo.Type.UniqueServices.ToString())) {
 				Type = ReportsInfo.Type.UniqueServices;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServices;
-				TemplateFileName = Properties.Settings.Default.TemplateUniqueServices;
-				MailTo = Properties.Settings.Default.MailToUniqueServices;
+				SqlQuery = settings.MisDbSqlGetUniqueServices;
+				TemplateFileName = settings.TemplateUniqueServices;
+				MailTo = settings.MailToUniqueServices;
 
 			} else if (reportName.Equals(ReportsInfo.Type.UniqueServicesRegions.ToString())) {
 				Type = ReportsInfo.Type.UniqueServicesRegions;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetUniqueServicesRegions;
-				TemplateFileName = Properties.Settings.Default.TemplateUniqueServicesRegions;
-				MailTo = Properties.Settings.Default.MailToUniqueServicesRegions;
+				SqlQuery = settings.MisDbSqlGetUniqueServicesRegions;
+				TemplateFileName = settings.TemplateUniqueServicesRegions;
+				MailTo = settings.MailToUniqueServicesRegions;
 
 			} else if (reportName.Equals(ReportsInfo.Type.PriceListToSite.ToString())) {
 				Type = ReportsInfo.Type.PriceListToSite;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetPriceListToSite;
-				TemplateFileName = Properties.Settings.Default.TemplatePriceListToSite;
-				MailTo = Properties.Settings.Default.MailToPriceListToSite;
-				FolderToSave = Properties.Settings.Default.FolderToSavePriceListToSite;
+				SqlQuery = settings.MisDbSqlGetPriceListToSite;
+				TemplateFileName = settings.TemplatePriceListToSite;
+				MailTo = settings.MailToPriceListToSite;
+				FolderToSave = settings.FolderToSavePriceListToSite;
 				UploadToServer = true;
 
 			} else if (reportName.Equals(ReportsInfo.Type.GBooking.ToString())) {
 				Type = ReportsInfo.Type.GBooking;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetGBooking;
-				TemplateFileName = Properties.Settings.Default.TemplateGBooking;
-				MailTo = Properties.Settings.Default.MailToGBooking;
+				SqlQuery = settings.MisDbSqlGetGBooking;
+				TemplateFileName = settings.TemplateGBooking;
+				MailTo = settings.MailToGBooking;
 
 			} else if (reportName.Equals(ReportsInfo.Type.PersonalAccountSchedule.ToString())) {
 				Type = ReportsInfo.Type.PersonalAccountSchedule;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetPersonalAccountSchedule;
-				TemplateFileName = Properties.Settings.Default.TemplatePersonalAccountSchedule;
-				MailTo = Properties.Settings.Default.MailToPersonalAccountSchedule;
+				SqlQuery = settings.MisDbSqlGetPersonalAccountSchedule;
+				TemplateFileName = settings.TemplatePersonalAccountSchedule;
+				MailTo = settings.MailToPersonalAccountSchedule;
 
 			} else if (reportName.Equals(ReportsInfo.Type.ProtocolViewCDBSyncEvent.ToString())) {
 				Type = ReportsInfo.Type.ProtocolViewCDBSyncEvent;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetProtocolViewCDBSyncEvent;
-				TemplateFileName = Properties.Settings.Default.TemplateProtocolViewCDBSyncEvent;
-				MailTo = Properties.Settings.Default.MailToProtocolViewCDBSyncEvent;
-				FolderToSave = Properties.Settings.Default.FolderToSaveProtocolViewCDBSyncEvent;
+				SqlQuery = settings.MisDbSqlGetProtocolViewCDBSyncEvent;
+				TemplateFileName = settings.TemplateProtocolViewCDBSyncEvent;
+				MailTo = settings.MailToProtocolViewCDBSyncEvent;
+				FolderToSave = settings.FolderToSaveProtocolViewCDBSyncEvent;
 
 			} else if (reportName.Equals(ReportsInfo.Type.FssInfo.ToString())) {
 				Type = ReportsInfo.Type.FssInfo;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetFssInfo;
-				TemplateFileName = Properties.Settings.Default.TemplateFssInfo;
-				MailTo = Properties.Settings.Default.MailToFssInfo;
+				SqlQuery = settings.MisDbSqlGetFssInfo;
+				TemplateFileName = settings.TemplateFssInfo;
+				MailTo = settings.MailToFssInfo;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TimetableToProdoctorovRu.ToString())) {
 				Type = ReportsInfo.Type.TimetableToProdoctorovRu;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTimetableToProdoctorovRu;
-				MailTo = Properties.Settings.Default.MailToTimetableToProdoctorovRu;
+				SqlQuery = settings.MisDbSqlGetTimetableToProdoctorovRu;
+				MailTo = settings.MailToTimetableToProdoctorovRu;
 				UploadToServer = true;
 
 			} else if (reportName.Equals(ReportsInfo.Type.RecordsFromInsuranceCompanies.ToString())) {
 				Type = ReportsInfo.Type.RecordsFromInsuranceCompanies;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetRecordsFromInsuranceCompanies;
-				TemplateFileName = Properties.Settings.Default.TemplateRecordsFromInsuranceCompanies;
-				MailTo = Properties.Settings.Default.MailToRecordsFromInsuranceCompanies;
+				SqlQuery = settings.MisDbSqlGetRecordsFromInsuranceCompanies;
+				TemplateFileName = settings.TemplateRecordsFromInsuranceCompanies;
+				MailTo = settings.MailToRecordsFromInsuranceCompanies;
 
 			} else if (reportName.Equals(ReportsInfo.Type.AverageCheckRegular.ToString())) {
 				Type = ReportsInfo.Type.AverageCheckRegular;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetAverageCheck;
-				TemplateFileName = Properties.Settings.Default.TemplateAverageCheck;
-				MailTo = Properties.Settings.Default.MailToAverageCheck;
+				SqlQuery = settings.MisDbSqlGetAverageCheck;
+				TemplateFileName = settings.TemplateAverageCheck;
+				MailTo = settings.MailToAverageCheck;
 
 			} else if (reportName.Equals(ReportsInfo.Type.AverageCheckIGS.ToString())) {
 				Type = ReportsInfo.Type.AverageCheckIGS;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetAverageCheck;
-				TemplateFileName = Properties.Settings.Default.TemplateAverageCheck;
-				MailTo = Properties.Settings.Default.MailToAverageCheckIGS;
+				SqlQuery = settings.MisDbSqlGetAverageCheck;
+				TemplateFileName = settings.TemplateAverageCheck;
+				MailTo = settings.MailToAverageCheckIGS;
 
 			} else if (reportName.Equals(ReportsInfo.Type.CompetitiveGroups.ToString())) {
 				Type = ReportsInfo.Type.CompetitiveGroups;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetCompetitiveGroups;
-				TemplateFileName = Properties.Settings.Default.TemplateCompetitiveGroups;
-				MailTo = Properties.Settings.Default.MailToCompetitiveGroups;
+				SqlQuery = settings.MisDbSqlGetCompetitiveGroups;
+				TemplateFileName = settings.TemplateCompetitiveGroups;
+				MailTo = settings.MailToCompetitiveGroups;
 
 			} else if (reportName.Equals(ReportsInfo.Type.LicenseStatistics.ToString())) {
 				Type = ReportsInfo.Type.LicenseStatistics;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetLicenseStatistics;
-				TemplateFileName = Properties.Settings.Default.TemplageLicenseStatistics;
-				MailTo = Properties.Settings.Default.MailToLicenseStatistics;
-				FolderToSave = Properties.Settings.Default.FolderToSaveLicenseStatistics;
+				SqlQuery = settings.MisDbSqlGetLicenseStatistics;
+				TemplateFileName = settings.TemplageLicenseStatistics;
+				MailTo = settings.MailToLicenseStatistics;
+				FolderToSave = settings.FolderToSaveLicenseStatistics;
 
 				//-----------------------------------------------------------------------------------------------------
 				#region TreatmentsDetails
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAbsolut.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAbsolut;
 				JIDS = "991515382,991519409,991519865,991523030";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAlfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAlfa;
 				JIDS = "100005,991520911,991514852";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAlfaSpb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAlfaSpb;
 				JIDS = "990424275"; //80/10-09
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAlliance.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAlliance;
 				JIDS = "991511535,991520499,991519440,991521374,991511568";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsBestdoctor.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsBestdoctor;
 				JIDS = "991520964, 991526106";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsEnergogarant.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsEnergogarant;
 				JIDS = "991523453,991517214,991520348";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhAdult.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhAdult;
 				JIDS = "991522348,991522924,991525955,991522442";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhKid.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKid;
 				JIDS = "991522386";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 				//JIDS = "990389345,991511093,991512906,991357338,991370062,991379370,991518734," +
 				//	"991518673,991519689,991519376,991520842,991520995,991521326,991522926,991522930," +
@@ -295,196 +299,202 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsLiberty.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsLiberty;
 				JIDS = "991517912";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsMetlife.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsMetlife;
 				JIDS = "991517927,991523451,991519436";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsOther.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsOther;
 				JIDS = "";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsRenessans.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsRenessans;
 				JIDS = "991523042,991523280,991523170";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsReso.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsReso;
 				JIDS = "991518370,991521272,991523038,991526075,991519595";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsRosgosstrakh.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsRosgosstrakh;
 				JIDS = "991511705,1990097479";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSmp.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSmp;
 				JIDS = "991516698,991521960";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSogaz.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSogaz;
 				JIDS = "991524638";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSoglasie.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSoglasie;
 				JIDS = "991520913,991518470,991519761,991523028";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsVsk.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsVsk;
 				JIDS = "991516556,991520387,991523215,991519361,991525970";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsVtb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsVtb;
 				JIDS = "991515797,991520427";
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAll.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAll;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhSochi.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhSochi;
 				JIDS = "991512906"; //4986881-19/16
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhKrasnodar.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKrasnodar;
 				JIDS = "991357338"; //№ 567751-19/11
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhUfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhUfa;
 				JIDS = "991370062"; //№ 681187-19/11
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhSpb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhSpb;
 				JIDS = "990389345"; //267673-19/09
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhKazan.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKazan;
 				JIDS = "991379370"; //№ 714760-19/11
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsBestDoctorSpb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsBestDoctorSpb;
 				JIDS = "991523486"; //522-78-2018
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsBestDoctorUfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsBestDoctorUfa;
 				JIDS = "991523489"; //535-02-18
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSogazUfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSogazUfa;
 				JIDS = "991524671,991524697"; //2719RP055, ДС № 2719RP055-02  к дог. №2719RP055 (ГК «БАШНЕФТЬ»)
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = Properties.Settings.Default.TemplateTreatmentsDetails;
-				MailTo = Properties.Settings.Default.MailToTreatmentsDetails;
-				FolderToSave = Properties.Settings.Default.FolderToSaveTreatmentsDetails;
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 				#endregion TreatmentsDetails
 				//-----------------------------------------------------------------------------------------------------
 
 			} else if (reportName.Equals(ReportsInfo.Type.TimetableToSite.ToString())) {
 				Type = ReportsInfo.Type.TimetableToSite;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetTimetableToSite;
-				MailTo = Properties.Settings.Default.MailToTimetableToSite;
+				SqlQuery = settings.MisDbSqlGetTimetableToSite;
+				MailTo = settings.MailToTimetableToSite;
 				UploadToServer = true;
 
 			} else if (reportName.Equals(ReportsInfo.Type.MicroSipContactsBook.ToString())) {
 				Type = ReportsInfo.Type.MicroSipContactsBook;
-				MailTo = Properties.Settings.Default.MailToMicroSipContactsBook;
-				FolderToSave = Properties.Settings.Default.FolderToSaveMicroSipContactsBook;
+				MailTo = settings.MailToMicroSipContactsBook;
+				FolderToSave = settings.FolderToSaveMicroSipContactsBook;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TasksForItilium.ToString())) {
 				Type = ReportsInfo.Type.TasksForItilium;
-				MailTo = Properties.Settings.Default.MailToTasksForItilium;
+				MailTo = settings.MailToTasksForItilium;
 
 			} else if (reportName.Equals(ReportsInfo.Type.FirstTimeVisitPatients.ToString())) {
 				Type = ReportsInfo.Type.FirstTimeVisitPatients;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetFirstTimeVisitPatients;
-				MailTo = Properties.Settings.Default.MailToFirstTimeVisitPatients;
-				TemplateFileName = Properties.Settings.Default.TemplateFirstTimeVisitPatients;
+				SqlQuery = settings.MisDbSqlGetFirstTimeVisitPatients;
+				MailTo = settings.MailToFirstTimeVisitPatients;
+				TemplateFileName = settings.TemplateFirstTimeVisitPatients;
 
 			} else if (reportName.Equals(ReportsInfo.Type.FreeCellsMarketing.ToString())) {
 				Type = ReportsInfo.Type.FreeCellsMarketing;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetFreeCellsMarketing;
-				MailTo = Properties.Settings.Default.MailToFreeCellsMarketing;
-				TemplateFileName = Properties.Settings.Default.TemplateFreeCells;
+				SqlQuery = settings.MisDbSqlGetFreeCellsMarketing;
+				MailTo = settings.MailToFreeCellsMarketing;
+				TemplateFileName = settings.TemplateFreeCells;
 
 			} else if (reportName.Equals(ReportsInfo.Type.EmergencyCallsQuantity.ToString())) {
 				Type = ReportsInfo.Type.EmergencyCallsQuantity;
-				SqlQuery = Properties.Settings.Default.MisDbSqlGetEmergencyCallsQuantity;
-				MailTo = Properties.Settings.Default.MailToEmergencyCallsQuantity;
-				TemplateFileName = Properties.Settings.Default.TemplateEmergencyCallsQuantity;
+				SqlQuery = settings.MisDbSqlGetEmergencyCallsQuantity;
+				MailTo = settings.MailToEmergencyCallsQuantity;
+				TemplateFileName = settings.TemplateEmergencyCallsQuantity;
+
+			} else if (reportName.Equals(ReportsInfo.Type.RegistryMotivation.ToString())) {
+				Type = ReportsInfo.Type.RegistryMotivation;
+				SqlQuery = settings.MisDbSqlGetRegistryMotivation;
+				MailTo = settings.MailToRegistryMotivation;
+				TemplateFileName = settings.TemplateRegistryMotivation;
 
 			} else
 				IsSettingsLoaded = false;

@@ -146,6 +146,8 @@ namespace MISReports.ExcelHandlers {
 				return false;
 			}
 
+			ws.Activate();
+
 			return true;
 		}
 
@@ -172,28 +174,40 @@ namespace MISReports.ExcelHandlers {
             GC.WaitForPendingFinalizers();
 		}
 
-		public static bool CopyFormatting(string resultFile) {
+		public static bool CopyFormatting(string resultFile, string sheetName = "", ReportsInfo.Type? type = null) {
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb,
-				out Excel.Worksheet ws))
+				out Excel.Worksheet ws, sheetName))
 				return false;
 
 			try {
 				int rowsUsed = ws.UsedRange.Rows.Count;
-				string lastColumn = GetExcelColumnName(ws.UsedRange.Columns.Count);
 
-				ws.Range["A2:" + lastColumn + "2"].Select();
-				xlApp.Selection.Copy();
-				ws.Range["A3:" + lastColumn + rowsUsed].Select();
-				xlApp.Selection.PasteSpecial(Excel.XlPasteType.xlPasteFormats);
-				ws.Rows["2:" + rowsUsed].Select();
-				xlApp.Selection.RowHeight = 15;
+				if (rowsUsed > 2) {
+					string lastColumn = GetExcelColumnName(ws.UsedRange.Columns.Count);
 
-				ws.Range["A1"].Select();
+					ws.Range["A2:" + lastColumn + "2"].Select();
+					xlApp.Selection.Copy();
+					ws.Range["A3:" + lastColumn + rowsUsed].Select();
+					xlApp.Selection.PasteSpecial(Excel.XlPasteType.xlPasteFormats);
+					ws.Rows["2:" + rowsUsed].Select();
+					xlApp.Selection.RowHeight = 15;
+
+					ws.Range["A1"].Select();
+				}
+
+				if (type != null && type == ReportsInfo.Type.RegistryMotivation) {
+					ws.UsedRange.Select();
+					xlApp.Selection.Columns.AutoFit();
+					xlApp.Selection.AutoFilter();
+					ws.Range["A1"].Select();
+				}
 			} catch (Exception e) {
 				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 			}
 
 			SaveAndCloseWorkbook(xlApp, wb, ws);
+
+			Thread.Sleep(2000);
 
 			return true;
 		}

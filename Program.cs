@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MISReports.ExcelHandlers;
+using NPOI.SS.Formula.Functions;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
@@ -33,10 +35,10 @@ namespace MISReports {
 		private static Dictionary<string, object> parametersAverageCheckPreviousWeek;
 		private static Dictionary<string, object> parametersAverageCheckPreviousYear;
 
-		private static ExcelHandlers.AverageCheck.ItemAverageCheck itemAverageCheckPreviousWeek = null;
-		private static ExcelHandlers.AverageCheck.ItemAverageCheck itemAverageCheckPreviousYear = null;
-		private static ExcelHandlers.AverageCheck.ItemAverageCheck itemAverageCheckIGS = null;
-		private static ExcelHandlers.CompetitiveGroups.ItemCompetitiveGroups ItemCompetitiveGroups = null;
+		private static AverageCheck.ItemAverageCheck itemAverageCheckPreviousWeek = null;
+		private static AverageCheck.ItemAverageCheck itemAverageCheckPreviousYear = null;
+		private static AverageCheck.ItemAverageCheck itemAverageCheckIGS = null;
+		private static CompetitiveGroups.ItemCompetitiveGroups ItemCompetitiveGroups = null;
 
 		private static string dateBeginStr = string.Empty;
 		private static string dateEndStr = string.Empty;
@@ -92,7 +94,7 @@ namespace MISReports {
 			ReportsInfo.Type.TreatmentsDetailsSogazUfa,
 		};
 
-		private static Tuple<string, string, string>[] licenseStatisticsDBs = 
+		private static readonly Tuple<string, string, string>[] licenseStatisticsDBs = 
 			new Tuple<string, string, string>[] {
 				 new Tuple<string, string, string>("172.16.9.9", "Central", "99_ЦБД"),
 				 new Tuple<string, string, string>("172.16.225.2", "mssu", "12_Сущевcкий Вал"),
@@ -111,6 +113,190 @@ namespace MISReports {
 				 new Tuple<string, string, string>("172.17.100.2", "sctrk", "17_Сочи"),
 				 new Tuple<string, string, string>("172.17.10.2", "call_center", "97_Информационный центр")
 		};
+
+		private static readonly Dictionary<string, string> registryMotivationQueries = new Dictionary<string, string> {
+			{ "ЛК", "select " + Environment.NewLine +
+					"doc.dcode " + Environment.NewLine +
+					", doc.fullname " + Environment.NewLine +
+					", doc.doctpost " + Environment.NewLine +
+					", count(distinct cd.docid )as kol " + Environment.NewLine +
+					"--, d.docname as doc_f " + Environment.NewLine +
+					", f.shortname  as f_n " + Environment.NewLine +
+					"from cldocuments cd " + Environment.NewLine +
+					"join DOCTEMPLATES d on  cd.DOCTYPE = d.ID " + Environment.NewLine +
+					"join doctor doc on cd.UID = doc.DCODE " + Environment.NewLine +
+					"join filials f on doc.FILIAL =  f.FILID " + Environment.NewLine +
+					"where " + Environment.NewLine +
+					"--cd.DOCTYPE in (990000244,990000254,990000257) " + Environment.NewLine +
+					"d.docname containing 'Соглашение на использование' " + Environment.NewLine +
+					"and cd.DOCDATE between @dateBegin and @dateEnd " + Environment.NewLine +
+					"group by 1,2,3,5 " + Environment.NewLine +
+					"order by 2 asc " },
+			{ "RG", "select " + Environment.NewLine +
+					"doc.dcode " + Environment.NewLine +
+					", doc.fullname " + Environment.NewLine +
+					", doc.doctpost " + Environment.NewLine +
+					", count(distinct cd.docid )as kol " + Environment.NewLine +
+					"--, d.docname as doc_f " + Environment.NewLine +
+					", f.shortname  as f_n " + Environment.NewLine +
+					"from cldocuments cd " + Environment.NewLine +
+					"join DOCTEMPLATES d on  cd.DOCTYPE = d.ID " + Environment.NewLine +
+					"join doctor doc on cd.UID = doc.DCODE " + Environment.NewLine +
+					"join filials f on doc.FILIAL =  f.FILID " + Environment.NewLine +
+					"where " + Environment.NewLine +
+					"--cd.DOCTYPE in (990000244,990000254,990000257) " + Environment.NewLine +
+					"d.docname containing 'RG ' " + Environment.NewLine +
+					"and cd.DOCDATE between @dateBegin and @dateEnd " + Environment.NewLine +
+					"group by 1,2,3,5 " + Environment.NewLine +
+					"order by 2 asc " },
+			{ "Выписка", "select " + Environment.NewLine +
+					"doc.dcode " + Environment.NewLine +
+					", doc.fullname " + Environment.NewLine +
+					", doc.doctpost " + Environment.NewLine +
+					", count(distinct cd.docid )as kol " + Environment.NewLine +
+					"--, d.docname as doc_f " + Environment.NewLine +
+					", f.shortname  as f_n " + Environment.NewLine +
+					"from cldocuments cd " + Environment.NewLine +
+					"join DOCTEMPLATES d on  cd.DOCTYPE = d.ID " + Environment.NewLine +
+					"join doctor doc on cd.UID = doc.DCODE " + Environment.NewLine +
+					"join filials f on doc.FILIAL =  f.FILID " + Environment.NewLine +
+					"where " + Environment.NewLine +
+					"--cd.DOCTYPE in (990000244,990000254,990000257) " + Environment.NewLine +
+					"d.docname containing 'Выписка по обследованию' " + Environment.NewLine +
+					"and cd.DOCDATE between @dateBegin and @dateEnd " + Environment.NewLine +
+					"group by 1,2,3,5 " + Environment.NewLine +
+					"order by 2 asc " },
+			{ "ИДС", "select " + Environment.NewLine +
+					"doc.dcode " + Environment.NewLine +
+					", doc.fullname " + Environment.NewLine +
+					", doc.doctpost " + Environment.NewLine +
+					", count(distinct cd.docid )as kol " + Environment.NewLine +
+					"--, d.docname as doc_f " + Environment.NewLine +
+					", f.shortname  as f_n " + Environment.NewLine +
+					"from cldocuments cd " + Environment.NewLine +
+					"join DOCTEMPLATES d on  cd.DOCTYPE = d.ID " + Environment.NewLine +
+					"join doctor doc on cd.UID = doc.DCODE " + Environment.NewLine +
+					"join filials f on doc.FILIAL =  f.FILID " + Environment.NewLine +
+					"where " + Environment.NewLine +
+					"--cd.DOCTYPE in (990000244,990000254,990000257) " + Environment.NewLine +
+					"d.docname containing 'ИДС' " + Environment.NewLine +
+					"and cd.DOCDATE between @dateBegin and @dateEnd " + Environment.NewLine +
+					"group by 1,2,3,5 " + Environment.NewLine +
+					"order by 2 asc " },
+			{ "Договор", "select " + Environment.NewLine +
+					"doc.dcode " + Environment.NewLine +
+					", doc.fullname " + Environment.NewLine +
+					", doc.doctpost " + Environment.NewLine +
+					", count(distinct cd.docid )as kol " + Environment.NewLine +
+					"--, d.docname as doc_f " + Environment.NewLine +
+					", f.shortname  as f_n " + Environment.NewLine +
+					"from cldocuments cd " + Environment.NewLine +
+					"join DOCTEMPLATES d on  cd.DOCTYPE = d.ID " + Environment.NewLine +
+					"join doctor doc on cd.UID = doc.DCODE " + Environment.NewLine +
+					"join filials f on doc.FILIAL =  f.FILID " + Environment.NewLine +
+					"where " + Environment.NewLine +
+					"--cd.DOCTYPE in (990000244,990000254,990000257) " + Environment.NewLine +
+					"d.docname containing 'Договор' " + Environment.NewLine +
+					"and cd.DOCDATE between @dateBegin and @dateEnd " + Environment.NewLine +
+					"group by 1,2,3,5 " + Environment.NewLine +
+					"order by 2 asc " },
+			{ "Заявление карта", "select " + Environment.NewLine +
+					"doc.dcode " + Environment.NewLine +
+					", doc.fullname " + Environment.NewLine +
+					", doc.doctpost " + Environment.NewLine +
+					", count(distinct cd.docid )as kol " + Environment.NewLine +
+					"--, d.docname as doc_f " + Environment.NewLine +
+					", f.shortname  as f_n " + Environment.NewLine +
+					"from cldocuments cd " + Environment.NewLine +
+					"join DOCTEMPLATES d on  cd.DOCTYPE = d.ID " + Environment.NewLine +
+					"join doctor doc on cd.UID = doc.DCODE " + Environment.NewLine +
+					"join filials f on doc.FILIAL =  f.FILID " + Environment.NewLine +
+					"where " + Environment.NewLine +
+					"--cd.DOCTYPE in (990000244,990000254,990000257) " + Environment.NewLine +
+					"d.docname containing 'Заявление на выдачу' " + Environment.NewLine +
+					"and cd.DOCDATE between @dateBegin and @dateEnd " + Environment.NewLine +
+					"group by 1,2,3,5 " + Environment.NewLine +
+					"order by 2 asc " },
+			{ "Заявление анализы", "select " + Environment.NewLine +
+					"doc.dcode " + Environment.NewLine +
+					", doc.fullname " + Environment.NewLine +
+					", doc.doctpost " + Environment.NewLine +
+					", count(distinct cd.docid )as kol " + Environment.NewLine +
+					"--, d.docname as doc_f " + Environment.NewLine +
+					", f.shortname  as f_n " + Environment.NewLine +
+					"from cldocuments cd " + Environment.NewLine +
+					"join DOCTEMPLATES d on  cd.DOCTYPE = d.ID " + Environment.NewLine +
+					"join doctor doc on cd.UID = doc.DCODE " + Environment.NewLine +
+					"join filials f on doc.FILIAL =  f.FILID " + Environment.NewLine +
+					"where " + Environment.NewLine +
+					"--cd.DOCTYPE in (990000244,990000254,990000257) " + Environment.NewLine +
+					"d.docname containing 'Заявление на получение результатов анализов на email' " + Environment.NewLine +
+					"and cd.DOCDATE between @dateBegin and @dateEnd " + Environment.NewLine +
+					"group by 1,2,3,5 " + Environment.NewLine +
+					"order by 2 asc " },
+			{ "Заявление возврат", "select " + Environment.NewLine +
+					"doc.dcode " + Environment.NewLine +
+					", doc.fullname " + Environment.NewLine +
+					", doc.doctpost " + Environment.NewLine +
+					", count(distinct cd.docid )as kol " + Environment.NewLine +
+					"--, d.docname as doc_f " + Environment.NewLine +
+					", f.shortname  as f_n " + Environment.NewLine +
+					"from cldocuments cd " + Environment.NewLine +
+					"join DOCTEMPLATES d on  cd.DOCTYPE = d.ID " + Environment.NewLine +
+					"join doctor doc on cd.UID = doc.DCODE " + Environment.NewLine +
+					"join filials f on doc.FILIAL =  f.FILID " + Environment.NewLine +
+					"where " + Environment.NewLine +
+					"--cd.DOCTYPE in (990000244,990000254,990000257) " + Environment.NewLine +
+					"d.docname containing 'Заявление на возврат денежных средств' " + Environment.NewLine +
+					"and cd.DOCDATE between @dateBegin and @dateEnd " + Environment.NewLine +
+					"group by 1,2,3,5 " + Environment.NewLine +
+					"order by 2 asc " },
+			{ "Отметок", "select " + Environment.NewLine +
+					"d.dcode " + Environment.NewLine +
+					", d.fullname " + Environment.NewLine +
+					", d.doctpost " + Environment.NewLine +
+					", count(distinct s.SCHEDID) " + Environment.NewLine +
+					", f.shortname " + Environment.NewLine +
+					"from Schedule s " + Environment.NewLine +
+					"join treat t on t.treatcode = s.treatcode " + Environment.NewLine +
+					"join filials f on f.filid = s.filial " + Environment.NewLine +
+					"join doctor d on s.VISIT_UID = d.dcode " + Environment.NewLine +
+					"where WorkDate between @dateBegin and @dateEnd " + Environment.NewLine +
+					"and s.CLVISIT = 1 " + Environment.NewLine +
+					"group by 1,2,3,5 " },
+			{ "Записи", "select " + Environment.NewLine +
+					"d.dcode " + Environment.NewLine +
+					", d.fullname " + Environment.NewLine +
+					", d.doctpost " + Environment.NewLine +
+					", count(distinct s.SCHEDID) " + Environment.NewLine +
+					", f.shortname " + Environment.NewLine +
+					"from Schedule s " + Environment.NewLine +
+					"join treat t on t.treatcode = s.treatcode " + Environment.NewLine +
+					"join filials f on f.filid = s.filial " + Environment.NewLine +
+					"join doctor d on s.CREATORID = d.dcode " + Environment.NewLine +
+					"where WorkDate between @dateBegin and @dateEnd " + Environment.NewLine +
+					"group by 1,2,3,5 " },
+			{ "Анализы", "select " + Environment.NewLine +
+					"d.dcode " + Environment.NewLine +
+					", d.fullname " + Environment.NewLine +
+					", d.doctpost " + Environment.NewLine +
+					", count(o.lgid) " + Environment.NewLine +
+					", f.shortname " + Environment.NewLine +
+					"from operlog o " + Environment.NewLine +
+					"left join operlogref op on o.eventtype = op.eventtype " + Environment.NewLine +
+					"join doctor d on o.uid = d.dcode " + Environment.NewLine +
+					"join filials f on d.FILIAL = f.filid " + Environment.NewLine +
+					"where o.eventtype in (229) " + Environment.NewLine +
+					"and o.eventdate between @dateBegin and @dateEnd " + Environment.NewLine +
+					"group by 1,2,3,5 " }
+		};
+
+
+
+
+
+
+
 
 		public static void Main(string[] args) {
 			Logging.ToLog("Старт");
@@ -137,15 +323,14 @@ namespace MISReports {
 				return;
 			}
 
-			//if (itemReport.Type == ReportsInfo.Type.TreatmentsDetailsAll) {
-			//	foreach (ReportsInfo.Type type in TreatmentsDetailsType) {
-			//		itemReport = new ItemReport(type.ToString());
-			//		ParseDateInterval(args);
-			//		CreateReport(itemReport);
-			//	}
-			//} else
-				CreateReport(itemReport);
+			CreateReport(itemReport);
 		}
+
+
+
+
+
+
 
 		public static void CreateReport(ItemReport itemReportToCreate, bool? needToAskToSend = null) {
 			if (itemReportToCreate.Type == ReportsInfo.Type.TreatmentsDetailsAll) {
@@ -262,20 +447,18 @@ namespace MISReports {
 
 		private static void LoadData(FirebirdClient firebirdClient) {
 			dateBeginOriginal = itemReport.DateBegin;
-			//itemReport.SetPeriod(itemReport.DateBegin.AddDays((-1 * itemReport.DateBegin.Day) + 1), itemReport.DateEnd);
-
 			dateBeginStr = dateBeginOriginal.Value.ToShortDateString();
 			dateEndStr = itemReport.DateEnd.ToShortDateString();
 			subject = ReportsInfo.AcceptedParameters[itemReport.Type] + " с " + dateBeginStr + " по " + dateEndStr;
 			Logging.ToLog(subject);
 
 			if (itemReport.Type == ReportsInfo.Type.TasksForItilium) {
-				dataTableMainData = ExcelHandlers.ExcelGeneral.ReadExcelFile(@"C:\Temp\Работы_январь_МИС.xlsx", "Лист1");
+				dataTableMainData = ExcelGeneral.ReadExcelFile(@"C:\Temp\Работы_январь_МИС.xlsx", "Лист1");
 				return;
 			}
 
 			if (itemReport.Type == ReportsInfo.Type.MicroSipContactsBook) {
-				dataTableMainData = ExcelHandlers.MicroSipContactsBook.ReadContactsFile();
+				dataTableMainData = MicroSipContactsBook.ReadContactsFile();
 				return;
 			}
 			
@@ -402,6 +585,25 @@ namespace MISReports {
 				dataTableUniqueServiceLabTotal = firebirdClient.GetDataTable(sqlQueryUniqueServiceLab, parametersTotal);
 			}
 
+			if (itemReport.Type == ReportsInfo.Type.RegistryMotivation) {
+				bool createNew = true;
+				string fileToWrite = itemReport.TemplateFileName;
+
+				foreach (KeyValuePair<string, string> query in registryMotivationQueries) {
+					Logging.ToLog("Получение данных для листа: " + query.Key);
+					DataTable dataTable = firebirdClient.GetDataTable(query.Value, parameters);
+					Logging.ToLog("Получено строк: " + dataTable.Rows.Count);
+
+					if (dataTable.Rows.Count > 0) {
+						Logging.ToLog("Запись данных в Excel");
+						itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(dataTable, subject, fileToWrite, query.Key, createNew);
+						ExcelGeneral.CopyFormatting(itemReport.FileResult, query.Key, itemReport.Type);
+						createNew = false;
+						fileToWrite = itemReport.FileResult;
+					}
+				}
+			}
+
 			dataTableMainData = firebirdClient.GetDataTable(itemReport.SqlQuery, parameters);
 			Logging.ToLog("Получено строк: " + dataTableMainData.Rows.Count);
 
@@ -425,14 +627,14 @@ namespace MISReports {
 				Logging.ToLog("Считывание настроек из файла: " + priceListToSiteSettingFilePath);
 
 				try {
-					DataTable dataTablePriceExclusions = ExcelHandlers.ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNameExclusions);
+					DataTable dataTablePriceExclusions = ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNameExclusions);
 					Logging.ToLog("Считано строк: " + dataTablePriceExclusions.Rows.Count);
-					DataTable dataTablePriceGrouping = ExcelHandlers.ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNameGrouping);
+					DataTable dataTablePriceGrouping = ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNameGrouping);
 					Logging.ToLog("Считано строк: " + dataTablePriceGrouping.Rows.Count);
-					DataTable dataTablePricePriorities = ExcelHandlers.ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNamePriorities);
+					DataTable dataTablePricePriorities = ExcelGeneral.ReadExcelFile(priceListToSiteSettingFilePath, sheetNamePriorities);
 					Logging.ToLog("Считано строк: " + dataTablePricePriorities.Rows.Count);
 
-					dataTableMainData = ExcelHandlers.PriceListToSite.PerformData(
+					dataTableMainData = PriceListToSite.PerformData(
 						dataTableMainData, dataTablePriceExclusions, dataTablePriceGrouping, dataTablePricePriorities, out priceListToSiteEmptyFields);
 				} catch (Exception e) {
 					Logging.ToLog(e.StackTrace + Environment.NewLine + e.StackTrace);
@@ -441,7 +643,7 @@ namespace MISReports {
 			}
 
             if (itemReport.Type == ReportsInfo.Type.FssInfo)
-                ExcelHandlers.FssInfo.PerformData(ref dataTableMainData);
+                FssInfo.PerformData(ref dataTableMainData);
 
 			if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular) {
 				if (itemReport.DateBegin.Day == 1 &&
@@ -530,7 +732,7 @@ namespace MISReports {
 					itemReport.SqlQuery, parametersAverageCheckPreviousWeek);
 				Logging.ToLog("Получено строк: " + dataTableAverageCheckPreviousWeek.Rows.Count);
 
-				itemAverageCheckPreviousWeek = ExcelHandlers.AverageCheck.PerformData(dataTableMainData, dataTableAverageCheckPreviousWeek);
+				itemAverageCheckPreviousWeek = AverageCheck.PerformData(dataTableMainData, dataTableAverageCheckPreviousWeek);
 				#endregion
 
 
@@ -542,18 +744,18 @@ namespace MISReports {
 					itemReport.SqlQuery, parametersAverageCheckPreviousYear);
 				Logging.ToLog("Получено строк: " + dataTableAverageCheckPreviousYear.Rows.Count);
 
-				itemAverageCheckPreviousYear = ExcelHandlers.AverageCheck.PerformData(dataTableMainData, dataTableAverageCheckPreviousYear);
+				itemAverageCheckPreviousYear = AverageCheck.PerformData(dataTableMainData, dataTableAverageCheckPreviousYear);
 				#endregion
 			}
 
 			if (itemReport.Type == ReportsInfo.Type.AverageCheckIGS)
-				itemAverageCheckIGS = ExcelHandlers.AverageCheck.PerformData(dataTableMainData);
+				itemAverageCheckIGS = AverageCheck.PerformData(dataTableMainData);
 
 			if (itemReport.Type == ReportsInfo.Type.CompetitiveGroups)
-				ItemCompetitiveGroups = ExcelHandlers.CompetitiveGroups.PerformData(dataTableMainData);
+				ItemCompetitiveGroups = CompetitiveGroups.PerformData(dataTableMainData);
 
 			if (itemReport.Type.ToString().StartsWith("TreatmentsDetails")) {
-				ExcelHandlers.TreatmentsDetails treatmentsDetails = new ExcelHandlers.TreatmentsDetails();
+				TreatmentsDetails treatmentsDetails = new TreatmentsDetails();
 				treatmentsDetails.PerformDataTable(dataTableMainData, itemReport.Type);
 			}
 		}
@@ -647,15 +849,15 @@ namespace MISReports {
 				}
 
 				if (itemReport.Type == ReportsInfo.Type.MESUsage) {
-					itemReport.FileResult = ExcelHandlers.MesUsage.WriteMesUsageTreatmentsToExcel(
+					itemReport.FileResult = MesUsage.WriteMesUsageTreatmentsToExcel(
 						dataTableMainData, subject, itemReport.TemplateFileName);
 
 				} else if (itemReport.Type == ReportsInfo.Type.MESUsageFull) {
-					itemReport.FileResult = ExcelHandlers.MesUsage.WriteMesUsageTreatmentsToExcel(
+					itemReport.FileResult = MesUsage.WriteMesUsageTreatmentsToExcel(
 						dataTableMainData, subject, itemReport.TemplateFileName, true);
 
 				} else if (itemReport.Type == ReportsInfo.Type.TelemedicineOnlyIngosstrakh) {
-					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
+					itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
 														 subject,
 														 itemReport.TemplateFileName,
 														 type: itemReport.Type);
@@ -665,7 +867,7 @@ namespace MISReports {
 						string key = workloadResultFiles.Keys.ElementAt(i);
 						Logging.ToLog("Филиал: " + key);
 
-						workloadResultFiles[key] = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
+						workloadResultFiles[key] = ExcelGeneral.WriteDataTableToExcel(dataTableWorkLoadA6,
 															 subject + " " + key,
 															 itemReport.TemplateFileName,
 															 "Услуги Мет. 1",
@@ -675,14 +877,14 @@ namespace MISReports {
 						if (string.IsNullOrEmpty(workloadResultFiles[key]))
 							continue;
 
-						ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
+						ExcelGeneral.WriteDataTableToExcel(dataTableWorkloadA11_10,
 												subject,
 												workloadResultFiles[key],
 												"Искл. услуги",
 												false,
 												key);
 
-						ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
+						ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
 												subject,
 												workloadResultFiles[key],
 												"Расчет",
@@ -691,27 +893,27 @@ namespace MISReports {
 					}
 
 				} else if (itemReport.Type == ReportsInfo.Type.Robocalls) {
-					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToTextFile(dataTableMainData,
+					itemReport.FileResult = ExcelGeneral.WriteDataTableToTextFile(dataTableMainData,
 															subject,
 															itemReport.TemplateFileName);
 
 				} else if (itemReport.Type == ReportsInfo.Type.PriceListToSite) {
-					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(
+					itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(
 						dataTableMainData,
 						subject,
 						itemReport.TemplateFileName,
 						type: itemReport.Type);
-					fileToUpload = ExcelHandlers.ExcelGeneral.WriteDataTableToTextFile(
+					fileToUpload = ExcelGeneral.WriteDataTableToTextFile(
 						dataTableMainData,
 						"BzPriceListToUpload",
 						saveAsJson: true);
 
 				} else if (itemReport.Type == ReportsInfo.Type.TimetableToProdoctorovRu) {
-					fileToUpload = ExcelHandlers.TimetableToProdoctorovRu.PerformData(dataTableMainData);
+					fileToUpload = TimetableToProdoctorovRu.PerformData(dataTableMainData);
 
 				} else if (itemReport.Type == ReportsInfo.Type.UniqueServices ||
 					itemReport.Type == ReportsInfo.Type.UniqueServicesRegions) {
-					itemReport.FileResult = ExcelHandlers.UniqueServices.Process(dataTableMainData,
+					itemReport.FileResult = UniqueServices.Process(dataTableMainData,
 														 dataTableUniqueServiceTotal,
 														 dataTableUniqueServiceLab,
 														 dataTableUniqueServiceLabTotal,
@@ -722,32 +924,36 @@ namespace MISReports {
 
 				} else if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular) {
 					itemReport.FileResult =
-						ExcelHandlers.AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousWeek,
+						AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousWeek,
 							subjectAverageCheckPreviousWeek, itemReport.TemplateFileName);
 					itemReport.FileResultAverageCheckPreviousYear =
-						ExcelHandlers.AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousYear,
+						AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousYear,
 							subjectAverageCheckPreviousYear, itemReport.TemplateFileName);
 
 				} else if (itemReport.Type == ReportsInfo.Type.AverageCheckIGS) {
-					itemReport.FileResult = ExcelHandlers.AverageCheck.WriteAverageCheckToExcel(itemAverageCheckIGS, subject, itemReport.TemplateFileName);
+					itemReport.FileResult = AverageCheck.WriteAverageCheckToExcel(itemAverageCheckIGS, subject, itemReport.TemplateFileName);
 
 				} else if (itemReport.Type == ReportsInfo.Type.CompetitiveGroups) {
 					itemReport.FileResult =
-						ExcelHandlers.CompetitiveGroups.WriteAverageCheckToExcel(
+						CompetitiveGroups.WriteAverageCheckToExcel(
 							ItemCompetitiveGroups, subject, itemReport.TemplateFileName);
 
 				} else if (itemReport.Type == ReportsInfo.Type.TimetableToSite) {
-					fileToUpload = ExcelHandlers.TimetableToSite.ParseAndWriteToJson(dataTableMainData);
+					fileToUpload = TimetableToSite.ParseAndWriteToJson(dataTableMainData);
 					itemReport.FileResult = fileToUpload;
 
 				} else if (itemReport.Type == ReportsInfo.Type.MicroSipContactsBook) {
-					itemReport.FileResult = ExcelHandlers.MicroSipContactsBook.WriteToFile(dataTableMainData);
+					itemReport.FileResult = MicroSipContactsBook.WriteToFile(dataTableMainData);
 
 				} else if (itemReport.Type == ReportsInfo.Type.TasksForItilium) {
-					itemReport.FileResult = ExcelHandlers.TasksForItilium.SendTasks(dataTableMainData);
+					itemReport.FileResult = TasksForItilium.SendTasks(dataTableMainData);
+
+				} else if (itemReport.Type == ReportsInfo.Type.RegistryMotivation &&
+					!string.IsNullOrEmpty(itemReport.FileResult)) { 
+					ExcelGeneral.WriteDataTableToExcel(dataTableMainData, subject, itemReport.FileResult, "Данные", false);
 
 				} else {
-					itemReport.FileResult = ExcelHandlers.ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
+					itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
 														 subject,
 														 itemReport.TemplateFileName,
 														 type: itemReport.Type);
@@ -761,44 +967,44 @@ namespace MISReports {
 					switch (itemReport.Type) {
 						case ReportsInfo.Type.FreeCellsDay:
 						case ReportsInfo.Type.FreeCellsWeek:
-							isPostProcessingOk = ExcelHandlers.FreeCells.Process(itemReport.FileResult, dateBeginOriginal.Value, itemReport.DateEnd);
+							isPostProcessingOk = FreeCells.Process(itemReport.FileResult, dateBeginOriginal.Value, itemReport.DateEnd);
 							break;
 
 						case ReportsInfo.Type.UnclosedProtocolsWeek:
 						case ReportsInfo.Type.UnclosedProtocolsMonth:
-							isPostProcessingOk = ExcelHandlers.UnclosedProtocols.Process(itemReport.FileResult);
+							isPostProcessingOk = UnclosedProtocols.Process(itemReport.FileResult);
 							break;
 
 						case ReportsInfo.Type.MESUsage:
-							isPostProcessingOk = ExcelHandlers.MesUsage.Process(itemReport.FileResult);
+							isPostProcessingOk = MesUsage.Process(itemReport.FileResult);
 							break;
 
 						case ReportsInfo.Type.MESUsageFull:
-							isPostProcessingOk = ExcelHandlers.MesUsage.Process(itemReport.FileResult, true);
+							isPostProcessingOk = MesUsage.Process(itemReport.FileResult, true);
 							break;
 
 						case ReportsInfo.Type.OnlineAccountsUsage:
-							isPostProcessingOk = ExcelHandlers.OnlineAccounts.Process(itemReport.FileResult);
+							isPostProcessingOk = OnlineAccounts.Process(itemReport.FileResult);
 							break;
 
 						case ReportsInfo.Type.TelemedicineOnlyIngosstrakh:
 						case ReportsInfo.Type.TelemedicineAll:
-							isPostProcessingOk = ExcelHandlers.Telemedicine.Process(itemReport.FileResult);
+							isPostProcessingOk = Telemedicine.Process(itemReport.FileResult);
 							break;
 
 						case ReportsInfo.Type.NonAppearance:
-							isPostProcessingOk = ExcelHandlers.NonAppearance.Process(itemReport.FileResult, dataTableMainData);
+							isPostProcessingOk = NonAppearance.Process(itemReport.FileResult, dataTableMainData);
 							break;
 
 						case ReportsInfo.Type.VIP_MSSU:
 						case ReportsInfo.Type.VIP_Moscow:
 						case ReportsInfo.Type.VIP_MSKM:
 						case ReportsInfo.Type.VIP_PND:
-							isPostProcessingOk = ExcelHandlers.VIP.Process(itemReport.FileResult, itemReport.PreviousFile);
+							isPostProcessingOk = VIP.Process(itemReport.FileResult, itemReport.PreviousFile);
 							break;
 
 						case ReportsInfo.Type.RegistryMarks:
-							isPostProcessingOk = ExcelHandlers.RegistryMarks.Process(
+							isPostProcessingOk = RegistryMarks.Process(
 								itemReport.FileResult, dataTableMainData, dateBeginOriginal.Value);
 							break;
 
@@ -811,7 +1017,7 @@ namespace MISReports {
 								if (string.IsNullOrEmpty(currentFileResult))
 									continue;
 
-								if (!ExcelHandlers.Workload.Process(currentFileResult))
+								if (!Workload.Process(currentFileResult))
 									isAllOk = false;
 							}
 
@@ -819,49 +1025,53 @@ namespace MISReports {
 							break;
 
                         case ReportsInfo.Type.PriceListToSite:
-                            isPostProcessingOk = ExcelHandlers.PriceListToSite.Process(itemReport.FileResult);
+                            isPostProcessingOk = PriceListToSite.Process(itemReport.FileResult);
                             break;
 
                         case ReportsInfo.Type.GBooking:
 						case ReportsInfo.Type.PersonalAccountSchedule:
 						case ReportsInfo.Type.ProtocolViewCDBSyncEvent:
-							isPostProcessingOk = ExcelHandlers.ExcelGeneral.CopyFormatting(itemReport.FileResult);
+							isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult);
 							break;
 
                         case ReportsInfo.Type.FssInfo:
-                            isPostProcessingOk = ExcelHandlers.FssInfo.Process(itemReport.FileResult);
+                            isPostProcessingOk = FssInfo.Process(itemReport.FileResult);
                             break;
 
                         case ReportsInfo.Type.RecordsFromInsuranceCompanies:
-                            isPostProcessingOk = ExcelHandlers.RecordsFromInsuranceCompanies.Process(itemReport.FileResult);
+                            isPostProcessingOk = RecordsFromInsuranceCompanies.Process(itemReport.FileResult);
                             break;
 
 						case ReportsInfo.Type.AverageCheckRegular:
-							isPostProcessingOk = ExcelHandlers.AverageCheck.Process(
+							isPostProcessingOk = AverageCheck.Process(
 								itemReport.FileResult, parameters, parametersAverageCheckPreviousWeek);
-							isPostProcessingOk &= ExcelHandlers.AverageCheck.Process(
+							isPostProcessingOk &= AverageCheck.Process(
 								itemReport.FileResultAverageCheckPreviousYear, parameters, parametersAverageCheckPreviousYear);
 							break;
 
 						case ReportsInfo.Type.AverageCheckIGS:
-							isPostProcessingOk = ExcelHandlers.AverageCheck.Process(
+							isPostProcessingOk = AverageCheck.Process(
 								itemReport.FileResult, parameters, null);
 							break;
 
 						case ReportsInfo.Type.CompetitiveGroups:
-							isPostProcessingOk = ExcelHandlers.CompetitiveGroups.Process(itemReport.FileResult, parameters);
+							isPostProcessingOk = CompetitiveGroups.Process(itemReport.FileResult, parameters);
 							break;
 
 						case ReportsInfo.Type.FirstTimeVisitPatients:
-							isPostProcessingOk = ExcelHandlers.FirstTimeVisitPatients.Process(itemReport.FileResult, dataTableMainData);
+							isPostProcessingOk = FirstTimeVisitPatients.Process(itemReport.FileResult, dataTableMainData);
 							break;
 
 						case ReportsInfo.Type.FreeCellsMarketing:
-							isPostProcessingOk = ExcelHandlers.FreeCells.Process(itemReport.FileResult, dateBeginOriginal.Value, itemReport.DateEnd, true);
+							isPostProcessingOk = FreeCells.Process(itemReport.FileResult, dateBeginOriginal.Value, itemReport.DateEnd, true);
 							break;
 
 						case ReportsInfo.Type.EmergencyCallsQuantity:
-							isPostProcessingOk = ExcelHandlers.ExcelGeneral.CopyFormatting(itemReport.FileResult);
+							isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult);
+							break;
+
+						case ReportsInfo.Type.RegistryMotivation:
+							isPostProcessingOk = RegistryMotivation.Process(itemReport.FileResult);
 							break;
 
 						default:
@@ -869,7 +1079,7 @@ namespace MISReports {
 					}
 
 					if (itemReport.Type.ToString().StartsWith("TreatmentsDetails"))
-						isPostProcessingOk = ExcelHandlers.ExcelGeneral.CopyFormatting(itemReport.FileResult);
+						isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult);
 
 					if (isPostProcessingOk) {
 						body = "Отчет во вложении";

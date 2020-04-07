@@ -70,7 +70,8 @@ namespace MISReports {
 			TasksForItilium,
 			FirstTimeVisitPatients,
 			FreeCellsMarketing,
-			EmergencyCallsQuantity
+			EmergencyCallsQuantity,
+			RegistryMotivation
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -137,7 +138,8 @@ namespace MISReports {
 			{ Type.TasksForItilium, "Задачи на январь 2020" },
 			{ Type.FirstTimeVisitPatients, "Отчет по первичным пациентам" },
 			{ Type.FreeCellsMarketing, "Отчет по свободным слотам для маркетинга" },
-			{ Type.EmergencyCallsQuantity, "Отчет по количеству вызовов СМП" }
+			{ Type.EmergencyCallsQuantity, "Отчет по количеству вызовов СМП" },
+			{ Type.RegistryMotivation, "Расчет мотивации для регистратуры" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -204,7 +206,8 @@ namespace MISReports {
 			{ Type.TasksForItilium, "Каждый день в 9:00" },
 			{ Type.FirstTimeVisitPatients, "Каждый понедельник в 5:00, каждый месяц" },
 			{ Type.FreeCellsMarketing, "Каждый день в 7:20 и каждый понедельник в 6:10" },
-			{ Type.EmergencyCallsQuantity, "Каждый понедельник в 2:20 и каждое 1 число в 2:30" }
+			{ Type.EmergencyCallsQuantity, "Каждый понедельник в 2:20 и каждое 1 число в 2:30" },
+			{ Type.RegistryMotivation, "Каждый месяц 10 числа в 3:00" }
 		};
 	}
 }

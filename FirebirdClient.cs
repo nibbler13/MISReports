@@ -9,6 +9,8 @@ namespace MISReports {
 		private FbConnection connection;
 
 		public FirebirdClient(string ipAddress, string baseName, string user, string pass) {
+			ipAddress = "172.16.9.10";
+			baseName = "central-report";
 			FbConnectionStringBuilder cs = new FbConnectionStringBuilder {
 				DataSource = ipAddress,
 				Database = baseName,

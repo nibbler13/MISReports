@@ -84,6 +84,7 @@
     <Compile Include="DataHandlers\OnlineAccounts.cs" />
     <Compile Include="DataHandlers\PriceListToSite.cs" />
     <Compile Include="DataHandlers\RecordsFromInsuranceCompanies.cs" />
+    <Compile Include="DataHandlers\RegistryMotivation.cs" />
     <Compile Include="DataHandlers\TasksForItilium.cs" />
     <Compile Include="DataHandlers\Telemedicine.cs" />
     <Compile Include="DataHandlers\TimetableToSite.cs" />
