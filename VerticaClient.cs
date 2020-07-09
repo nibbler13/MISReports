@@ -1,29 +1,25 @@
 ﻿using System;
-using System.Data;
 using System.Collections.Generic;
-using FirebirdSql.Data.FirebirdClient;
-using System.Windows;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Vertica.Data.VerticaClient;
 
 namespace MISReports {
-	public class FirebirdClient : IDbClient {
-		private FbConnection connection;
+	class VerticaClient : IDbClient {
+		private VerticaConnection connection;
 
-		public FirebirdClient(string ipAddress, string baseName, string user, string pass) {
-			FbConnectionStringBuilder cs = new FbConnectionStringBuilder {
-				DataSource = ipAddress,
-				Database = baseName,
-				UserID = user,
-				Password = pass,
-				Charset = "NONE",
-				Pooling = false
+		public VerticaClient(string host, string database, string user, string password) {
+			VerticaConnectionStringBuilder builder = new VerticaConnectionStringBuilder {
+				Host = host,
+				Database = database,
+				User = user,
+				Password = password
 			};
 
-			connection = new FbConnection(cs.ToString());
+			connection = new VerticaConnection(builder.ToString());
 			IsConnectionOpened();
-		}
-
-		public void Close() {
-			connection.Close();
 		}
 
 		private bool IsConnectionOpened() {
@@ -41,19 +37,20 @@ namespace MISReports {
 			return connection.State == ConnectionState.Open;
 		}
 
-		public DataTable GetDataTable(string query, Dictionary<string, object> parameters) {
+		public DataTable GetDataTable(string query, Dictionary<string, object> parameters = null) {
 			DataTable dataTable = new DataTable();
 
 			if (!IsConnectionOpened())
 				return dataTable;
-			
+
 			try {
-				using (FbCommand command = new FbCommand(query, connection)) { 
-					if (parameters.Count > 0) 
+				using (VerticaCommand command = new VerticaCommand(query, connection)) {
+					if (parameters != null && parameters.Count > 0)
 						foreach (KeyValuePair<string, object> parameter in parameters)
-							command.Parameters.AddWithValue(parameter.Key, parameter.Value);
-				
-					using (FbDataAdapter fbDataAdapter = new FbDataAdapter(command)) 
+							if (query.Contains(parameter.Key))
+								command.Parameters.Add(new VerticaParameter(parameter.Key, parameter.Value));
+
+					using (VerticaDataAdapter fbDataAdapter = new VerticaDataAdapter(command))
 						fbDataAdapter.Fill(dataTable);
 				}
 			} catch (Exception e) {
@@ -67,18 +64,18 @@ namespace MISReports {
 			return dataTable;
 		}
 
-		public bool ExecuteUpdateQuery(string query, Dictionary<string, object> parameters) {
+        public bool ExecuteUpdateQuery(string query, Dictionary<string, object> parameters) {
 			bool updated = false;
 
 			if (!IsConnectionOpened())
 				return updated;
 
 			try {
-				FbCommand update = new FbCommand(query, connection);
+				VerticaCommand update = new VerticaCommand(query, connection);
 
 				if (parameters.Count > 0) {
 					foreach (KeyValuePair<string, object> parameter in parameters)
-						update.Parameters.AddWithValue(parameter.Key, parameter.Value);
+						update.Parameters.Add(new VerticaParameter(parameter.Key, parameter.Value));
 				}
 
 				updated = update.ExecuteNonQuery() > 0 ? true : false;
@@ -92,5 +89,9 @@ namespace MISReports {
 
 			return updated;
 		}
-	}
+
+        public void Close() {
+			connection.Close();
+        }
+    }
 }

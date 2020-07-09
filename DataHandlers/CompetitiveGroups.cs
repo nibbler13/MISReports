@@ -189,7 +189,7 @@ namespace MISReports.ExcelHandlers {
 					int treatmentsCount = Convert.ToInt32(dataRow["UNI_TREAT"].ToString());
 					double discountedCost = Convert.ToDouble(dataRow["DISC_SUM_SERV"].ToString());
 
-					if (filial.Equals("СУЩ") && department.Equals("ГАСТРОЭНТЕРОЛОГИЯ"))
+					if (filial.Equals("Казань") && (department.Equals("КОММЕРЧЕСКИЙ ОТДЕЛ") || department.Equals("Регистратура взрослая")))
 						Console.WriteLine("");
 
 					bool isFirstVisit = false;

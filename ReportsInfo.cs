@@ -71,7 +71,10 @@ namespace MISReports {
 			FirstTimeVisitPatients,
 			FreeCellsMarketing,
 			EmergencyCallsQuantity,
-			RegistryMotivation
+			RegistryMotivation,
+			Reserves,
+			LicenseEndingDates,
+			Promo
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -139,7 +142,10 @@ namespace MISReports {
 			{ Type.FirstTimeVisitPatients, "Отчет по первичным пациентам" },
 			{ Type.FreeCellsMarketing, "Отчет по свободным слотам для маркетинга" },
 			{ Type.EmergencyCallsQuantity, "Отчет по количеству вызовов СМП" },
-			{ Type.RegistryMotivation, "Расчет мотивации для регистратуры" }
+			{ Type.RegistryMotivation, "Расчет мотивации для регистратуры" },
+			{ Type.Reserves, "Отчет по резервам в расписании" },
+			{ Type.LicenseEndingDates, "Статистика по окончанию действия лицензий" },
+			{ Type.Promo, "Список действующих акций" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -207,7 +213,10 @@ namespace MISReports {
 			{ Type.FirstTimeVisitPatients, "Каждый понедельник в 5:00, каждый месяц" },
 			{ Type.FreeCellsMarketing, "Каждый день в 7:20 и каждый понедельник в 6:10" },
 			{ Type.EmergencyCallsQuantity, "Каждый понедельник в 2:20 и каждое 1 число в 2:30" },
-			{ Type.RegistryMotivation, "Каждый месяц 10 числа в 3:00" }
+			{ Type.RegistryMotivation, "Каждый месяц 10 числа в 3:00" },
+			{ Type.Reserves, "Каждый месяц 3 и 18 числа в в 3:10" },
+			{ Type.LicenseEndingDates, "Каждый день в 5:00" },
+			{ Type.Promo, "Каждый понедельник" }
 		};
 	}
 }

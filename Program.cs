@@ -52,7 +52,7 @@ namespace MISReports {
 		private static readonly string mailCopy = Properties.Settings.Default.MailCopy;
         private static string priceListToSiteEmptyFields = string.Empty;
 
-		private static readonly Dictionary<string, string> workloadResultFiles = new Dictionary<string, string> {
+		private static Dictionary<string, string> workloadResultFiles = new Dictionary<string, string> {
 			{ "_Общий", string.Empty },
 			{ "Казань", string.Empty },
 			{ "Красн", string.Empty },
@@ -94,7 +94,7 @@ namespace MISReports {
 			ReportsInfo.Type.TreatmentsDetailsSogazUfa,
 		};
 
-		private static readonly Tuple<string, string, string>[] licenseStatisticsDBs = 
+		private static readonly Tuple<string, string, string>[] infoclinicaDBs = 
 			new Tuple<string, string, string>[] {
 				 new Tuple<string, string, string>("172.16.9.9", "Central", "99_ЦБД"),
 				 new Tuple<string, string, string>("172.16.225.2", "mssu", "12_Сущевcкий Вал"),
@@ -271,7 +271,7 @@ namespace MISReports {
 					", count(distinct s.SCHEDID) " + Environment.NewLine +
 					", f.shortname " + Environment.NewLine +
 					"from Schedule s " + Environment.NewLine +
-					"join treat t on t.treatcode = s.treatcode " + Environment.NewLine +
+					"left join treat t on t.treatcode = s.treatcode " + Environment.NewLine +
 					"join filials f on f.filid = s.filial " + Environment.NewLine +
 					"join doctor d on s.CREATORID = d.dcode " + Environment.NewLine +
 					"where WorkDate between @dateBegin and @dateEnd " + Environment.NewLine +
@@ -333,6 +333,9 @@ namespace MISReports {
 
 
 		public static void CreateReport(ItemReport itemReportToCreate, bool? needToAskToSend = null) {
+			if (Debugger.IsAttached)
+				workloadResultFiles = new Dictionary<string, string> { { "_Общий", string.Empty } };
+
 			if (itemReportToCreate.Type == ReportsInfo.Type.TreatmentsDetailsAll) {
 				foreach (ReportsInfo.Type type in TreatmentsDetailsType) {
 					ItemReport report = new ItemReport(type.ToString());
@@ -353,17 +356,25 @@ namespace MISReports {
 				Properties.Settings.Default.MisDbAddress + ":" + 
 				Properties.Settings.Default.MisDbName);
 
-			FirebirdClient firebirdClient = new FirebirdClient(
+			IDbClient dbClient = new FirebirdClient(
 				Properties.Settings.Default.MisDbAddress,
 				Properties.Settings.Default.MisDbName,
 				Properties.Settings.Default.MisDbUser,
 				Properties.Settings.Default.MisDbPassword);
 
-			LoadData(firebirdClient);
+			if (itemReport.UseVerticaDb)
+				dbClient = new VerticaClient(
+					Properties.Settings.Default.VerticaDbAddress,
+					Properties.Settings.Default.VerticaDbDatabase,
+					Properties.Settings.Default.VerticaDbUser,
+					Properties.Settings.Default.VerticaDbPassword);
 
-			firebirdClient.Close();
-
+			LoadData(dbClient);
+			dbClient.Close();
 			WriteDataToFile();
+
+			if (itemReport.Type == ReportsInfo.Type.LicenseEndingDates)
+				return;
 
 			if (hasError) {
 				Logging.ToLog(body);
@@ -419,11 +430,18 @@ namespace MISReports {
 			DateTime? dateBegin = null;
 			DateTime? dateEnd = null;
 
+			DateTime tst = new DateTime(2020, 5, 18);
+			Console.WriteLine(tst.AddDays(-17).ToShortDateString());
+			Console.WriteLine(tst.AddDays(-3).ToShortDateString());
+
 			if (args.Length == 2) {
 				if (args[1].Equals("PreviousMonth")) {
 					dateBegin = DateTime.Now.AddMonths(-1).AddDays(-1 * (DateTime.Now.Day - 1));
 					dateEnd = dateBegin.Value.AddDays(
 						DateTime.DaysInMonth(dateBegin.Value.Year, dateBegin.Value.Month) - 1);
+				} else if (args[1].Equals("PreviousMonthSecondPart")) {
+					dateBegin = DateTime.Now.AddMonths(-1).AddDays(-1 * (DateTime.Now.Day - 1)).AddDays(15);
+					dateEnd = DateTime.Now.AddDays(-1 * DateTime.Now.Day);
 				}
 			} else if (args.Length == 3) {
 				if (int.TryParse(args[1], out int dateBeginOffset) &&
@@ -445,7 +463,7 @@ namespace MISReports {
 		}
 
 
-		private static void LoadData(FirebirdClient firebirdClient) {
+		private static void LoadData(IDbClient dbClient) {
 			dateBeginOriginal = itemReport.DateBegin;
 			dateBeginStr = dateBeginOriginal.Value.ToShortDateString();
 			dateEndStr = itemReport.DateEnd.ToShortDateString();
@@ -489,7 +507,7 @@ namespace MISReports {
 							{ "@dateEnd", dayToGetData }
 						};
 
-						DataTable dataTablePart = firebirdClient.GetDataTable(itemReport.SqlQuery, parametersMes);
+						DataTable dataTablePart = dbClient.GetDataTable(itemReport.SqlQuery, parametersMes);
 						Logging.ToLog("Получено строк: " + dataTablePart.Rows.Count);
 
 						foreach (DataRow row in dataTablePart.Rows)
@@ -510,21 +528,49 @@ namespace MISReports {
 				dataTableMainData.Columns.Add(new DataColumn("DB", typeof(string)));
 				dataTableMainData.Columns.Add(new DataColumn("DATE", typeof(DateTime)));
 				dataTableMainData.Columns.Add(new DataColumn("COUNT", typeof(int)));
-				foreach (Tuple<string, string, string> item in licenseStatisticsDBs) {
+
+				foreach (Tuple<string, string, string> item in infoclinicaDBs) {
 					string dbName = item.Item1 + ":" + item.Item2 + "@" + item.Item3;
 					Logging.ToLog("Получение данных из бд: " + dbName);
 					try {
-						firebirdClient = new FirebirdClient(
+						dbClient = new FirebirdClient(
 							item.Item1, 
 							item.Item2, 
 							Properties.Settings.Default.MisDbUser, 
 							Properties.Settings.Default.MisDbPassword);
 
-						DataTable dataTable = firebirdClient.GetDataTable(itemReport.SqlQuery, new Dictionary<string, object>());
+						DataTable dataTable = dbClient.GetDataTable(itemReport.SqlQuery, new Dictionary<string, object>());
 						dataTableMainData.Rows.Add(new object[] {dbName, DateTime.Now, dataTable.Rows[0][0] });
 					} catch (Exception e) {
 						Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 						dataTableMainData.Rows.Add(new object[] { dbName, DateTime.Now, -1 });
+					}
+				}
+
+				return;
+			}
+
+			if (itemReport.Type == ReportsInfo.Type.LicenseEndingDates) {
+				dataTableMainData = new DataTable();
+				dataTableMainData.Columns.Add(new DataColumn("DB", typeof(string)));
+				dataTableMainData.Columns.Add(new DataColumn("NOTBEFORE", typeof(DateTime)));
+
+				foreach (Tuple<string, string, string> item in infoclinicaDBs) {
+					string dbName = item.Item1 + ":" + item.Item2 + "@" + item.Item3;
+					Logging.ToLog("Получение данных из бд: " + dbName);
+					try {
+						dbClient = new FirebirdClient(
+							item.Item1,
+							item.Item2,
+							Properties.Settings.Default.MisDbUser,
+							Properties.Settings.Default.MisDbPassword);
+
+						DataTable dataTable = dbClient.GetDataTable(itemReport.SqlQuery, new Dictionary<string, object>());
+						if (dataTable.Rows.Count > 0)
+							dataTableMainData.Rows.Add(new object[] { dbName, DateTime.Parse(dataTable.Rows[0][0].ToString()) });
+					} catch (Exception e) {
+						Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+						dataTableMainData.Rows.Add(new object[] { dbName, new DateTime() });
 					}
 				}
 
@@ -554,10 +600,10 @@ namespace MISReports {
 						queryA8_2 = File.ReadAllText(queryA8_2).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
 						queryA11_10 = File.ReadAllText(queryA11_10).Replace("@dateBegin", "'" + dateBeginStr + "'").Replace("@dateEnd", "'" + dateEndStr + "'");
 
-						dataTableMainData = firebirdClient.GetDataTable(queryA8_2, parameters);
-						dataTableWorkLoadA6 = firebirdClient.GetDataTable(queryA6, parameters);
+						dataTableMainData = dbClient.GetDataTable(queryA8_2, parameters);
+						dataTableWorkLoadA6 = dbClient.GetDataTable(queryA6, parameters);
 						Logging.ToLog("Получено строк A6: " + dataTableWorkLoadA6.Rows.Count);
-						dataTableWorkloadA11_10 = firebirdClient.GetDataTable(queryA11_10, parameters);
+						dataTableWorkloadA11_10 = dbClient.GetDataTable(queryA11_10, parameters);
 						Logging.ToLog("Получено строк A11_10: " + dataTableWorkloadA11_10.Rows.Count);
 					} catch (Exception e) {
 						Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
@@ -574,15 +620,15 @@ namespace MISReports {
 				if (itemReport.Type == ReportsInfo.Type.UniqueServicesRegions)
 					sqlQueryUniqueServiceLab = Properties.Settings.Default.MisDbSqlGetUniqueServicesRegionsLab;
 
-				dataTableUniqueServiceLab = firebirdClient.GetDataTable(sqlQueryUniqueServiceLab, parameters);
+				dataTableUniqueServiceLab = dbClient.GetDataTable(sqlQueryUniqueServiceLab, parameters);
 
 				Dictionary<string, object> parametersTotal = new Dictionary<string, object>() {
 					{"@dateBegin",  DateTime.Parse("01.01." + itemReport.DateEnd.ToString("yyyy")).ToShortDateString() },
 					{"@dateEnd", dateEndStr }
 				};
 
-				dataTableUniqueServiceTotal = firebirdClient.GetDataTable(itemReport.SqlQuery, parametersTotal);
-				dataTableUniqueServiceLabTotal = firebirdClient.GetDataTable(sqlQueryUniqueServiceLab, parametersTotal);
+				dataTableUniqueServiceTotal = dbClient.GetDataTable(itemReport.SqlQuery, parametersTotal);
+				dataTableUniqueServiceLabTotal = dbClient.GetDataTable(sqlQueryUniqueServiceLab, parametersTotal);
 			}
 
 			if (itemReport.Type == ReportsInfo.Type.RegistryMotivation) {
@@ -591,7 +637,7 @@ namespace MISReports {
 
 				foreach (KeyValuePair<string, string> query in registryMotivationQueries) {
 					Logging.ToLog("Получение данных для листа: " + query.Key);
-					DataTable dataTable = firebirdClient.GetDataTable(query.Value, parameters);
+					DataTable dataTable = dbClient.GetDataTable(query.Value, parameters);
 					Logging.ToLog("Получено строк: " + dataTable.Rows.Count);
 
 					if (dataTable.Rows.Count > 0) {
@@ -604,7 +650,7 @@ namespace MISReports {
 				}
 			}
 
-			dataTableMainData = firebirdClient.GetDataTable(itemReport.SqlQuery, parameters);
+			dataTableMainData = dbClient.GetDataTable(itemReport.SqlQuery, parameters);
 			Logging.ToLog("Получено строк: " + dataTableMainData.Rows.Count);
 
 			if (itemReport.Type == ReportsInfo.Type.PriceListToSite) {
@@ -728,7 +774,7 @@ namespace MISReports {
 				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " +
 					parametersAverageCheckPreviousWeek["@dateBegin"] +
 					" по " + parametersAverageCheckPreviousWeek["@dateEnd"]);
-				dataTableAverageCheckPreviousWeek = firebirdClient.GetDataTable(
+				dataTableAverageCheckPreviousWeek = dbClient.GetDataTable(
 					itemReport.SqlQuery, parametersAverageCheckPreviousWeek);
 				Logging.ToLog("Получено строк: " + dataTableAverageCheckPreviousWeek.Rows.Count);
 
@@ -740,7 +786,7 @@ namespace MISReports {
 				Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " +
 					parametersAverageCheckPreviousYear["@dateBegin"] +
 					" по " + parametersAverageCheckPreviousYear["@dateEnd"]);
-				dataTableAverageCheckPreviousYear = firebirdClient.GetDataTable(
+				dataTableAverageCheckPreviousYear = dbClient.GetDataTable(
 					itemReport.SqlQuery, parametersAverageCheckPreviousYear);
 				Logging.ToLog("Получено строк: " + dataTableAverageCheckPreviousYear.Rows.Count);
 
@@ -903,6 +949,7 @@ namespace MISReports {
 						subject,
 						itemReport.TemplateFileName,
 						type: itemReport.Type);
+
 					fileToUpload = ExcelGeneral.WriteDataTableToTextFile(
 						dataTableMainData,
 						"BzPriceListToUpload",
@@ -949,8 +996,26 @@ namespace MISReports {
 					itemReport.FileResult = TasksForItilium.SendTasks(dataTableMainData);
 
 				} else if (itemReport.Type == ReportsInfo.Type.RegistryMotivation &&
-					!string.IsNullOrEmpty(itemReport.FileResult)) { 
+					!string.IsNullOrEmpty(itemReport.FileResult)) {
 					ExcelGeneral.WriteDataTableToExcel(dataTableMainData, subject, itemReport.FileResult, "Данные", false);
+
+				} else if (itemReport.Type == ReportsInfo.Type.LicenseEndingDates) {
+					foreach (DataRow row in dataTableMainData.Rows) {
+						DateTime dateTime = (DateTime)row[1];
+						int daysLeft = (int)(dateTime - DateTime.Now).TotalDays;
+						string message = string.Empty;
+
+						string db = row[0].ToString();
+						if (daysLeft <= 7)
+							message += Environment.NewLine + "DB: " + db + " до окончания лицензии осталось дней: " + daysLeft;
+						else
+							Logging.ToLog("DB: " + db + " до окончания лицензии осталось дней: " + daysLeft);
+
+						if (!string.IsNullOrEmpty(message)) 
+							SystemMail.SendMail(subject, "На отдел сопровождения МИС: " + Environment.NewLine + message, itemReport.MailTo);
+					}
+
+					return;
 
 				} else {
 					itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
@@ -1072,6 +1137,11 @@ namespace MISReports {
 
 						case ReportsInfo.Type.RegistryMotivation:
 							isPostProcessingOk = RegistryMotivation.Process(itemReport.FileResult);
+							break;
+
+
+						case ReportsInfo.Type.Promo:
+							isPostProcessingOk = Promo.Process(itemReport.FileResult);
 							break;
 
 						default:
@@ -1222,7 +1292,7 @@ namespace MISReports {
             string method = string.Empty;
 
 			if (itemReport.Type == ReportsInfo.Type.PriceListToSite) {
-				url = "https://klinikabudzdorov.ru/export/price/file_input.php";
+				url = "https://old.klinikabudzdorov.ru/export/price/file_input.php";
 				method = WebRequestMethods.Http.Post;
 
 			} else if (itemReport.Type == ReportsInfo.Type.TimetableToProdoctorovRu) {
@@ -1230,7 +1300,7 @@ namespace MISReports {
 				return;
 
 			} else if (itemReport.Type == ReportsInfo.Type.TimetableToSite) {
-				url = "https://klinikabudzdorov.ru/export/schedule/file_input.php";
+				url = "https://old.klinikabudzdorov.ru/export/schedule/file_input.php";
 				method = WebRequestMethods.Http.Post;
 
 			} else {

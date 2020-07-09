@@ -12,12 +12,12 @@ namespace MISReports.ExcelHandlers {
 				return false;
 
 			try {
-				ws.Columns["C:C"].Select();
+				ws.Columns["D:D"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
-				ws.Columns["I:I"].ColumnWidth = 10;
-				ws.Columns["I:I"].Select();
+				ws.Columns["J:J"].ColumnWidth = 10;
+				ws.Columns["J:J"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
-				ws.Columns["I:I"].ColumnWidth = 10;
+				ws.Columns["J:J"].ColumnWidth = 10;
 				ws.Range["A1"].Select();
 			} catch (Exception e) {
 				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);

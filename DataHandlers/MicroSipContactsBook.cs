@@ -14,7 +14,7 @@ namespace MISReports.ExcelHandlers {
 			dataTable.Columns.Add(new DataColumn("name", typeof(string)));
 			dataTable.Columns.Add(new DataColumn("phoneNumber", typeof(string)));
 
-			string filePath = @"\\budzdorov.ru\NETLOGON\телефоны клиники Будь Здоров.xls";
+			string filePath = @"\\budzdorov.ru\NETLOGON\телефоны клиники Будь Здоров.xlsx";
 			List<string> sheetNames = ReadSheetNames(filePath);
 			foreach (string sheetName in sheetNames) {
 				string sheetNameCleared = sheetName.TrimStart('\'').TrimEnd('\'');

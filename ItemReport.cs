@@ -23,6 +23,7 @@ namespace MISReports {
 		public string FileResult { get; set; }
 		public string FileResultAverageCheckPreviousYear { get; set; }
 		public string JIDS { get; private set; }
+		public bool UseVerticaDb { get; set; } = false;
 
 		public ItemReport(string reportName) {
 			Settings settings = Settings.Default;
@@ -42,7 +43,7 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.UnclosedProtocolsWeek.ToString())) {
 				Type = ReportsInfo.Type.UnclosedProtocolsWeek;
 				SqlQuery = settings.MisDbSqlGetUnclosedProtocols;
-				MailTo = settings.MailToUnclosedProtocolsWeek;
+				MailTo = settings.MailToUnclosedProtocolsMonth;
 				TemplateFileName = settings.TemplateUnclosedProtocols;
 				FolderToSave = settings.FolderToSaveUnclosedProtocols;
 
@@ -495,6 +496,24 @@ namespace MISReports {
 				SqlQuery = settings.MisDbSqlGetRegistryMotivation;
 				MailTo = settings.MailToRegistryMotivation;
 				TemplateFileName = settings.TemplateRegistryMotivation;
+
+			} else if (reportName.Equals(ReportsInfo.Type.Reserves.ToString())) {
+				Type = ReportsInfo.Type.Reserves;
+				SqlQuery = settings.MisDbGetReserves;
+				MailTo = settings.MailToReserves;
+				TemplateFileName = settings.TemplateReserves;
+
+			} else if (reportName.Equals(ReportsInfo.Type.LicenseEndingDates.ToString())) {
+				Type = ReportsInfo.Type.LicenseEndingDates;
+				SqlQuery = settings.MisDbGetLicenseEndingDates;
+				MailTo = settings.MailToLicenseEndingDates;
+
+			} else if (reportName.Equals(ReportsInfo.Type.Promo.ToString())) {
+				Type = ReportsInfo.Type.Promo;
+				SqlQuery = settings.VerticaDbSqlQueryGetPromo;
+				MailTo = settings.MailToPromo;
+				TemplateFileName = settings.TemplatePromo;
+				UseVerticaDb = true;
 
 			} else
 				IsSettingsLoaded = false;
