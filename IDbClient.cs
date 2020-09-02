@@ -10,5 +10,6 @@ namespace MISReports {
         DataTable GetDataTable(string query, Dictionary<string, object> parameters = null);
         bool ExecuteUpdateQuery(string query, Dictionary<string, object> parameters);
         void Close();
+        string GetName();
     }
 }

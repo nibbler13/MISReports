@@ -93,5 +93,9 @@ namespace MISReports {
         public void Close() {
 			connection.Close();
         }
+
+        public string GetName() {
+			return connection.Database;
+        }
     }
 }

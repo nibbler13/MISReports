@@ -28,13 +28,13 @@ namespace MISReports.ExcelHandlers {
 		//private int maxKidAge = 0;
 		private string fileNameCodes;
 
-		public void PerformDataTable(DataTable dataTable, ReportsInfo.Type type) {
+		public void PerformDataTable(DataTable dataTable, ItemReport itemReport) {
 			if (dataTable == null)
 				return;
 
 			this.dataTable = dataTable;
 
-			switch (type) {
+			switch (itemReport.Type) {
 				#region Absolut
 				//------------
 				//checked 14.11.2019
@@ -744,9 +744,68 @@ namespace MISReports.ExcelHandlers {
 			rules.Add(RuleMsktByDepartment);
 			rules.Add(RuleSmpByDepartment);
 
+			double totalAmount = 0;
+			foreach (DataRow dataRow in dataTable.Rows)
+                try {
+					if (double.TryParse(dataRow["AMOUNTRUB"].ToString(), out double value))
+						totalAmount += value;
+				} catch (Exception e) {
+					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+                }
+
+            foreach (ItemTreatmentsDiscount item in itemReport.TreatmentsDiscounts)
+				if (item.MainDiscount == -1) {
+					foreach (KeyValuePair<Tuple<int, int>, float> pair in item.DynamicDiscount) {
+						Tuple<int, int> range = pair.Key;
+						if (totalAmount >= range.Item1 && (totalAmount <= range.Item2 || range.Item2 == -1)) {
+							item.UpdateMainDiscount(pair.Value);
+							break;
+						}
+					}
+
+					if (item.MainDiscount == -1)
+						item.UpdateMainDiscount(0);
+				}
+
 			for (i = 0; i < dataTable.Rows.Count; i++) {
 				try {
 					dataRow = dataTable.Rows[i];
+
+					string amountrub = dataRow["AMOUNTRUB"].ToString();
+					double totalWithDiscount = 0;
+					double.TryParse(amountrub, out totalWithDiscount);
+					double discount = 0;
+
+					string department = dataRow["DEPNAME"].ToString();
+					string kodoper = dataRow["KODOPER"].ToString();
+					string treatdate = dataRow["NCTRDATE"].ToString();
+
+					if (DateTime.TryParse(treatdate, out DateTime dateTreat)) {
+						foreach (ItemTreatmentsDiscount itemDiscount in itemReport.TreatmentsDiscounts) {
+							bool isDiscountNotAvailable = false;
+							foreach (string dept in itemDiscount.ExcludeDepartments)
+								if (department.ToLower().Equals(dept.ToLower())) {
+									isDiscountNotAvailable = true;
+									break;
+								}
+
+							foreach (string kod in itemDiscount.ExcludeKodopers)
+								if (kodoper.ToLower().Equals(kod.ToLower())) {
+									isDiscountNotAvailable = true;
+									break;
+								}
+
+							if (dateTreat.Date >= itemDiscount.DateStart.Date && 
+								(!itemDiscount.DateEnd.HasValue || dateTreat.Date <= itemDiscount.DateEnd.Value.Date))
+								if (!isDiscountNotAvailable)
+									discount += itemDiscount.MainDiscount;
+
+						}
+					}
+
+					//dataRow["TOTAL_WITH_DISCOUNT"] = totalWithDiscount * ((100.0d - discount) / 100.0d);
+					//dataRow["DISCOUNT"] = discount;
+
 					string comment_3 = dataRow["COMMENT_3"].ToString();
 					if (!string.IsNullOrEmpty(comment_3))
 						continue;
@@ -893,6 +952,7 @@ namespace MISReports.ExcelHandlers {
 
 			return false;
 		}
+
 		private bool RuleGarantyMailAlliance() {
 			string programType = dataRow["PRG"].ToString().ToLower();
 			if (programType.Contains("гарантийное письмо") && programType.Contains("ашан")) {

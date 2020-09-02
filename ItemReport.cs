@@ -24,6 +24,7 @@ namespace MISReports {
 		public string FileResultAverageCheckPreviousYear { get; set; }
 		public string JIDS { get; private set; }
 		public bool UseVerticaDb { get; set; } = false;
+		public List<ItemTreatmentsDiscount> TreatmentsDiscounts { get; private set; } = new List<ItemTreatmentsDiscount>();
 
 		public ItemReport(string reportName) {
 			Settings settings = Settings.Default;
@@ -207,6 +208,12 @@ namespace MISReports {
 				TemplateFileName = settings.TemplateAverageCheck;
 				MailTo = settings.MailToAverageCheckIGS;
 
+			} else if (reportName.Equals(ReportsInfo.Type.AverageCheckMSK.ToString())) {
+				Type = ReportsInfo.Type.AverageCheckMSK;
+				SqlQuery = settings.MisDbSqlGetAverageCheckMSK;
+				TemplateFileName = settings.TemplateAverageCheck;
+				MailTo = settings.MailToAverageCheckMSK;
+
 			} else if (reportName.Equals(ReportsInfo.Type.CompetitiveGroups.ToString())) {
 				Type = ReportsInfo.Type.CompetitiveGroups;
 				SqlQuery = settings.MisDbSqlGetCompetitiveGroups;
@@ -225,236 +232,277 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAbsolut.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAbsolut;
 				JIDS = "991515382,991519409,991519865,991523030";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 5);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAlfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAlfa;
 				JIDS = "100005,991520911,991514852";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2018, 6, 1), null, 20);
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 6, 1), new DateTime(2020, 6, 30), 2.9f);
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAlfaSpb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAlfaSpb;
 				JIDS = "990424275"; //80/10-09
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAlliance.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAlliance;
 				JIDS = "991511535,991520499,991519440,991521374,991511568";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 2, 1), new DateTime(2020, 3, 31), 20);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				TreatmentsDiscounts.Add(discount2);
+
+				ItemTreatmentsDiscount discount3 = new ItemTreatmentsDiscount(new DateTime(2020, 4, 1), new DateTime(2020, 12, 31), 10);
+				discount3.AddKtMrtPndSmpDeptToExclude();
+				discount3.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount3);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsBestdoctor.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsBestdoctor;
 				JIDS = "991520964, 991526106";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(300000, 700000), 5);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(700001, 1500000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(1500001, 3000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 5);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsEnergogarant.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsEnergogarant;
 				JIDS = "991523453,991517214,991520348";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhAdult.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhAdult;
 				JIDS = "991522348,991522924,991525955,991522442";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 20);
+				discount.ExcludeDepartments.Add("СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ");
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhKid.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKid;
 				JIDS = "991522386";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
-				//JIDS = "990389345,991511093,991512906,991357338,991370062,991379370,991518734," +
-				//	"991518673,991519689,991519376,991520842,991520995,991521326,991522926,991522930," +
-				//	"991524101,991524413,991518373,991522932,991524095,991522934,991522938,991516471,991517195," +
-				//	"991517199,991518886,991518972,991519618,991520845,991522343,991524107,991524598,991525373," +
-				//	"991526193,991514245,991516006,991514230,991517179,991517184,991514243,991526172,991517202," +
-				//	"991519343,991519465,991518877,991521414,991519417,991520848,991524071,991522936,991524374," +
-				//	"991524084,991514228,991526177,991526091,991517190,991516351,991526130,991518519,991518344," +
-				//	"991519305,991520863,991514323,991521813,991523284,991524104,991514234,991526175,991465238," +
-				//	"991512358,1990110711,1990108742,1990110725,1990134205,1990138662,1990110728,991510615," +
-				//	"991465236,991465233,991465253";
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 20);
+				discount.ExcludeDepartments.Add("СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ");
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsLiberty.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsLiberty;
 				JIDS = "991517912";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsMetlife.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsMetlife;
 				JIDS = "991517927,991523451,991519436";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 5);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsOther.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsOther;
 				JIDS = "";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsRenessans.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsRenessans;
 				JIDS = "991523042,991523280,991523170";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsReso.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsReso;
 				JIDS = "991518370,991521272,991523038,991526075,991519595";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsRosgosstrakh.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsRosgosstrakh;
 				JIDS = "991511705,1990097479";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSmp.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSmp;
 				JIDS = "991516698,991521960";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSogaz.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSogaz;
 				JIDS = "991524638";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 2, 1), new DateTime(2020, 12, 31), 10);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSoglasie.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSoglasie;
 				JIDS = "991520913,991518470,991519761,991523028";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 5);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsVsk.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsVsk;
 				JIDS = "991516556,991520387,991523215,991519361,991525970";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(4000000, 5000000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(5000001, 10000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(10000001, -1), 20);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 5);
+				discount2.AddKtMrtPndSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				TreatmentsDiscounts.Add(discount2);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsVtb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsVtb;
 				JIDS = "991515797,991520427";
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAll.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAll;
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhSochi.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhSochi;
 				JIDS = "991512906"; //4986881-19/16
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhKrasnodar.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKrasnodar;
 				JIDS = "991357338"; //№ 567751-19/11
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhUfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhUfa;
 				JIDS = "991370062"; //№ 681187-19/11
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhSpb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhSpb;
 				JIDS = "990389345"; //267673-19/09
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhKazan.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKazan;
 				JIDS = "991379370"; //№ 714760-19/11
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsBestDoctorSpb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsBestDoctorSpb;
 				JIDS = "991523486"; //522-78-2018
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsBestDoctorUfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsBestDoctorUfa;
 				JIDS = "991523489"; //535-02-18
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSogazUfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSogazUfa;
 				JIDS = "991524671,991524697"; //2719RP055, ДС № 2719RP055-02  к дог. №2719RP055 (ГК «БАШНЕФТЬ»)
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails;
-				TemplateFileName = settings.TemplateTreatmentsDetails;
-				MailTo = settings.MailToTreatmentsDetails;
-				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 				#endregion TreatmentsDetails
 				//-----------------------------------------------------------------------------------------------------
 
@@ -510,13 +558,27 @@ namespace MISReports {
 
 			} else if (reportName.Equals(ReportsInfo.Type.Promo.ToString())) {
 				Type = ReportsInfo.Type.Promo;
-				SqlQuery = settings.VerticaDbSqlQueryGetPromo;
+				SqlQuery = settings.VerticaDbSqlGetPromo;
 				MailTo = settings.MailToPromo;
 				TemplateFileName = settings.TemplatePromo;
 				UseVerticaDb = true;
 
+			} else if (reportName.Equals(ReportsInfo.Type.MisTimeSheet.ToString())) {
+				Type = ReportsInfo.Type.MisTimeSheet;
+				SqlQuery = settings.MisDbSqlGetMisTimeSheet;
+				MailTo = settings.MailToMisTimeSheet;
+				TemplateFileName = settings.TemplateMisTimeSheet;
+
 			} else
 				IsSettingsLoaded = false;
+
+			if (Type.ToString().Contains("TreatmentsDetails")) {
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails; //settings.VerticaDbSqlGetTreatmentsDetails; //
+				TemplateFileName = settings.TemplateTreatmentsDetails;
+				MailTo = settings.MailToTreatmentsDetails;
+				FolderToSave = settings.FolderToSaveTreatmentsDetails;
+				UseVerticaDb = false;
+			}
 
 			if (IsSettingsLoaded) {
 				Name = ReportsInfo.AcceptedParameters[Type];

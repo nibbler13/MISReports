@@ -35,6 +35,7 @@ namespace MISReports {
             RecordsFromInsuranceCompanies,
 			AverageCheckRegular,
 			AverageCheckIGS,
+			AverageCheckMSK,
 			CompetitiveGroups,
 			LicenseStatistics,
 			TreatmentsDetailsAbsolut,
@@ -74,7 +75,8 @@ namespace MISReports {
 			RegistryMotivation,
 			Reserves,
 			LicenseEndingDates,
-			Promo
+			Promo,
+			MisTimeSheet
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -106,6 +108,7 @@ namespace MISReports {
             { Type.RecordsFromInsuranceCompanies, "Отчет по записям из страховых компаний" },
             { Type.AverageCheckRegular, "Отчет по среднему чеку" },
             { Type.AverageCheckIGS, "Отчет по среднему чеку (ИГС)" },
+            { Type.AverageCheckMSK, "Отчет по среднему чеку (МСК)" },
 			{ Type.CompetitiveGroups, "Отчет по конкурентным группам" },
 			{ Type.LicenseStatistics, "Статистика по лицензиям" },
 			{ Type.TreatmentsDetailsAbsolut, "Детальный отчет по приемам АбсолютСтрахование" },
@@ -145,7 +148,8 @@ namespace MISReports {
 			{ Type.RegistryMotivation, "Расчет мотивации для регистратуры" },
 			{ Type.Reserves, "Отчет по резервам в расписании" },
 			{ Type.LicenseEndingDates, "Статистика по окончанию действия лицензий" },
-			{ Type.Promo, "Список действующих акций" }
+			{ Type.Promo, "Список действующих акций" },
+			{ Type.MisTimeSheet, "Табель из МИС" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -177,6 +181,7 @@ namespace MISReports {
 			{ Type.RecordsFromInsuranceCompanies, "Каждый понедельник в 3:00" },
 			{ Type.AverageCheckRegular, "Каждый понедельник в 6:25" },
 			{ Type.AverageCheckIGS, "Каждый день в 7:30" },
+			{ Type.AverageCheckMSK, "Каждый понедельник и каждое 1 число месяца в 6:40" },
 			{ Type.CompetitiveGroups, "Каждый месяц, 1 числа в 6:40" },
 			{ Type.LicenseStatistics, "Каждый день, с 8:00 до 21:00 с интервалом 2 часа" },
 			{ Type.TreatmentsDetailsAbsolut, "" },
@@ -216,7 +221,8 @@ namespace MISReports {
 			{ Type.RegistryMotivation, "Каждый месяц 10 числа в 3:00" },
 			{ Type.Reserves, "Каждый месяц 3 и 18 числа в в 3:10" },
 			{ Type.LicenseEndingDates, "Каждый день в 5:00" },
-			{ Type.Promo, "Каждый понедельник" }
+			{ Type.Promo, "Каждый понедельник" },
+			{ Type.MisTimeSheet, "Каждое 1 и 16 число месяца" }
 		};
 	}
 }

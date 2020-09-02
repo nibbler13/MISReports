@@ -63,7 +63,8 @@ namespace MISReports.ExcelHandlers {
 
 			Uri uriStartup = null;
 			try {
-				uriStartup = Application.Current.StartupUri;
+				if (Application.Current is object)
+					uriStartup = Application.Current.StartupUri;
 			} catch (Exception) {}
 
 			if (uriStartup != null) {

@@ -77,6 +77,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataHandlers\MisTimeSheet.cs" />
+    <Compile Include="ItemTreatmentsDiscount.cs" />
     <Compile Include="DataHandlers\AverageCheck.cs" />
     <Compile Include="DataHandlers\CompetitiveGroups.cs" />
     <Compile Include="DataHandlers\FirstTimeVisitPatients.cs" />

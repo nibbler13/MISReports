@@ -48,9 +48,9 @@ namespace MISReports {
 		private static string body = string.Empty;
 		private static bool hasError = false;
 
-        private static string fileToUpload = string.Empty;
+		private static string fileToUpload = string.Empty;
 		private static readonly string mailCopy = Properties.Settings.Default.MailCopy;
-        private static string priceListToSiteEmptyFields = string.Empty;
+		private static string priceListToSiteEmptyFields = string.Empty;
 
 		private static Dictionary<string, string> workloadResultFiles = new Dictionary<string, string> {
 			{ "_Общий", string.Empty },
@@ -94,7 +94,7 @@ namespace MISReports {
 			ReportsInfo.Type.TreatmentsDetailsSogazUfa,
 		};
 
-		private static readonly Tuple<string, string, string>[] infoclinicaDBs = 
+		private static readonly Tuple<string, string, string>[] infoclinicaDBs =
 			new Tuple<string, string, string>[] {
 				 new Tuple<string, string, string>("172.16.9.9", "Central", "99_ЦБД"),
 				 new Tuple<string, string, string>("172.16.225.2", "mssu", "12_Сущевcкий Вал"),
@@ -111,7 +111,7 @@ namespace MISReports {
 				 new Tuple<string, string, string>("172.16.158.2", "kazan", "10_Казань"),
 				 new Tuple<string, string, string>("172.17.3.2", "yekuk", "15_К-Уральский"),
 				 new Tuple<string, string, string>("172.17.100.2", "sctrk", "17_Сочи"),
-				 new Tuple<string, string, string>("172.17.10.2", "call_center", "97_Информационный центр")
+				 new Tuple<string, string, string>("172.16.166.2", "call_center", "97_Информационный центр")
 		};
 
 		private static readonly Dictionary<string, string> registryMotivationQueries = new Dictionary<string, string> {
@@ -264,18 +264,19 @@ namespace MISReports {
 					"where WorkDate between @dateBegin and @dateEnd " + Environment.NewLine +
 					"and s.CLVISIT = 1 " + Environment.NewLine +
 					"group by 1,2,3,5 " },
-			{ "Записи", "select " + Environment.NewLine +
-					"d.dcode " + Environment.NewLine +
-					", d.fullname " + Environment.NewLine +
-					", d.doctpost " + Environment.NewLine +
-					", count(distinct s.SCHEDID) " + Environment.NewLine +
-					", f.shortname " + Environment.NewLine +
-					"from Schedule s " + Environment.NewLine +
-					"left join treat t on t.treatcode = s.treatcode " + Environment.NewLine +
-					"join filials f on f.filid = s.filial " + Environment.NewLine +
-					"join doctor d on s.CREATORID = d.dcode " + Environment.NewLine +
-					"where WorkDate between @dateBegin and @dateEnd " + Environment.NewLine +
-					"group by 1,2,3,5 " },
+			{ "Записи", "select " +
+					"d.dcode " +
+					", d.fullname " +
+					", d.doctpost " +
+					", count(o.lgid) " +
+					", f.shortname " +
+					"from operlog o " +
+					"left join operlogref op on o.eventtype = op.eventtype " +
+					"join doctor d on o.uid = d.dcode " +
+					"join filials f on d.FILIAL = f.filid " +
+					"where o.eventtype in (29) " +
+					"and o.eventdate between @dateBegin and @dateEnd " +
+					"group by 1,2,3,5" },
 			{ "Анализы", "select " + Environment.NewLine +
 					"d.dcode " + Environment.NewLine +
 					", d.fullname " + Environment.NewLine +
@@ -401,7 +402,8 @@ namespace MISReports {
 
 			string[] attachments;
 
-			if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular)
+			if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular ||
+				itemReport.Type == ReportsInfo.Type.AverageCheckMSK)
 				attachments = new string[] { itemReport.FileResult, itemReport.FileResultAverageCheckPreviousYear };
 			else
 				attachments = new string[] { itemReport.FileResult };
@@ -467,6 +469,12 @@ namespace MISReports {
 			dateBeginOriginal = itemReport.DateBegin;
 			dateBeginStr = dateBeginOriginal.Value.ToShortDateString();
 			dateEndStr = itemReport.DateEnd.ToShortDateString();
+
+			if (itemReport.UseVerticaDb) {
+				dateBeginStr = dateBeginOriginal.Value.ToString("yyyy-MM-dd");
+				dateEndStr = itemReport.DateEnd.ToString("yyyy-MM-dd");
+            }
+
 			subject = ReportsInfo.AcceptedParameters[itemReport.Type] + " с " + dateBeginStr + " по " + dateEndStr;
 			Logging.ToLog(subject);
 
@@ -585,7 +593,7 @@ namespace MISReports {
 			if (itemReport.Type.ToString().StartsWith("TreatmentsDetails"))
 				itemReport.SqlQuery = itemReport.SqlQuery.Replace("@jids", itemReport.JIDS);
 
-			Logging.ToLog("Получение данных из базы МИС Инфоклиника за период с " + dateBeginStr + " по " + dateEndStr);
+			Logging.ToLog("Получение данных из БД (" + dbClient.GetName() + ") за период с " + dateBeginStr + " по " + dateEndStr);
 
 			if (itemReport.Type == ReportsInfo.Type.Workload) {
 				parameters = new Dictionary<string, object>();
@@ -691,7 +699,8 @@ namespace MISReports {
             if (itemReport.Type == ReportsInfo.Type.FssInfo)
                 FssInfo.PerformData(ref dataTableMainData);
 
-			if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular) {
+			if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular ||
+				itemReport.Type == ReportsInfo.Type.AverageCheckMSK) {
 				if (itemReport.DateBegin.Day == 1 &&
 					itemReport.DateEnd.Day == DateTime.DaysInMonth(itemReport.DateBegin.Year, itemReport.DateBegin.Month) &&
 					itemReport.DateBegin.Month == itemReport.DateEnd.Month &&
@@ -802,7 +811,7 @@ namespace MISReports {
 
 			if (itemReport.Type.ToString().StartsWith("TreatmentsDetails")) {
 				TreatmentsDetails treatmentsDetails = new TreatmentsDetails();
-				treatmentsDetails.PerformDataTable(dataTableMainData, itemReport.Type);
+				treatmentsDetails.PerformDataTable(dataTableMainData, itemReport);
 			}
 		}
 
@@ -969,7 +978,8 @@ namespace MISReports {
 														 dateBeginStr + " - " + dateEndStr,
 														 itemReport.Type);
 
-				} else if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular) {
+				} else if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular ||
+					itemReport.Type == ReportsInfo.Type.AverageCheckMSK) {
 					itemReport.FileResult =
 						AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousWeek,
 							subjectAverageCheckPreviousWeek, itemReport.TemplateFileName);
@@ -1108,6 +1118,7 @@ namespace MISReports {
                             break;
 
 						case ReportsInfo.Type.AverageCheckRegular:
+						case ReportsInfo.Type.AverageCheckMSK:
 							isPostProcessingOk = AverageCheck.Process(
 								itemReport.FileResult, parameters, parametersAverageCheckPreviousWeek);
 							isPostProcessingOk &= AverageCheck.Process(
@@ -1139,9 +1150,12 @@ namespace MISReports {
 							isPostProcessingOk = RegistryMotivation.Process(itemReport.FileResult);
 							break;
 
-
 						case ReportsInfo.Type.Promo:
 							isPostProcessingOk = Promo.Process(itemReport.FileResult);
+							break;
+
+						case ReportsInfo.Type.MisTimeSheet:
+							isPostProcessingOk = MisTimeSheet.Process(itemReport.FileResult);
 							break;
 
 						default:

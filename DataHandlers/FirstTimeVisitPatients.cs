@@ -26,7 +26,7 @@ namespace MISReports.ExcelHandlers {
 				SortedDictionary<string, int> results = new SortedDictionary<string, int>();
 
 				foreach (DataRow dataRow in dataTable.Rows) {
-					string filial = dataRow[4].ToString();
+					string filial = dataRow[5].ToString();
 
 					if (filial.Equals("Филиал"))
 						continue;

@@ -92,5 +92,9 @@ namespace MISReports {
 
 			return updated;
 		}
-	}
+
+        public string GetName() {
+			return connection.Database;
+        }
+    }
 }
