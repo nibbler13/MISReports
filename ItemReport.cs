@@ -310,9 +310,12 @@ namespace MISReports {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhAdult;
 				JIDS = "991522348,991522924,991525955,991522442";
 
-				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 20);
-				discount.ExcludeDepartments.Add("СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ");
-				TreatmentsDiscounts.Add(discount);
+				//=====================
+				//Управленческая скидка
+				//=====================
+				//ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 20);
+				//discount.ExcludeDepartments.Add("СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ");
+				//TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
 				discount2.AddKtMrtPndSmpDeptToExclude();
@@ -323,9 +326,12 @@ namespace MISReports {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKid;
 				JIDS = "991522386";
 
-				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 20);
-				discount.ExcludeDepartments.Add("СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ");
-				TreatmentsDiscounts.Add(discount);
+				//=====================
+				//Управленческая скидка
+				//=====================
+				//ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 20);
+				//discount.ExcludeDepartments.Add("СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ");
+				//TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
 				discount2.AddKtMrtPndSmpDeptToExclude();
@@ -578,6 +584,9 @@ namespace MISReports {
 				MailTo = settings.MailToTreatmentsDetails;
 				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 				UseVerticaDb = false;
+
+				if (Type.ToString().Equals(ReportsInfo.Type.TreatmentsDetailsOther.ToString()))
+					SqlQuery = settings.MisDbSqlGetTreatmentsDetailsOtherIC;
 			}
 
 			if (IsSettingsLoaded) {

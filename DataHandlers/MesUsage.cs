@@ -50,10 +50,13 @@ namespace MISReports.ExcelHandlers {
 					string[] arrayMES = new string[0];
 					string[] arrayReferrals = new string[0];
 					string[] arrayAllReferrals = new string[0];
+
 					if (!string.IsNullOrEmpty(listMES))
 						arrayMES = listMES.Split(';');
+
 					if (!string.IsNullOrEmpty(listReferrals))
 						arrayReferrals = listReferrals.Split(';');
+
 					if (!string.IsNullOrEmpty(listAllReferrals))
 						arrayAllReferrals = listAllReferrals.Split(';');
 

@@ -92,6 +92,7 @@ namespace MISReports {
 			ReportsInfo.Type.TreatmentsDetailsBestDoctorSpb,
 			ReportsInfo.Type.TreatmentsDetailsBestDoctorUfa,
 			ReportsInfo.Type.TreatmentsDetailsSogazUfa,
+			ReportsInfo.Type.TreatmentsDetailsOther
 		};
 
 		private static readonly Tuple<string, string, string>[] infoclinicaDBs =

@@ -32,9 +32,11 @@ namespace MISReports {
 
 		public void AddKtMrtPndSmpDeptToExclude() {
 			ExcludeDepartments.AddRange(new List<string> {
-				"Конусно-лучевая компьютерная томография",
+				"Компьютерная топография",
 				"МРТ",
+				"МУЛЬТИСПИРАЛЬНАЯ КОМПЬЮТЕРНАЯ ТОМОГРАФИЯ",
 				"ПОМОЩЬ НА ДОМУ",
+				"Помощь на дому детское",
 				"СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ"
 			});
         }

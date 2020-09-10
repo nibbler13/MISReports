@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -744,6 +745,11 @@ namespace MISReports.ExcelHandlers {
 			rules.Add(RuleMsktByDepartment);
 			rules.Add(RuleSmpByDepartment);
 
+			string motivationExcludeFile = @"\\mskv-fs-01\MSKV Files\Управление информационных технологий\08_Проекты\142 - МЭЭ\Мотивация - Исключаемые услуги.xlsx";
+			string motivationExcludeFileSheetName = "Услуги исключения (Приказ №107)";
+			List<string> motivationExcludeKodopers = new List<string>();
+			ReadWorksheetColumn0(motivationExcludeFile, motivationExcludeFileSheetName, motivationExcludeKodopers);
+
 			double totalAmount = 0;
 			foreach (DataRow dataRow in dataTable.Rows)
                 try {
@@ -803,8 +809,9 @@ namespace MISReports.ExcelHandlers {
 						}
 					}
 
-					//dataRow["TOTAL_WITH_DISCOUNT"] = totalWithDiscount * ((100.0d - discount) / 100.0d);
-					//dataRow["DISCOUNT"] = discount;
+					dataRow["TOTAL_WITH_DISCOUNT"] = totalWithDiscount * ((100.0d - discount) / 100.0d);
+					dataRow["DISCOUNT"] = discount;
+					dataRow["MOTIVATION_USE"] = motivationExcludeKodopers.Contains(kodoper) ? "Нет" : "Да";
 
 					string comment_3 = dataRow["COMMENT_3"].ToString();
 					if (!string.IsNullOrEmpty(comment_3))
@@ -821,7 +828,6 @@ namespace MISReports.ExcelHandlers {
 		}
 
 		private void ReadWorksheetColumn0(string fileFullPath, string sheetName, List<string> list) {
-			Logging.ToLog("Считывание файла: " + fileFullPath);
 			if (File.Exists(fileFullPath)) {
 				try {
 					DataTable dataTable = ReadExcelFile(fileFullPath, sheetName);
