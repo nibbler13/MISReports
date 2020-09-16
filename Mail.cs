@@ -75,8 +75,15 @@ namespace MISReports {
 				message.Subject = subject;
 				message.Body = body;
 
-				if (!string.IsNullOrEmpty(Properties.Settings.Default.MailCopy))
-					message.CC.Add(Properties.Settings.Default.MailCopy);
+				string mailCopy = Properties.Settings.Default.MailCopy;
+				if (!string.IsNullOrEmpty(mailCopy)) {
+					if (mailCopy.Contains(";")) {
+						string[] splitted = mailCopy.Split(';');
+						foreach (string item in splitted)
+							message.CC.Add(item);
+					} else
+						message.CC.Add(mailCopy);
+				}
 
 				SmtpClient client = new SmtpClient(Properties.Settings.Default.MailSmtpServer, 587);
 				client.UseDefaultCredentials = false;

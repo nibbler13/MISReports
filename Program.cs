@@ -1,4 +1,5 @@
-﻿using MISReports.ExcelHandlers;
+﻿using MISReports.DataHandlers;
+using MISReports.ExcelHandlers;
 using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
@@ -386,8 +387,8 @@ namespace MISReports {
 
 			SaveSettings();
 
-			if (Debugger.IsAttached)
-				return;
+			//if (Debugger.IsAttached)
+			//	return;
 
 			if (!string.IsNullOrEmpty(itemReport.FolderToSave))
 				SaveReportToFolder();
@@ -814,6 +815,9 @@ namespace MISReports {
 				TreatmentsDetails treatmentsDetails = new TreatmentsDetails();
 				treatmentsDetails.PerformDataTable(dataTableMainData, itemReport);
 			}
+
+			if (itemReport.Type == ReportsInfo.Type.PatientsToSha1)
+				dataTableMainData = PatientToSha1.PerformDataTable(dataTableMainData);
 		}
 
 		private static int GetIso8601WeekOfYear(DateTime time) {
@@ -960,10 +964,12 @@ namespace MISReports {
 						itemReport.TemplateFileName,
 						type: itemReport.Type);
 
-					fileToUpload = ExcelGeneral.WriteDataTableToTextFile(
-						dataTableMainData,
-						"BzPriceListToUpload",
-						saveAsJson: true);
+					fileToUpload = itemReport.FileResult;
+
+					//fileToUpload = ExcelGeneral.WriteDataTableToTextFile(
+					//	dataTableMainData,
+					//	"BzPriceListToUpload",
+					//	saveAsJson: true);
 
 				} else if (itemReport.Type == ReportsInfo.Type.TimetableToProdoctorovRu) {
 					fileToUpload = TimetableToProdoctorovRu.PerformData(dataTableMainData);
@@ -1307,7 +1313,8 @@ namespace MISReports {
             string method = string.Empty;
 
 			if (itemReport.Type == ReportsInfo.Type.PriceListToSite) {
-				url = "https://old.klinikabudzdorov.ru/export/price/file_input.php";
+				//url = "https://old.klinikabudzdorov.ru/export/price/file_input.php";
+				url = "https://klinikabudzdorov.ru/api/upload_price/";
 				method = WebRequestMethods.Http.Post;
 
 			} else if (itemReport.Type == ReportsInfo.Type.TimetableToProdoctorovRu) {

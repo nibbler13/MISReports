@@ -575,6 +575,11 @@ namespace MISReports {
 				MailTo = settings.MailToMisTimeSheet;
 				TemplateFileName = settings.TemplateMisTimeSheet;
 
+			} else if (reportName.Equals(ReportsInfo.Type.PatientsToSha1.ToString())) {
+				Type = ReportsInfo.Type.PatientsToSha1;
+				SqlQuery = settings.MisDbSqlGetPatientsToSha1;
+				TemplateFileName = settings.TemplatePatientsToSha1;
+
 			} else
 				IsSettingsLoaded = false;
 

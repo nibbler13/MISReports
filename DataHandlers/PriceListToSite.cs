@@ -21,11 +21,27 @@ namespace MISReports.ExcelHandlers {
 				if (IsNeedToExclude(dataRow, exclusions))
 					continue;
 
-				dataRow["ПРИОРИТЕТ"] = GetPriority(dataRow, priorities);
-				dataRow["ВИД"] = GetType(dataRow);
+				dataRow["PRIORITY"] = GetPriority(dataRow, priorities);
+				dataRow["TYPE_NAME"] = GetType(dataRow);
 				GetTopLevelAndSiteService(dataRow, grouping, out string topLevel, out string siteService);
-				dataRow["ВЕРХНИЙ УРОВЕНЬ"] = topLevel;
-				dataRow["УСЛУГА САЙТА"] = siteService;
+				dataRow["TOP_LEVEL"] = topLevel;
+				dataRow["SITE_SERVICE"] = siteService;
+
+				if (topLevel.Equals("Детские специалисты")) {
+					try {
+						dataRow["KID_MSSU_NAL"] = dataRow["ADULT_MSSU_NAL"];
+						dataRow["ADULT_MSSU_NAL"] = DBNull.Value;
+					} catch (Exception e) {
+						Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+					}
+				} else if (topLevel.Equals("Лабораторные исследования")) {
+					try {
+						dataRow["Zabornik1_NAL"] = dataRow["MSPO_NAL"];
+						dataRow["Zabornik2_NAL"] = dataRow["MSPO_NAL"];
+					} catch (Exception e) {
+						Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+					}
+				}
 
                 if (string.IsNullOrEmpty(topLevel) ||
                     string.IsNullOrEmpty(siteService))
@@ -37,9 +53,9 @@ namespace MISReports.ExcelHandlers {
             if (!string.IsNullOrEmpty(emptyFields))
                 emptyFields =
                     "<table border='1'><tr><th>ВЕРХНИЙ УРОВЕНЬ</th><th>ГРУППА</th><th>ПОДГРУППА</th><th>УСЛУГА САЙТА</th><th>ID УСЛУГИ</th><th>ВИД</th><th>ПРИОРИТЕТ</th><th>" +
-                    "КОД УСЛУГИ</th><th>ИМЯ УСЛУГИ</th><th>МДМ_Наличный расчет</th><th>СУЩ_Наличный расчет</th><th>М-СРЕТ_Наличный расчет</th><th>" +
+					"КОД УСЛУГИ</th><th>ИМЯ УСЛУГИ</th><th>МДМ_Наличный расчет</th><th>Взросл_СУЩ_Наличный расчет</th><th>Детск_СУЩ_Наличный расчет</th><th>М-СРЕТ_Наличный расчет</th><th>" +
                     "С-Пб._Наличный расчет</th><th>Красн_Наличный расчет</th><th>Уфа_Наличный расчет</th><th>Казань_Наличный расчет</th><th>" +
-                    "К-УРАЛ_Наличный расчет</th><th>Сочи_Наличный расчет</th></tr>" + emptyFields + "</table>";
+					"К-УРАЛ_Наличный расчет</th><th>Сочи_Наличный расчет</th><th>Заборник_1_Наличный расчет</th><th>Заборник_2_Наличный расчет</th></tr>" + emptyFields + "</table>";
 
 			return dataTableResult;
 		}
@@ -68,7 +84,7 @@ namespace MISReports.ExcelHandlers {
 				return isNeedToExclude;
 
 			try {
-				string[] typesToExclude = new string[] { "ГРУППА", "ПОДГРУППА", "КОД УСЛУГИ" };
+				string[] typesToExclude = new string[] { "GROUP_NAME", "SUBGROUP", "KODOPER" };
 				foreach (string excludeType in typesToExclude) {
 					string valueToCheck = dataRow[excludeType].ToString();
 
@@ -98,7 +114,7 @@ namespace MISReports.ExcelHandlers {
 
 		private static int GetPriority(DataRow dataRow, DataTable priorities) {
 			int priority = 99;
-			string kodoper = dataRow["КОД УСЛУГИ"].ToString();
+			string kodoper = dataRow["KODOPER"].ToString();
 
 			try {
 				if (string.IsNullOrEmpty(kodoper))
@@ -125,7 +141,7 @@ namespace MISReports.ExcelHandlers {
 			string type = "Услуги";
 
 			try {
-				string serviceName = dataRow["ИМЯ УСЛУГИ"].ToString();
+				string serviceName = dataRow["SERVICE_NAME"].ToString();
 				serviceName = serviceName.ToLower();
 				if (serviceName.Contains("прием") ||
 					serviceName.Contains("приём") ||
@@ -144,9 +160,9 @@ namespace MISReports.ExcelHandlers {
 			siteService = string.Empty;
 
 			try {
-				string kodoper = dataRow["КОД УСЛУГИ"].ToString();
-				string group = dataRow["ГРУППА"].ToString().ToLower();
-				string subgroup = dataRow["ПОДГРУППА"].ToString().ToLower();
+				string kodoper = dataRow["KODOPER"].ToString();
+				string group = dataRow["GROUP_NAME"].ToString().ToLower();
+				string subgroup = dataRow["SUBGROUP"].ToString().ToLower();
 
 				EnumerableRowCollection<DataRow> rowsByKodoper =
 					from row in grouping.AsEnumerable()
@@ -159,7 +175,7 @@ namespace MISReports.ExcelHandlers {
 					return;
 				}
 
-				string type = dataRow["ВИД"].ToString().ToLower();
+				string type = dataRow["TYPE_NAME"].ToString().ToLower();
 
 				EnumerableRowCollection<DataRow> rowsByGroup =
 					from row in grouping.AsEnumerable()
@@ -233,9 +249,9 @@ namespace MISReports.ExcelHandlers {
 
 			int usedRows = ws.UsedRange.Rows.Count;
 
-			ws.Range["A3:R3"].Select();
+			ws.Range["A3:U3"].Select();
 			xlApp.Selection.Copy();
-			ws.Range["A4:R" + usedRows].Select();
+			ws.Range["A4:U" + usedRows].Select();
 			xlApp.Selection.PasteSpecial(Excel.XlPasteType.xlPasteFormats);
 			ws.Range["A1"].Select();
 

@@ -79,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataHandlers\MisTimeSheet.cs" />
+    <Compile Include="DataHandlers\PatientToSha1.cs" />
     <Compile Include="ItemTreatmentsDiscount.cs" />
     <Compile Include="DataHandlers\AverageCheck.cs" />
     <Compile Include="DataHandlers\CompetitiveGroups.cs" />
