@@ -77,7 +77,9 @@ namespace MISReports {
 			LicenseEndingDates,
 			Promo,
 			MisTimeSheet,
-			PatientsToSha1
+			PatientsToSha1,
+			PatientsReferralsDetail,
+			FrontOfficeClients
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -151,7 +153,9 @@ namespace MISReports {
 			{ Type.LicenseEndingDates, "Статистика по окончанию действия лицензий" },
 			{ Type.Promo, "Список действующих акций" },
 			{ Type.MisTimeSheet, "Табель из МИС" },
-			{ Type.PatientsToSha1, "Получение хэш-суммы SHA1 для списка пациентов" }
+			{ Type.PatientsToSha1, "Получение хэш-суммы SHA1 для списка пациентов" },
+			{ Type.PatientsReferralsDetail, "Отчет по направлениям пациентов (фронт-офис)" },
+			{ Type.FrontOfficeClients, "Список наличных пациентов на сегодня (фронт-офис)" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -225,7 +229,9 @@ namespace MISReports {
 			{ Type.LicenseEndingDates, "Каждый день в 5:00" },
 			{ Type.Promo, "Каждый понедельник" },
 			{ Type.MisTimeSheet, "Каждое 1 и 16 число месяца" },
-			{ Type.PatientsToSha1, "" }
+			{ Type.PatientsToSha1, "" },
+			{ Type.PatientsReferralsDetail, "" },
+			{ Type.FrontOfficeClients, "Каждый день в 7:30" }
 		};
 	}
 }

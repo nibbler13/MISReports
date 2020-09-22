@@ -580,6 +580,18 @@ namespace MISReports {
 				SqlQuery = settings.MisDbSqlGetPatientsToSha1;
 				TemplateFileName = settings.TemplatePatientsToSha1;
 
+			} else if (reportName.Equals(ReportsInfo.Type.PatientsReferralsDetail.ToString())) {
+				Type = ReportsInfo.Type.PatientsReferralsDetail;
+				SqlQuery = settings.MisDbSqlGetPatientsReferralsDetail;
+				TemplateFileName = settings.TemplatePatientsReferralsDetail;
+				MailTo = settings.MailToPatientsReferralsDetail;
+
+			} else if (reportName.Equals(ReportsInfo.Type.FrontOfficeClients.ToString())) {
+				Type = ReportsInfo.Type.FrontOfficeClients;
+				SqlQuery = settings.MisSqlGetFrontOfficeClients;
+				TemplateFileName = settings.TemplateFrontOfficeClients;
+				MailTo = settings.MailToFrontOfficeClients;
+
 			} else
 				IsSettingsLoaded = false;
 

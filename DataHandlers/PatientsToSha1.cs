@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MISReports.DataHandlers {
-	public class PatientToSha1 {
+	public class PatientsToSha1 {
 		public static DataTable PerformDataTable(DataTable dataTable) {
 			DataRow dataRowIvanov = dataTable.NewRow();
 			dataRowIvanov["PCODE"] = "0";

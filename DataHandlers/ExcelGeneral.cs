@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using CsvHelper;
+using Newtonsoft.Json;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
@@ -475,5 +476,36 @@ namespace MISReports.ExcelHandlers {
 
             return resultFile;
         }
-    }
+
+		public static string SaveAsCSV(DataTable dataTable, string resultFilePrefix) {
+			string fileName = @"C:\\ClientsSha1Bz.csv";// GetResultFilePath(resultFilePrefix);
+
+			try {
+				using (StreamWriter writer = new StreamWriter(fileName, true))
+				using (CsvWriter csvWriter = new CsvWriter(writer, CultureInfo.CurrentCulture)) {
+					csvWriter.Configuration.Delimiter = ";";
+					csvWriter.Configuration.ShouldQuote = (s, w) => { return false; };
+
+					//foreach (DataColumn column in dataTable.Columns) 
+					//	csvWriter.WriteField(column.ColumnName);
+					//	//csvWriter.WriteField("\"" + column.ColumnName.Replace("\"", "'") + "\"");
+
+					//csvWriter.NextRecord();
+
+					foreach (DataRow row in dataTable.Rows) {
+						foreach (object item in row.ItemArray) 
+							csvWriter.WriteField(item.ToString());
+							//csvWriter.WriteField("\"" + item.ToString().Replace("\"", "'") + "\"");
+
+						csvWriter.NextRecord();
+					}
+				}
+			} catch (Exception e) {
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+				return string.Empty;
+			}
+
+			return fileName;
+		}
+	}
 }

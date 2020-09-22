@@ -96,6 +96,7 @@ namespace MISReports {
 			ReportsInfo.Type.TreatmentsDetailsOther
 		};
 
+
 		private static readonly Tuple<string, string, string>[] infoclinicaDBs =
 			new Tuple<string, string, string>[] {
 				 new Tuple<string, string, string>("172.16.9.9", "Central", "99_ЦБД"),
@@ -817,7 +818,7 @@ namespace MISReports {
 			}
 
 			if (itemReport.Type == ReportsInfo.Type.PatientsToSha1)
-				dataTableMainData = PatientToSha1.PerformDataTable(dataTableMainData);
+				dataTableMainData = PatientsToSha1.PerformDataTable(dataTableMainData);
 		}
 
 		private static int GetIso8601WeekOfYear(DateTime time) {
@@ -1028,11 +1029,17 @@ namespace MISReports {
 						else
 							Logging.ToLog("DB: " + db + " до окончания лицензии осталось дней: " + daysLeft);
 
-						if (!string.IsNullOrEmpty(message)) 
+						if (!string.IsNullOrEmpty(message))
 							SystemMail.SendMail(subject, "На отдел сопровождения МИС: " + Environment.NewLine + message, itemReport.MailTo);
 					}
 
 					return;
+
+				} else if (itemReport.Type == ReportsInfo.Type.PatientsToSha1) {
+					itemReport.FileResult = ExcelGeneral.SaveAsCSV(dataTableMainData, subject);
+
+				} else if (itemReport.Type == ReportsInfo.Type.PatientsReferralsDetail) {
+					itemReport.FileResult = PatientsReferralsDetail.WriteToExcel(dataTableMainData, subject, itemReport.TemplateFileName);
 
 				} else {
 					itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
@@ -1163,6 +1170,14 @@ namespace MISReports {
 
 						case ReportsInfo.Type.MisTimeSheet:
 							isPostProcessingOk = MisTimeSheet.Process(itemReport.FileResult);
+							break;
+
+						case ReportsInfo.Type.PatientsReferralsDetail:
+							isPostProcessingOk = PatientsReferralsDetail.Process(itemReport.FileResult);
+							break;
+
+						case ReportsInfo.Type.FrontOfficeClients:
+							isPostProcessingOk = FrontOfficeClients.Process(itemReport.FileResult);
 							break;
 
 						default:
