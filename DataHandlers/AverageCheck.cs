@@ -9,10 +9,14 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace MISReports.ExcelHandlers {
 	class AverageCheck : ExcelGeneral {
-		public static bool Process(string resultFile, Dictionary<string, object> periodCurrent, Dictionary<string, object> periodPrevious = null) {
+		public static bool Process(string resultFile, Dictionary<string, object> periodCurrent, 
+			Dictionary<string, object> periodPrevious = null, bool isCash = false) {
 			Logging.ToLog("Выполнение пост-обработки");
 
 			string[] sheetNames = new string[] { "Факт", "Аванс", "Аванс_ЛМС" };
+			if (isCash)
+				sheetNames = new string[] { "Факт" };
+
 			if (!OpenWorkbook(resultFile, out Excel.Application xlApp, out Excel.Workbook wb, out Excel.Worksheet ws, sheetNames[0]))
 				return false;
 
@@ -267,7 +271,7 @@ namespace MISReports.ExcelHandlers {
 
 
 
-		public static string WriteAverageCheckToExcel(ItemAverageCheck averageCheck, string resultFilePrefix, string templateFileName) {
+		public static string WriteAverageCheckToExcel(ItemAverageCheck averageCheck, string resultFilePrefix, string templateFileName, bool isCash = false) {
 			IWorkbook workbook = null;
 			ISheet sheet = null;
 			string resultFile = string.Empty;
@@ -275,6 +279,9 @@ namespace MISReports.ExcelHandlers {
 			Logging.ToLog("Запись данных в книгу Excel");
 
 			string[] sheetNames = new string[] { "Факт", "Аванс", "Аванс_ЛМС" };
+			if (isCash)
+				sheetNames = new string[] { "Факт" };
+
 			if (!CreateNewIWorkbook(resultFilePrefix, templateFileName,
 					out workbook, out sheet, out resultFile, sheetNames[0]))
 				return string.Empty;

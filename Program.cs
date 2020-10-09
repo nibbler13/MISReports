@@ -703,7 +703,8 @@ namespace MISReports {
                 FssInfo.PerformData(ref dataTableMainData);
 
 			if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular ||
-				itemReport.Type == ReportsInfo.Type.AverageCheckMSK) {
+				itemReport.Type == ReportsInfo.Type.AverageCheckMSK ||
+				itemReport.Type == ReportsInfo.Type.AverageCheckCash) {
 				if (itemReport.DateBegin.Day == 1 &&
 					itemReport.DateEnd.Day == DateTime.DaysInMonth(itemReport.DateBegin.Year, itemReport.DateBegin.Month) &&
 					itemReport.DateBegin.Month == itemReport.DateEnd.Month &&
@@ -987,13 +988,16 @@ namespace MISReports {
 														 itemReport.Type);
 
 				} else if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular ||
-					itemReport.Type == ReportsInfo.Type.AverageCheckMSK) {
+					itemReport.Type == ReportsInfo.Type.AverageCheckMSK ||
+					itemReport.Type == ReportsInfo.Type.AverageCheckCash) {
 					itemReport.FileResult =
 						AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousWeek,
-							subjectAverageCheckPreviousWeek, itemReport.TemplateFileName);
+							subjectAverageCheckPreviousWeek, itemReport.TemplateFileName, 
+							itemReport.Type == ReportsInfo.Type.AverageCheckCash);
 					itemReport.FileResultAverageCheckPreviousYear =
 						AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousYear,
-							subjectAverageCheckPreviousYear, itemReport.TemplateFileName);
+							subjectAverageCheckPreviousYear, itemReport.TemplateFileName, 
+							itemReport.Type == ReportsInfo.Type.AverageCheckCash);
 
 				} else if (itemReport.Type == ReportsInfo.Type.AverageCheckIGS) {
 					itemReport.FileResult = AverageCheck.WriteAverageCheckToExcel(itemAverageCheckIGS, subject, itemReport.TemplateFileName);
@@ -1133,10 +1137,13 @@ namespace MISReports {
 
 						case ReportsInfo.Type.AverageCheckRegular:
 						case ReportsInfo.Type.AverageCheckMSK:
+						case ReportsInfo.Type.AverageCheckCash:
 							isPostProcessingOk = AverageCheck.Process(
-								itemReport.FileResult, parameters, parametersAverageCheckPreviousWeek);
+								itemReport.FileResult, parameters, parametersAverageCheckPreviousWeek,
+								itemReport.Type == ReportsInfo.Type.AverageCheckCash);
 							isPostProcessingOk &= AverageCheck.Process(
-								itemReport.FileResultAverageCheckPreviousYear, parameters, parametersAverageCheckPreviousYear);
+								itemReport.FileResultAverageCheckPreviousYear, parameters, parametersAverageCheckPreviousYear,
+								itemReport.Type == ReportsInfo.Type.AverageCheckCash);
 							break;
 
 						case ReportsInfo.Type.AverageCheckIGS:

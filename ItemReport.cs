@@ -214,6 +214,12 @@ namespace MISReports {
 				TemplateFileName = settings.TemplateAverageCheck;
 				MailTo = settings.MailToAverageCheckMSK;
 
+			} else if (reportName.Equals(ReportsInfo.Type.AverageCheckCash.ToString())) {
+				Type = ReportsInfo.Type.AverageCheckCash;
+				SqlQuery = settings.MisDbSqlGetAverageCheckCash;
+				TemplateFileName = settings.TemplateAverageCheckCash;
+				MailTo = settings.MailToAverageCheckCash;
+
 			} else if (reportName.Equals(ReportsInfo.Type.CompetitiveGroups.ToString())) {
 				Type = ReportsInfo.Type.CompetitiveGroups;
 				SqlQuery = settings.MisDbSqlGetCompetitiveGroups;
