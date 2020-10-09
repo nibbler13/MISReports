@@ -811,7 +811,17 @@ namespace MISReports.ExcelHandlers {
 
 					dataRow["TOTAL_WITH_DISCOUNT"] = totalWithDiscount * ((100.0d - discount) / 100.0d);
 					dataRow["DISCOUNT"] = discount;
-					dataRow["MOTIVATION_USE"] = motivationExcludeKodopers.Contains(kodoper) ? "Нет" : "Да";
+
+					bool isExcludedFromMotivation = false;
+					string prg = dataRow["PRG"].ToString().ToLower();
+					if (motivationExcludeKodopers.Contains(kodoper))
+						isExcludedFromMotivation = true;
+					else if (prg.StartsWith("а-00/") || prg.Contains("аванс"))
+						isExcludedFromMotivation = true;
+					else if (prg.Contains("ранняя диагностика") || prg.Contains("медо"))
+						isExcludedFromMotivation = true;
+
+					dataRow["MOTIVATION_USE"] = isExcludedFromMotivation ? "Нет" : "Да";
 
 					string comment_3 = dataRow["COMMENT_3"].ToString();
 					if (!string.IsNullOrEmpty(comment_3))

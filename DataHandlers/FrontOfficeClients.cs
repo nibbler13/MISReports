@@ -1,4 +1,5 @@
-﻿using MISReports.ExcelHandlers;
+﻿using Microsoft.Office.Interop.Excel;
+using MISReports.ExcelHandlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,17 @@ namespace MISReports.DataHandlers {
 				return false;
 
 			try {
+				ws.Columns["G:G"].Select();
+				xlApp.Selection.FormatConditions().Add(Type:Excel.XlFormatConditionType.xlTextString, String:"Да", TextOperator:Excel.XlContainsOperator.xlContains);
+				xlApp.Selection.FormatConditions(1).Interior.ThemeColor = Excel.XlThemeColor.xlThemeColorAccent6;
+				xlApp.Selection.FormatConditions(1).Interior.TintAndShade = 0.599963377788629;
+				xlApp.Selection.FormatConditions(1).StopIfTrue = false;
+				ws.Range["A1"].Select();
+			} catch (Exception e) {
+				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+			}
+
+			try {
 				AddPivotTable(wb, ws, xlApp);
 			} catch (Exception e) {
 				Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
@@ -32,9 +44,11 @@ namespace MISReports.DataHandlers {
             string pivotTableName = @"FrontOfficeClientsPivotTable";
             Excel.Worksheet wsPivote = wb.Sheets["Сводная Таблица"];
 
-            wsPivote.Activate();
+			int rowsUsed = ws.UsedRange.Rows.Count;
 
-            Excel.PivotCache pivotCache = wb.PivotCaches().Create(Excel.XlPivotTableSourceType.xlDatabase, ws.UsedRange, 6);
+			wsPivote.Activate();
+
+            Excel.PivotCache pivotCache = wb.PivotCaches().Create(Excel.XlPivotTableSourceType.xlDatabase, "Данные!R1C1:R" + rowsUsed + "C12", 6);
             Excel.PivotTable pivotTable = pivotCache.CreatePivotTable(wsPivote.Cells[1, 1], pivotTableName, true, 6);
 
             pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
@@ -48,12 +62,19 @@ namespace MISReports.DataHandlers {
             pivotTable.PivotFields("Отделение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
             pivotTable.PivotFields("Отделение").Position = 3;
 
-            pivotTable.AddDataField(pivotTable.PivotFields("№ ИБ"), "Кол-во записей", Excel.XlConsolidationFunction.xlCount);
+			pivotTable.PivotFields("Новый пациент?").Orientation = Excel.XlPivotFieldOrientation.xlColumnField;
+			pivotTable.PivotFields("Новый пациент?").Position = 1;
+
+			wsPivote.Range["B1"].Value2 = "Новый пациент?";
+			wsPivote.Range["A2"].Value2 = "Филиал";
+
+
+			pivotTable.AddDataField(pivotTable.PivotFields("№ ИБ"), "Кол-во записей", Excel.XlConsolidationFunction.xlCount);
 
             pivotTable.PivotFields("Филиал").ShowDetail = false;
 
             wb.ShowPivotTableFieldList = false;
-            pivotTable.DisplayFieldCaptions = false;
+            //pivotTable.DisplayFieldCaptions = false;
 
             wsPivote.Range["A1"].Select();
         }

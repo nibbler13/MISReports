@@ -25,7 +25,7 @@ namespace MISReports.ExcelHandlers {
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
 				ws.Columns["C:D"].Select();
 				xlApp.Selection.NumberFormat = "ч:мм;@";
-				ws.Columns["K:K"].Select();
+				ws.Columns["L:L"].Select();
 				xlApp.Selection.NumberFormat = "ДД.ММ.ГГГГ";
 				ws.Cells[1, 1].Select();
 			} catch (Exception e) {
@@ -47,8 +47,8 @@ namespace MISReports.ExcelHandlers {
 			DataTable dataTablePrevious = ReadExcelFile(previousFile, "Данные");
 			Logging.ToLog("Предыдущий файл, строк: " + dataTablePrevious.Rows.Count);
 
-			if (dataTablePrevious.Columns.Count == 14)
-				dataTablePrevious.Columns.RemoveAt(13);
+			if (dataTablePrevious.Columns.Count == 15)
+				dataTablePrevious.Columns.RemoveAt(14);
 
 			if (!OpenWorkbook(resultFile, out xlApp, out wb, out ws)) {
 				Logging.ToLog("Не удалось открыть книгу: " + resultFile);
@@ -69,8 +69,8 @@ namespace MISReports.ExcelHandlers {
 
 				if (!existedBefore) {
 					int rowNumber = i + 1;
-					ws.Range["A" + rowNumber + ":N" + rowNumber].Interior.ColorIndex = 35;
-					ws.Range["N" + rowNumber + ":N" + rowNumber].Value2 = "Новая запись";
+					ws.Range["A" + rowNumber + ":O" + rowNumber].Interior.ColorIndex = 35;
+					ws.Range["O" + rowNumber].Value2 = "Новая запись";
 				}
 			}
 

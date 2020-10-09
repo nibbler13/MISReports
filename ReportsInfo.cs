@@ -146,7 +146,7 @@ namespace MISReports {
 			{ Type.MicroSipContactsBook, "Справочик контактов для MicroSip" },
 			{ Type.TasksForItilium, "Задачи на январь 2020" },
 			{ Type.FirstTimeVisitPatients, "Отчет по первичным пациентам" },
-			{ Type.FreeCellsMarketing, "Отчет по свободным слотам для маркетинга" },
+			{ Type.FreeCellsMarketing, "Отчет по свободным слотам" },
 			{ Type.EmergencyCallsQuantity, "Отчет по количеству вызовов СМП" },
 			{ Type.RegistryMotivation, "Расчет мотивации для регистратуры" },
 			{ Type.Reserves, "Отчет по резервам в расписании" },

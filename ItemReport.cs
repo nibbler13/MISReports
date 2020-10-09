@@ -313,9 +313,9 @@ namespace MISReports {
 				//=====================
 				//Управленческая скидка
 				//=====================
-				//ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 20);
-				//discount.ExcludeDepartments.Add("СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ");
-				//TreatmentsDiscounts.Add(discount);
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 20);
+				discount.ExcludeDepartments.Add("СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ");
+				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
 				discount2.AddKtMrtPndSmpDeptToExclude();
@@ -329,9 +329,9 @@ namespace MISReports {
 				//=====================
 				//Управленческая скидка
 				//=====================
-				//ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 20);
-				//discount.ExcludeDepartments.Add("СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ");
-				//TreatmentsDiscounts.Add(discount);
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 20);
+				discount.ExcludeDepartments.Add("СКОРАЯ МЕДИЦИНСКАЯ ПОМОЩЬ");
+				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
 				discount2.AddKtMrtPndSmpDeptToExclude();
@@ -387,6 +387,10 @@ namespace MISReports {
 				JIDS = "991518370,991521272,991523038,991526075,991519595";
 
 				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
 				discount.AddSmpDeptToExclude();
 				discount.AddDocOnlineTelemedCovidKodoperToExclude();
 				TreatmentsDiscounts.Add(discount);
@@ -596,14 +600,14 @@ namespace MISReports {
 				IsSettingsLoaded = false;
 
 			if (Type.ToString().Contains("TreatmentsDetails")) {
-				SqlQuery = settings.MisDbSqlGetTreatmentsDetails; //settings.VerticaDbSqlGetTreatmentsDetails; //
+				SqlQuery = settings.VerticaDbSqlGetTreatmentsDetails; //settings.MisDbSqlGetTreatmentsDetails; //
 				TemplateFileName = settings.TemplateTreatmentsDetails;
 				MailTo = settings.MailToTreatmentsDetails;
 				FolderToSave = settings.FolderToSaveTreatmentsDetails;
-				UseVerticaDb = false;
+				UseVerticaDb = true;
 
 				if (Type.ToString().Equals(ReportsInfo.Type.TreatmentsDetailsOther.ToString()))
-					SqlQuery = settings.MisDbSqlGetTreatmentsDetailsOtherIC;
+					SqlQuery = settings.VerticaDbSqlGetTreatmentsDetailsOtherIC; //settings.MisDbSqlGetTreatmentsDetailsOtherIC; //
 			}
 
 			if (IsSettingsLoaded) {

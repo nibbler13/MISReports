@@ -102,7 +102,7 @@ namespace MISReports {
 				 new Tuple<string, string, string>("172.16.9.9", "Central", "99_ЦБД"),
 				 new Tuple<string, string, string>("172.16.225.2", "mssu", "12_Сущевcкий Вал"),
 				 new Tuple<string, string, string>("172.16.225.2", "mskt", "06_Кутузовский"),
-				 new Tuple<string, string, string>("172.16.210.203", "web", "Расписание для сайта"),
+				 //new Tuple<string, string, string>("172.16.210.203", "web", "Расписание для сайта"),
 				 new Tuple<string, string, string>("172.16.225.2", "msn", "02_Мясницкая"),
 				 new Tuple<string, string, string>("172.16.9.10", "central-report", "99_ЦБД (Отчеты}"),
 				 new Tuple<string, string, string>("172.16.190.6", "dentbase", "01_МДМ"),
