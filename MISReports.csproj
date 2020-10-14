@@ -94,6 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataHandlers\FrontOfficeClients.cs" />
+    <Compile Include="DataHandlers\FrontOfficeScheduleRecords.cs" />
     <Compile Include="DataHandlers\MisTimeSheet.cs" />
     <Compile Include="DataHandlers\PatientsReferralsDetail.cs" />
     <Compile Include="DataHandlers\PatientsToSha1.cs" />

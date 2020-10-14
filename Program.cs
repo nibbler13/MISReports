@@ -1124,6 +1124,7 @@ namespace MISReports {
                         case ReportsInfo.Type.GBooking:
 						case ReportsInfo.Type.PersonalAccountSchedule:
 						case ReportsInfo.Type.ProtocolViewCDBSyncEvent:
+						case ReportsInfo.Type.EmergencyCallsQuantity:
 							isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult);
 							break;
 
@@ -1163,10 +1164,6 @@ namespace MISReports {
 							isPostProcessingOk = FreeCells.Process(itemReport.FileResult, dateBeginOriginal.Value, itemReport.DateEnd, true);
 							break;
 
-						case ReportsInfo.Type.EmergencyCallsQuantity:
-							isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult);
-							break;
-
 						case ReportsInfo.Type.RegistryMotivation:
 							isPostProcessingOk = RegistryMotivation.Process(itemReport.FileResult);
 							break;
@@ -1185,6 +1182,10 @@ namespace MISReports {
 
 						case ReportsInfo.Type.FrontOfficeClients:
 							isPostProcessingOk = FrontOfficeClients.Process(itemReport.FileResult);
+							break;
+
+						case ReportsInfo.Type.FrontOfficeScheduleRecords:
+							isPostProcessingOk = FrontOfficeScheduleRecords.Process(itemReport.FileResult);
 							break;
 
 						default:

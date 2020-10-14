@@ -480,8 +480,6 @@ namespace MISReports.DataHandlers {
 			return resultFile;
 		}
 
-		private static void WriteOutResultRow() { 
-		}
 
 		private static void WriteOutRow(List<object> values, ISheet sheet, int rowNumber, int columnNumber) {
 			IRow row = null;
@@ -598,17 +596,17 @@ namespace MISReports.DataHandlers {
 
 			pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
 
-			pivotTable.PivotFields("Дата").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Дата").Position = 1;
+			//pivotTable.PivotFields("Дата").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			//pivotTable.PivotFields("Дата").Position = 1;
 
 			pivotTable.PivotFields("Филиал").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Филиал").Position = 2;
+			pivotTable.PivotFields("Филиал").Position = 1;
 
 			pivotTable.PivotFields("Запись, Должность").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Запись, Должность").Position = 3;
+			pivotTable.PivotFields("Запись, Должность").Position = 2;
 
 			pivotTable.PivotFields("Запись, Автор").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Запись, Автор").Position = 4;
+			pivotTable.PivotFields("Запись, Автор").Position = 3;
 
 			pivotTable.PivotFields("Услуга").Orientation = Excel.XlPivotFieldOrientation.xlPageField;
 			pivotTable.PivotFields("Услуга").Position = 1;
@@ -639,7 +637,7 @@ namespace MISReports.DataHandlers {
 
 			pivotTable.PivotFields("Запись, Должность").ShowDetail = false;
 			pivotTable.PivotFields("Филиал").ShowDetail = false;
-			pivotTable.PivotFields("Дата").ShowDetail = false;
+			//pivotTable.PivotFields("Дата").ShowDetail = false;
 
 			wb.ShowPivotTableFieldList = false;
 			//pivotTable.DisplayFieldCaptions = false;
@@ -661,11 +659,11 @@ namespace MISReports.DataHandlers {
 
 			pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
 
-			pivotTable.PivotFields("Дата").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Дата").Position = 1;
+			//pivotTable.PivotFields("Дата").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			//pivotTable.PivotFields("Дата").Position = 1;
 
 			pivotTable.PivotFields("Филиал").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Филиал").Position = 2;
+			pivotTable.PivotFields("Филиал").Position = 1;
 
 			pivotTable.AddDataField(pivotTable.PivotFields("Refid"), "Кол-во направлений (всего)", Excel.XlConsolidationFunction.xlCount);
 			pivotTable.PivotFields("Кол-во направлений (всего)").NumberFormat = "# ##0";
@@ -729,7 +727,7 @@ namespace MISReports.DataHandlers {
 
 			//pivotTable.AddDataField(pivotTable.PivotFields("№ ИБ"), "Кол-во записей", Excel.XlConsolidationFunction.xlCount);
 
-			pivotTable.PivotFields("Дата").ShowDetail = false;
+			//pivotTable.PivotFields("Дата").ShowDetail = false;
 
 			wb.ShowPivotTableFieldList = false;
 			//pivotTable.DisplayFieldCaptions = false;
@@ -756,17 +754,17 @@ namespace MISReports.DataHandlers {
 
 			pivotTable = (Excel.PivotTable)wsPivote.PivotTables(pivotTableName);
 
-			pivotTable.PivotFields("Дата").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Дата").Position = 1;
+			//pivotTable.PivotFields("Дата").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
+			//pivotTable.PivotFields("Дата").Position = 1;
 
 			pivotTable.PivotFields("Филиал").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Филиал").Position = 2;
+			pivotTable.PivotFields("Филиал").Position = 1;
 
 			pivotTable.PivotFields("Отделение").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("Отделение").Position = 3;
+			pivotTable.PivotFields("Отделение").Position = 2;
 
 			pivotTable.PivotFields("ФИО Сотрудника").Orientation = Excel.XlPivotFieldOrientation.xlRowField;
-			pivotTable.PivotFields("ФИО Сотрудника").Position = 4;
+			pivotTable.PivotFields("ФИО Сотрудника").Position = 3;
 
 
 			pivotTable.PivotFields("Услуга").Orientation = Excel.XlPivotFieldOrientation.xlPageField;

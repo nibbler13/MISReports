@@ -80,7 +80,8 @@ namespace MISReports {
 			MisTimeSheet,
 			PatientsToSha1,
 			PatientsReferralsDetail,
-			FrontOfficeClients
+			FrontOfficeClients,
+			FrontOfficeScheduleRecords
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -157,7 +158,8 @@ namespace MISReports {
 			{ Type.MisTimeSheet, "Табель из МИС" },
 			{ Type.PatientsToSha1, "Получение хэш-суммы SHA1 для списка пациентов" },
 			{ Type.PatientsReferralsDetail, "Отчет по направлениям пациентов (фронт-офис)" },
-			{ Type.FrontOfficeClients, "Список наличных пациентов на сегодня (фронт-офис)" }
+			{ Type.FrontOfficeClients, "Список наличных пациентов на сегодня (фронт-офис)" },
+			{ Type.FrontOfficeScheduleRecords, "Отчет по записям в расписание (фронт-офис)" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -234,7 +236,8 @@ namespace MISReports {
 			{ Type.MisTimeSheet, "Каждое 1 и 16 число месяца" },
 			{ Type.PatientsToSha1, "" },
 			{ Type.PatientsReferralsDetail, "" },
-			{ Type.FrontOfficeClients, "Каждый день в 7:30" }
+			{ Type.FrontOfficeClients, "Каждый день в 7:30" },
+			{ Type.FrontOfficeScheduleRecords, "" }
 		};
 	}
 }

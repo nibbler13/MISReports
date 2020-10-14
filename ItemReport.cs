@@ -598,9 +598,15 @@ namespace MISReports {
 
 			} else if (reportName.Equals(ReportsInfo.Type.FrontOfficeClients.ToString())) {
 				Type = ReportsInfo.Type.FrontOfficeClients;
-				SqlQuery = settings.MisSqlGetFrontOfficeClients;
+				SqlQuery = settings.MisDbSqlGetFrontOfficeClients;
 				TemplateFileName = settings.TemplateFrontOfficeClients;
 				MailTo = settings.MailToFrontOfficeClients;
+
+			} else if (reportName.Equals(ReportsInfo.Type.FrontOfficeScheduleRecords.ToString())) {
+				Type = ReportsInfo.Type.FrontOfficeScheduleRecords;
+				SqlQuery = settings.MisDbSqlGetFrontOfficeScheduleRecords;
+				TemplateFileName = settings.TemplateFrontOfficeScheduleRecords;
+				MailTo = settings.MailToFrontOfficeScheduleRecords;
 
 			} else
 				IsSettingsLoaded = false;
