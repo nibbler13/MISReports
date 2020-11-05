@@ -3,12 +3,16 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace MISReports.ExcelHandlers {
 	class AverageCheck : ExcelGeneral {
+		private enum PrgTypes { Fact, Avans, Nal }
+		private enum ValueTypes { SumServ, UniqPacient }
+
 		public static bool Process(string resultFile, Dictionary<string, object> periodCurrent, 
 			Dictionary<string, object> periodPrevious = null, bool isCash = false) {
 			Logging.ToLog("Выполнение пост-обработки");
@@ -40,6 +44,15 @@ namespace MISReports.ExcelHandlers {
 					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 				}
 			}
+
+			if (wb.Sheets.Count >= 4)
+				try {
+					string sheetName = "Заборники";
+					ws = wb.Sheets[sheetName];
+					CreateFormattingForSheet(xlApp, ws, sheetName, period1, period2);
+				} catch (Exception e) {
+					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+				}
 
 			wb.Sheets[sheetNames[0]].Activate();
 			SaveAndCloseWorkbook(xlApp, wb, ws);
@@ -271,7 +284,12 @@ namespace MISReports.ExcelHandlers {
 
 
 
-		public static string WriteAverageCheckToExcel(ItemAverageCheck averageCheck, string resultFilePrefix, string templateFileName, bool isCash = false) {
+		public static string WriteAverageCheckToExcel(ItemAverageCheck averageCheck,
+												string resultFilePrefix,
+												string templateFileName,
+												DataTable dataTableZaborCurrent,
+												DataTable dataTableZaborPrevious,
+												bool isCash = false) {
 			IWorkbook workbook = null;
 			ISheet sheet = null;
 			string resultFile = string.Empty;
@@ -415,10 +433,94 @@ namespace MISReports.ExcelHandlers {
 					}
 			}
 
+			if (workbook.NumberOfSheets >= 4) {
+				Logging.ToLog("Заполнение информации для заборников");
+
+				try {
+					sheet = workbook.GetSheet("Заборники");
+
+					int rowToWrite = 6;
+					foreach (string item in new string[] { "Заборник №1 (Мытная 58)", "Заборник №2 (Лен. 75)  " }) {
+						Logging.ToLog("Заборник: " + item);
+
+						List<object> values1 = new List<object> { null, null, null };
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Fact, ValueTypes.SumServ));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Nal, ValueTypes.SumServ));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Avans, ValueTypes.SumServ));
+						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Fact, ValueTypes.SumServ));
+						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Nal, ValueTypes.SumServ));
+						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Avans, ValueTypes.SumServ));
+						values1.AddRange(new List<object> { null, null, null });
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Fact, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Nal, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Avans, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Fact, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Nal, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Avans, ValueTypes.UniqPacient));
+
+						WriteOutValues(values1.ToArray(), sheet, ref rowToWrite);
+					}
+
+				} catch (Exception e) {
+					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
+				}
+			}
+
 			if (!SaveAndCloseIWorkbook(workbook, resultFile))
 				return string.Empty;
 
 			return resultFile;
+		}
+
+		private static object FindValueInDataTable(DataTable dataTable, string ttt, PrgTypes prgType, ValueTypes valueType) {
+			if (dataTable == null)
+				return null;
+
+			string prgName;
+			string columnName;
+
+			switch (prgType) {
+				case PrgTypes.Fact:
+					prgName = "Факт";
+					break;
+				case PrgTypes.Avans:
+					prgName = "Аванс";
+					break;
+				case PrgTypes.Nal:
+					prgName = "НАЛ";
+					break;
+				default:
+					prgName = "unknown";
+					break;
+			}
+
+			switch (valueType) {
+				case ValueTypes.SumServ:
+					columnName = "SUM_SERV";
+					break;
+				case ValueTypes.UniqPacient:
+					columnName = "UNI_PAC";
+					break;
+				default:
+					columnName = "unknown";
+					break;
+			}
+
+			if (!dataTable.Columns.Contains(columnName)) {
+				Logging.ToLog("Таблица не содержит столбца " + columnName);
+				return null;
+			}
+
+			DataRow[] rows = dataTable.Select("TTT='" + ttt + "' and PRG_TYPE='" + prgName + "'");
+			if (rows.Length == 0) {
+				Logging.ToLog("Не удается найти значение для " + ttt + ", " + prgName);
+				return null;
+			} else if (rows.Length > 1) {
+				Logging.ToLog("Результат поиска выдал больше одной строки для " + ttt + ", " + prgName + ", пропуск обработки");
+				return null;
+			}
+
+			return double.Parse(rows[0][columnName].ToString());
 		}
 
 		private static object[] GenerateValuesToWrite(string sheetName,
@@ -485,12 +587,14 @@ namespace MISReports.ExcelHandlers {
 				if (cell == null)
 					cell = row.CreateCell(columnNumber);
 
-				if (value is string)
-					cell.SetCellValue((string)value);
-				else if (value is double)
-					cell.SetCellValue((double)value);
-				else if (value is int)
-					cell.SetCellValue((int)value);
+				if (value != null) {
+					if (value is string)
+						cell.SetCellValue((string)value);
+					else if (value is double)
+						cell.SetCellValue((double)value);
+					else if (value is int)
+						cell.SetCellValue((int)value);
+				}
 
 				columnNumber++;
 			}
@@ -517,9 +621,11 @@ namespace MISReports.ExcelHandlers {
 			int usedColumns = ws.UsedRange.Columns.Count;
 			string lastColumn = ColumnIndexToColumnLetter(usedColumns);
 
-			ws.Range["A7: " + lastColumn + "7"].Select();
-			xlApp.Selection.AutoFill(ws.Range["A7:" + lastColumn + usedRows], Excel.XlAutoFillType.xlFillFormats);
-			AddBoldBorder(ws.Range["A7:" + lastColumn + usedRows]);
+			if (!sheetName.Equals("Заборники")) {
+				ws.Range["A7: " + lastColumn + "7"].Select();
+				xlApp.Selection.AutoFill(ws.Range["A7:" + lastColumn + usedRows], Excel.XlAutoFillType.xlFillFormats);
+				AddBoldBorder(ws.Range["A7:" + lastColumn + usedRows]);
+			}
 
 			string[] rangesWithFormula = new string[] { "H7:I7", "R7:Y7" };
 			string columnsToHide = "J:M";
@@ -528,6 +634,10 @@ namespace MISReports.ExcelHandlers {
 				rangesWithFormula = new string[] { "F7:F7", "K7:N7" };
 				columnsToHide = "G:H";
 				scrollColumn = 2;
+			} else if (sheetName.Equals("Заборники")) {
+				rangesWithFormula = new string[] { "J7:L7", "S7:V7" };
+				columnsToHide = string.Empty;
+				scrollColumn = 8;
 			}
 
 			foreach (string rangeWithFormula in rangesWithFormula) {
@@ -545,8 +655,11 @@ namespace MISReports.ExcelHandlers {
 					Excel.XlAutoFillType.xlFillValues);
 			}
 
-			ws.Columns[columnsToHide].Select();
-			xlApp.Selection.EntireColumn.Hidden = true;
+			if (!string.IsNullOrEmpty(columnsToHide)) {
+				ws.Columns[columnsToHide].Select();
+				xlApp.Selection.EntireColumn.Hidden = true;
+			}
+
 			xlApp.ActiveWindow.ScrollColumn = scrollColumn;
 
 			for (int row = 7; row <= usedRows; row++) {

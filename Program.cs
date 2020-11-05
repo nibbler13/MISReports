@@ -1,5 +1,6 @@
 ﻿using MISReports.DataHandlers;
 using MISReports.ExcelHandlers;
+using MISReports.Properties;
 using NPOI.SS.Formula.Functions;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,9 @@ namespace MISReports {
 		private static DataTable dataTableMainData = null;
 		private static DataTable dataTableAverageCheckPreviousWeek = null;
 		private static DataTable dataTableAverageCheckPreviousYear = null;
+		private static DataTable dataTableAverageCheckZabor = null;
+		private static DataTable dataTableAverageCheckZaborPreviousWeek = null;
+		private static DataTable dataTableAverageCheckZaborPreviousYear = null;
 		private static DataTable dataTableWorkLoadA6 = null;
 		private static DataTable dataTableWorkloadA11_10 = null;
 		private static DataTable dataTableUniqueServiceTotal = null;
@@ -388,8 +392,8 @@ namespace MISReports {
 
 			SaveSettings();
 
-			//if (Debugger.IsAttached)
-			//	return;
+			if (Debugger.IsAttached)
+				return;
 
 			if (!string.IsNullOrEmpty(itemReport.FolderToSave))
 				SaveReportToFolder();
@@ -423,6 +427,8 @@ namespace MISReports {
 				"НазваниеОтчета СмещениеДатаНачала СмещениеДатаОкончания (пример: 'FreeCells 0 6')" + Environment.NewLine +
 				"НазваниеОтчета ДатаНачала ДатаОкончания (пример: 'FreeCells 01.01.2018 31.01.2018')" +
 				"НазваниеОтчета PreviousMonth (пример: 'FreeCells PreviousMonth' - отчет за предыдущий месяц)" +
+				"НазваниеОтчета PreviousMonthSecondPart (пример: 'FreeCells PreviousMonthSecondPart' - отчет за предыдущую половину (2/2) месяц)" +
+				"НазваниеОтчета PreviousTwoMonth (пример: 'FreeCells PreviousTwoMonth' - отчет за -2 предыдущий месяц)" +
 				Environment.NewLine + Environment.NewLine +
 				"Варианты отчетов:" + Environment.NewLine;
 			foreach (KeyValuePair<ReportsInfo.Type, string> pair in ReportsInfo.AcceptedParameters)
@@ -435,9 +441,9 @@ namespace MISReports {
 			DateTime? dateBegin = null;
 			DateTime? dateEnd = null;
 
-			DateTime tst = new DateTime(2020, 5, 18);
-			Console.WriteLine(tst.AddDays(-17).ToShortDateString());
-			Console.WriteLine(tst.AddDays(-3).ToShortDateString());
+			//DateTime tst = new DateTime(2020, 5, 18);
+			//Console.WriteLine(tst.AddDays(-17).ToShortDateString());
+			//Console.WriteLine(tst.AddDays(-3).ToShortDateString());
 
 			if (args.Length == 2) {
 				if (args[1].Equals("PreviousMonth")) {
@@ -447,6 +453,10 @@ namespace MISReports {
 				} else if (args[1].Equals("PreviousMonthSecondPart")) {
 					dateBegin = DateTime.Now.AddMonths(-1).AddDays(-1 * (DateTime.Now.Day - 1)).AddDays(15);
 					dateEnd = DateTime.Now.AddDays(-1 * DateTime.Now.Day);
+				} else if (args[1].Equals("PreviousTwoMonth")) {
+					dateBegin = DateTime.Now.AddMonths(-2).AddDays(-1 * (DateTime.Now.Day - 1));
+					dateEnd = dateBegin.Value.AddDays(
+						DateTime.DaysInMonth(dateBegin.Value.Year, dateBegin.Value.Month) - 1);
 				}
 			} else if (args.Length == 3) {
 				if (int.TryParse(args[1], out int dateBeginOffset) &&
@@ -805,6 +815,19 @@ namespace MISReports {
 
 				itemAverageCheckPreviousYear = AverageCheck.PerformData(dataTableMainData, dataTableAverageCheckPreviousYear);
 				#endregion
+
+				#region Zabor
+				Logging.ToLog("Получение информации о заборниках");
+				dataTableAverageCheckZabor = dbClient.GetDataTable(
+					Settings.Default.MisDbSqlGetAverageCheckZabor, parameters);
+				Logging.ToLog("Текущий период, получено строк: " + dataTableAverageCheckZabor.Rows.Count);
+				dataTableAverageCheckZaborPreviousWeek = dbClient.GetDataTable(
+					Settings.Default.MisDbSqlGetAverageCheckZabor, parametersAverageCheckPreviousWeek);
+				Logging.ToLog("-2 недели, получено строк: " + dataTableAverageCheckZaborPreviousWeek.Rows.Count);
+				dataTableAverageCheckZaborPreviousYear = dbClient.GetDataTable(
+					Settings.Default.MisDbSqlGetAverageCheckZabor, parametersAverageCheckPreviousYear);
+				Logging.ToLog("Предыдущий год, получено строк: " + dataTableAverageCheckZaborPreviousYear.Rows.Count);
+				#endregion
 			}
 
 			if (itemReport.Type == ReportsInfo.Type.AverageCheckIGS)
@@ -820,6 +843,67 @@ namespace MISReports {
 
 			if (itemReport.Type == ReportsInfo.Type.PatientsToSha1)
 				dataTableMainData = PatientsToSha1.PerformDataTable(dataTableMainData);
+
+			if (itemReport.Type == ReportsInfo.Type.FreeCellsToSite) {
+				DataTable dataTable = new DataTable();
+				dataTable.Columns.Add("order", typeof(int));
+				dataTable.Columns.Add("dcode", typeof(long));
+				dataTable.Columns.Add("date", typeof(DateTime));
+				dataTable.Columns.Add("start", typeof(TimeSpan));
+				dataTable.Columns.Add("end", typeof(TimeSpan));
+				dataTable.Columns.Add("status", typeof(string));
+				string sqlGetSchedIntervals = "select * from sched_intervals(@schedident, 990002986, @filial, null, 0, 34)";
+
+				int order = 1;
+				foreach (DataRow dataRow in dataTableMainData.Rows) {
+					string schedident = dataRow["SCHEDIDENT"].ToString();
+					string dcode = dataRow["dcode"].ToString();
+					string filial = dataRow["filial"].ToString();
+					string wdate = dataRow["wdate"].ToString();
+
+					DataTable dataTableIntervals = dbClient.GetDataTable(
+						sqlGetSchedIntervals, 
+						new Dictionary<string, object> { { "@schedident", schedident }, { "@filial", filial } });
+
+					foreach (DataRow dataRowInterval in dataTableIntervals.Rows) {
+						string bhour = dataRowInterval["bhour"].ToString();
+						string bmin = dataRowInterval["bmin"].ToString();
+						string fhour = dataRowInterval["fhour"].ToString();
+						if (fhour.Equals("24"))
+							fhour = "0";
+
+						string fmin = dataRowInterval["fmin"].ToString();
+						string isfreeinfo = dataRowInterval["isfreeinfo"].ToString();
+
+						dataTable.Rows.Add(
+							new object[] { 
+								order, 
+								long.Parse(dcode), 
+								DateTime.Parse(wdate), 
+								TimeSpan.Parse(bhour + ":" + bmin), 
+								TimeSpan.Parse(fhour + ":" + fmin),
+								isfreeinfo
+							});
+
+						order++;
+					}
+
+					if (dataTableIntervals.Rows.Count == 0)
+						dataTable.Rows.Add(
+							new object[] {
+								order,
+								long.Parse(dcode),
+								DateTime.Parse(wdate),
+								null,
+								null,
+								null
+							});
+
+					order++;
+				}
+
+				dataTableMainData = dataTable;
+			}
 		}
 
 		private static int GetIso8601WeekOfYear(DateTime time) {
@@ -973,8 +1057,21 @@ namespace MISReports {
 					//	"BzPriceListToUpload",
 					//	saveAsJson: true);
 
+				} else if (itemReport.Type == ReportsInfo.Type.FreeCellsToSite) {
+					itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(
+						dataTableMainData,
+						subject,
+						itemReport.TemplateFileName,
+						type: itemReport.Type);
+
+					fileToUpload = itemReport.FileResult;
+
 				} else if (itemReport.Type == ReportsInfo.Type.TimetableToProdoctorovRu) {
 					fileToUpload = TimetableToProdoctorovRu.PerformData(dataTableMainData);
+
+				} else if (itemReport.Type == ReportsInfo.Type.ServiceListByDoctorsToSite) {
+					itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData, subject, itemReport.TemplateFileName);
+					fileToUpload = itemReport.FileResult;
 
 				} else if (itemReport.Type == ReportsInfo.Type.UniqueServices ||
 					itemReport.Type == ReportsInfo.Type.UniqueServicesRegions) {
@@ -991,16 +1088,29 @@ namespace MISReports {
 					itemReport.Type == ReportsInfo.Type.AverageCheckMSK ||
 					itemReport.Type == ReportsInfo.Type.AverageCheckCash) {
 					itemReport.FileResult =
-						AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousWeek,
-							subjectAverageCheckPreviousWeek, itemReport.TemplateFileName, 
+						AverageCheck.WriteAverageCheckToExcel(
+							itemAverageCheckPreviousWeek,
+							subjectAverageCheckPreviousWeek, 
+							itemReport.TemplateFileName, 
+							dataTableAverageCheckZabor,
+							dataTableAverageCheckZaborPreviousWeek,
 							itemReport.Type == ReportsInfo.Type.AverageCheckCash);
 					itemReport.FileResultAverageCheckPreviousYear =
-						AverageCheck.WriteAverageCheckToExcel(itemAverageCheckPreviousYear,
-							subjectAverageCheckPreviousYear, itemReport.TemplateFileName, 
+						AverageCheck.WriteAverageCheckToExcel(
+							itemAverageCheckPreviousYear,
+							subjectAverageCheckPreviousYear,
+							itemReport.TemplateFileName, 
+							dataTableAverageCheckZabor,
+							dataTableAverageCheckZaborPreviousYear,
 							itemReport.Type == ReportsInfo.Type.AverageCheckCash);
 
 				} else if (itemReport.Type == ReportsInfo.Type.AverageCheckIGS) {
-					itemReport.FileResult = AverageCheck.WriteAverageCheckToExcel(itemAverageCheckIGS, subject, itemReport.TemplateFileName);
+					itemReport.FileResult = AverageCheck.WriteAverageCheckToExcel(
+						itemAverageCheckIGS, 
+						subject, 
+						itemReport.TemplateFileName,
+						dataTableAverageCheckZabor,
+						dataTableAverageCheckZaborPreviousWeek);
 
 				} else if (itemReport.Type == ReportsInfo.Type.CompetitiveGroups) {
 					itemReport.FileResult =
@@ -1125,6 +1235,8 @@ namespace MISReports {
 						case ReportsInfo.Type.PersonalAccountSchedule:
 						case ReportsInfo.Type.ProtocolViewCDBSyncEvent:
 						case ReportsInfo.Type.EmergencyCallsQuantity:
+						case ReportsInfo.Type.ScheduleExternalServices:
+						case ReportsInfo.Type.ServiceListByDoctorsToSite:
 							isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult);
 							break;
 
@@ -1188,6 +1300,10 @@ namespace MISReports {
 							isPostProcessingOk = FrontOfficeScheduleRecords.Process(itemReport.FileResult);
 							break;
 
+						case ReportsInfo.Type.RecordCountFrontOffice:
+							isPostProcessingOk = RecordsCountFrontOffice.Process(itemReport.FileResult);
+							break;
+
 						default:
 							break;
 					}
@@ -1229,13 +1345,14 @@ namespace MISReports {
 							continue;
 						}
 
-						body += pair.Key + ": <br>" +
-							SaveFileToNetworkFolder(pair.Value, Path.Combine(itemReport.FolderToSave, pair.Key)) +
-							"<br><br>";
+						string newFilePath = SaveFileToNetworkFolder(pair.Value, Path.Combine(itemReport.FolderToSave, pair.Key), out string destFile);
+						body += pair.Key + ": <br>" + newFilePath + "<br><br>";
+						itemReport.FileResult = destFile;
 					}
 				} else {
-					body = "Файл с отчетом сохранен по адресу: " + Environment.NewLine +
-						SaveFileToNetworkFolder(itemReport.FileResult, itemReport.FolderToSave);
+					string newFilePath = SaveFileToNetworkFolder(itemReport.FileResult, itemReport.FolderToSave, out string destFile);
+					body = "Файл с отчетом сохранен по адресу: " + Environment.NewLine + newFilePath;
+					itemReport.FileResult = destFile;
 				}
 			} catch (Exception e) {
 				Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
@@ -1243,13 +1360,11 @@ namespace MISReports {
 					Environment.NewLine + e.Message + Environment.NewLine + e.StackTrace;
 				itemReport.SetMailTo(mailCopy);
 			}
-
-			itemReport.FileResult = string.Empty;
 		}
 
-		public static string SaveFileToNetworkFolder(string localFile, string folderToSave) {
+		public static string SaveFileToNetworkFolder(string localFile, string folderToSave, out string destFile) {
 			string fileName = Path.GetFileName(localFile);
-			string destFile = Path.Combine(folderToSave, fileName);
+			destFile = Path.Combine(folderToSave, fileName);
 			if (File.Exists(destFile))
 				try {
 					File.Delete(destFile);
@@ -1348,6 +1463,14 @@ namespace MISReports {
 				url = "https://old.klinikabudzdorov.ru/export/schedule/file_input.php";
 				method = WebRequestMethods.Http.Post;
 
+			} else if (itemReport.Type == ReportsInfo.Type.FreeCellsToSite) {
+				url = "https://klinikabudzdorov.ru/api/upload_schedule/";
+				method = WebRequestMethods.Http.Post;
+
+			} else if (itemReport.Type == ReportsInfo.Type.ServiceListByDoctorsToSite) {
+				url = "https://klinikabudzdorov.ru/api/upload_doctor_service/";
+				method = WebRequestMethods.Http.Post;
+
 			} else {
 				Logging.ToLog("Не заданы параметры, возврат");
 				return;
@@ -1381,7 +1504,8 @@ namespace MISReports {
             }
 
             try {
-                File.Delete(fileToUpload);
+				if (!Debugger.IsAttached)
+					File.Delete(fileToUpload);
             } catch (Exception e) {
                 Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
             }

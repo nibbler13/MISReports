@@ -81,7 +81,11 @@ namespace MISReports {
 			PatientsToSha1,
 			PatientsReferralsDetail,
 			FrontOfficeClients,
-			FrontOfficeScheduleRecords
+			FrontOfficeScheduleRecords,
+			FreeCellsToSite,
+			ScheduleExternalServices,
+			ServiceListByDoctorsToSite,
+			RecordCountFrontOffice
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -104,17 +108,17 @@ namespace MISReports {
 			{ Type.Robocalls, "Информация для автообзвона" },
 			{ Type.UniqueServices, "Отчет по уникальным услугам" },
 			{ Type.UniqueServicesRegions, "Отчет по уникальным услугам (регионы)" },
-			{ Type.PriceListToSite, "Прайс-лист для загрузки на сайт klinikabudzdorov.ru" },
+			{ Type.PriceListToSite, "Выгрузка прайс-листа на сайт" },
 			{ Type.GBooking, "Информация для обзвона пациентов с GBooking" },
 			{ Type.PersonalAccountSchedule, "Отчет по записям через личный кабинет" },
 			{ Type.ProtocolViewCDBSyncEvent, "Отчет по просмотрам ИБ и синхронизации с ЦБД" },
 			{ Type.FssInfo, "Отчет по выданным ЭЛН" },
-            { Type.TimetableToProdoctorovRu, "Выгрузка расписания на сайт prodoctorov.ru" },
-            { Type.RecordsFromInsuranceCompanies, "Отчет по записям из страховых компаний" },
-            { Type.AverageCheckRegular, "Отчет по среднему чеку" },
-            { Type.AverageCheckIGS, "Отчет по среднему чеку (ИГС)" },
-            { Type.AverageCheckMSK, "Отчет по среднему чеку (МСК)" },
-            { Type.AverageCheckCash, "Отчет по среднему чеку (Физики-факт)" },
+			{ Type.TimetableToProdoctorovRu, "Выгрузка расписания на сайт prodoctorov.ru" },
+			{ Type.RecordsFromInsuranceCompanies, "Отчет по записям из страховых компаний" },
+			{ Type.AverageCheckRegular, "Отчет по среднему чеку" },
+			{ Type.AverageCheckIGS, "Отчет по среднему чеку (ИГС)" },
+			{ Type.AverageCheckMSK, "Отчет по среднему чеку (МСК)" },
+			{ Type.AverageCheckCash, "Отчет по среднему чеку (Физики-факт)" },
 			{ Type.CompetitiveGroups, "Отчет по конкурентным группам" },
 			{ Type.LicenseStatistics, "Статистика по лицензиям" },
 			{ Type.TreatmentsDetailsAbsolut, "Детальный отчет по приемам АбсолютСтрахование" },
@@ -145,7 +149,7 @@ namespace MISReports {
 			{ Type.TreatmentsDetailsBestDoctorSpb, "Детальный отчет по приемам БестДоктор Санкт-Петербург" },
 			{ Type.TreatmentsDetailsBestDoctorUfa, "Детальный отчет по приемам БестДоктор Уфа" },
 			{ Type.TreatmentsDetailsSogazUfa, "Детальный отчет по приемам СОГАЗ Уфа" },
-			{ Type.TimetableToSite, "Выгрузка расписания на сайт klinikabudzdorov.ru" },
+			{ Type.TimetableToSite, "Выгрузка расписания на сайт" },
 			{ Type.MicroSipContactsBook, "Справочик контактов для MicroSip" },
 			{ Type.TasksForItilium, "Задачи на январь 2020" },
 			{ Type.FirstTimeVisitPatients, "Отчет по первичным пациентам" },
@@ -159,7 +163,11 @@ namespace MISReports {
 			{ Type.PatientsToSha1, "Получение хэш-суммы SHA1 для списка пациентов" },
 			{ Type.PatientsReferralsDetail, "Отчет по направлениям пациентов (фронт-офис)" },
 			{ Type.FrontOfficeClients, "Список наличных пациентов на сегодня (фронт-офис)" },
-			{ Type.FrontOfficeScheduleRecords, "Отчет по записям в расписание (фронт-офис)" }
+			{ Type.FrontOfficeScheduleRecords, "Отчет по записям в расписание (фронт-офис)" },
+			{ Type.FreeCellsToSite, "Выгрузка отчета по свободным слотам на сайт" },
+			{ Type.ScheduleExternalServices, "Отчет по записям через сервисы" },
+			{ Type.ServiceListByDoctorsToSite, "Выгрузка списка оказываемых сотрудниками услуг на сайт" },
+			{ Type.RecordCountFrontOffice, "Отчет по количеству клиентов (фронт-офис)" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -237,7 +245,11 @@ namespace MISReports {
 			{ Type.PatientsToSha1, "" },
 			{ Type.PatientsReferralsDetail, "" },
 			{ Type.FrontOfficeClients, "Каждый день в 7:30" },
-			{ Type.FrontOfficeScheduleRecords, "" }
+			{ Type.FrontOfficeScheduleRecords, "" },
+			{ Type.FreeCellsToSite, "" },
+			{ Type.ScheduleExternalServices, "Каждый понедельник за -1 неделю и за -2 недели, каждое 1 число месяца за -1 и за -2 месяца" },
+			{ Type.ServiceListByDoctorsToSite, "" },
+			{ Type.RecordCountFrontOffice , "Каждый понедельник за предыдущую неделю"}
 		};
 	}
 }

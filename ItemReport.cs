@@ -595,6 +595,7 @@ namespace MISReports {
 				SqlQuery = settings.MisDbSqlGetPatientsReferralsDetail;
 				TemplateFileName = settings.TemplatePatientsReferralsDetail;
 				MailTo = settings.MailToPatientsReferralsDetail;
+				FolderToSave = settings.FolderToSavePatientsReferralsDetail;
 
 			} else if (reportName.Equals(ReportsInfo.Type.FrontOfficeClients.ToString())) {
 				Type = ReportsInfo.Type.FrontOfficeClients;
@@ -608,6 +609,33 @@ namespace MISReports {
 				TemplateFileName = settings.TemplateFrontOfficeScheduleRecords;
 				MailTo = settings.MailToFrontOfficeScheduleRecords;
 
+			} else if (reportName.Equals(ReportsInfo.Type.FreeCellsToSite.ToString())) {
+				Type = ReportsInfo.Type.FreeCellsToSite;
+				SqlQuery = settings.MisDbSqlGetFreeCellsToSite;
+				TemplateFileName = settings.TemplateFreeCellsToSite;
+				MailTo = settings.MailToFreeCellsToSite;
+				UploadToServer = true;
+
+			} else if (reportName.Equals(ReportsInfo.Type.ScheduleExternalServices.ToString())) {
+				Type = ReportsInfo.Type.ScheduleExternalServices;
+				SqlQuery = settings.MisDbSqlGetScheduleExternalServices;
+				TemplateFileName = settings.TemplateScheduleExternalServices;
+				MailTo = settings.MailToScheduleExternalServices;
+
+			} else if (reportName.Equals(ReportsInfo.Type.ServiceListByDoctorsToSite.ToString())) {
+				Type = ReportsInfo.Type.ServiceListByDoctorsToSite;
+				SqlQuery = settings.MisDbSqlGetServiceListByDoctorsToSite;
+				TemplateFileName = settings.TemplateServiceListByDoctorsToSite;
+				MailTo = settings.MailToServiceListByDoctorsToSite;
+				UploadToServer = true;
+				UseVerticaDb = true;
+
+			} else if (reportName.Equals(ReportsInfo.Type.RecordCountFrontOffice.ToString())) {
+				Type = ReportsInfo.Type.RecordCountFrontOffice;
+				SqlQuery = settings.MisDbSqlGetRecordCountFrontOffice;
+				TemplateFileName = settings.TemplateRecordCountFrontOffice;
+				MailTo = settings.MailToRecordCountFrontOffice;
+
 			} else
 				IsSettingsLoaded = false;
 
@@ -618,8 +646,10 @@ namespace MISReports {
 				FolderToSave = settings.FolderToSaveTreatmentsDetails;
 				UseVerticaDb = true;
 
-				if (Type.ToString().Equals(ReportsInfo.Type.TreatmentsDetailsOther.ToString()))
-					SqlQuery = settings.VerticaDbSqlGetTreatmentsDetailsOtherIC; //settings.MisDbSqlGetTreatmentsDetailsOtherIC; //
+				if (Type.ToString().Equals(ReportsInfo.Type.TreatmentsDetailsOther.ToString())) { //Нужно актуализировать запрос к вертике
+					UseVerticaDb = false;
+					SqlQuery = settings.MisDbSqlGetTreatmentsDetailsOtherIC; //settings.VerticaDbSqlGetTreatmentsDetailsOtherIC; //
+				}
 			}
 
 			if (IsSettingsLoaded) {

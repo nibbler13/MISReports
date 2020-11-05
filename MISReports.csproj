@@ -98,6 +98,7 @@
     <Compile Include="DataHandlers\MisTimeSheet.cs" />
     <Compile Include="DataHandlers\PatientsReferralsDetail.cs" />
     <Compile Include="DataHandlers\PatientsToSha1.cs" />
+    <Compile Include="DataHandlers\RecordsCountFrontOffice.cs" />
     <Compile Include="ItemTreatmentsDiscount.cs" />
     <Compile Include="DataHandlers\AverageCheck.cs" />
     <Compile Include="DataHandlers\CompetitiveGroups.cs" />
