@@ -386,14 +386,14 @@ namespace MISReports {
 
 			if (hasError) {
 				Logging.ToLog(body);
-				itemReport.SetMailTo(mailCopy);
+				//itemReport.SetMailTo(mailCopy);
 				itemReport.FileResult = string.Empty;
 			}
 
 			SaveSettings();
 
-			if (Debugger.IsAttached)
-				return;
+			//if (Debugger.IsAttached)
+			//	return;
 
 			if (!string.IsNullOrEmpty(itemReport.FolderToSave))
 				SaveReportToFolder();
@@ -844,7 +844,8 @@ namespace MISReports {
 			if (itemReport.Type == ReportsInfo.Type.PatientsToSha1)
 				dataTableMainData = PatientsToSha1.PerformDataTable(dataTableMainData);
 
-			if (itemReport.Type == ReportsInfo.Type.FreeCellsToSite) {
+			if (itemReport.Type == ReportsInfo.Type.FreeCellsToSite ||
+				itemReport.Type == ReportsInfo.Type.FreeCellsToSiteJSON) {
 				DataTable dataTable = new DataTable();
 				dataTable.Columns.Add("order", typeof(int));
 				dataTable.Columns.Add("dcode", typeof(long));
@@ -903,6 +904,9 @@ namespace MISReports {
 				}
 
 				dataTableMainData = dataTable;
+
+				if (itemReport.Type == ReportsInfo.Type.FreeCellsToSiteJSON)
+					fileToUpload = FreeCellsToSiteJSON.ParseDataTableToJsonAndWriteToFile(dataTableMainData);
 			}
 		}
 
@@ -1064,6 +1068,10 @@ namespace MISReports {
 						itemReport.TemplateFileName,
 						type: itemReport.Type);
 
+					fileToUpload = itemReport.FileResult;
+
+				} else if (itemReport.Type == ReportsInfo.Type.FreeCellsToSiteJSON) {
+					itemReport.FileResult = FreeCellsToSiteJSON.ParseDataTableToJsonAndWriteToFile(dataTableMainData);
 					fileToUpload = itemReport.FileResult;
 
 				} else if (itemReport.Type == ReportsInfo.Type.TimetableToProdoctorovRu) {
@@ -1237,6 +1245,9 @@ namespace MISReports {
 						case ReportsInfo.Type.EmergencyCallsQuantity:
 						case ReportsInfo.Type.ScheduleExternalServices:
 						case ReportsInfo.Type.ServiceListByDoctorsToSite:
+						case ReportsInfo.Type.RFNonResident:
+						case ReportsInfo.Type.Covid19Patients:
+						case ReportsInfo.Type.ScheduleCallCenter:
 							isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult);
 							break;
 
@@ -1352,7 +1363,7 @@ namespace MISReports {
 				} else {
 					string newFilePath = SaveFileToNetworkFolder(itemReport.FileResult, itemReport.FolderToSave, out string destFile);
 					body = "Файл с отчетом сохранен по адресу: " + Environment.NewLine + newFilePath;
-					itemReport.FileResult = destFile;
+					itemReport.FileResult = string.Empty;
 				}
 			} catch (Exception e) {
 				Console.WriteLine(e.Message + Environment.NewLine + e.StackTrace);
@@ -1448,12 +1459,11 @@ namespace MISReports {
             string url = string.Empty;
             string user = string.Empty;
             string password = string.Empty;
-            string method = string.Empty;
+            string method = WebRequestMethods.Http.Post;
 
 			if (itemReport.Type == ReportsInfo.Type.PriceListToSite) {
 				//url = "https://old.klinikabudzdorov.ru/export/price/file_input.php";
 				url = "https://klinikabudzdorov.ru/api/upload_price/";
-				method = WebRequestMethods.Http.Post;
 
 			} else if (itemReport.Type == ReportsInfo.Type.TimetableToProdoctorovRu) {
 				PostDataToServer();
@@ -1461,15 +1471,15 @@ namespace MISReports {
 
 			} else if (itemReport.Type == ReportsInfo.Type.TimetableToSite) {
 				url = "https://old.klinikabudzdorov.ru/export/schedule/file_input.php";
-				method = WebRequestMethods.Http.Post;
 
 			} else if (itemReport.Type == ReportsInfo.Type.FreeCellsToSite) {
 				url = "https://klinikabudzdorov.ru/api/upload_schedule/";
-				method = WebRequestMethods.Http.Post;
+
+			} else if (itemReport.Type == ReportsInfo.Type.FreeCellsToSiteJSON) {
+				url = "https://klinikabudzdorov.ru/api/upload_schedule/json/";
 
 			} else if (itemReport.Type == ReportsInfo.Type.ServiceListByDoctorsToSite) {
 				url = "https://klinikabudzdorov.ru/api/upload_doctor_service/";
-				method = WebRequestMethods.Http.Post;
 
 			} else {
 				Logging.ToLog("Не заданы параметры, возврат");

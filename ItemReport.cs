@@ -616,6 +616,12 @@ namespace MISReports {
 				MailTo = settings.MailToFreeCellsToSite;
 				UploadToServer = true;
 
+			} else if (reportName.Equals(ReportsInfo.Type.FreeCellsToSiteJSON.ToString())) {
+				Type = ReportsInfo.Type.FreeCellsToSiteJSON;
+				SqlQuery = settings.MisDbSqlGetFreeCellsToSite;
+				MailTo = settings.MailToFreeCellsToSite;
+				UploadToServer = true;
+
 			} else if (reportName.Equals(ReportsInfo.Type.ScheduleExternalServices.ToString())) {
 				Type = ReportsInfo.Type.ScheduleExternalServices;
 				SqlQuery = settings.MisDbSqlGetScheduleExternalServices;
@@ -635,6 +641,24 @@ namespace MISReports {
 				SqlQuery = settings.MisDbSqlGetRecordCountFrontOffice;
 				TemplateFileName = settings.TemplateRecordCountFrontOffice;
 				MailTo = settings.MailToRecordCountFrontOffice;
+
+			} else if (reportName.Equals(ReportsInfo.Type.RFNonResident.ToString())) {
+				Type = ReportsInfo.Type.RFNonResident;
+				SqlQuery = settings.MisDbSqlGetRFNonResident;
+				MailTo = settings.MailToRFNonResident;
+				TemplateFileName = settings.TemplateRFNonResident;
+
+			} else if (reportName.Equals(ReportsInfo.Type.Covid19Patients.ToString())) {
+				Type = ReportsInfo.Type.Covid19Patients;
+				SqlQuery = settings.MisDbSqlGetCovid19Patients;
+				MailTo = settings.MailToCovid19Patients;
+				TemplateFileName = settings.TemplateCovid19Patients;
+
+			} else if (reportName.Equals(ReportsInfo.Type.ScheduleCallCenter.ToString())) {
+				Type = ReportsInfo.Type.ScheduleCallCenter;
+				SqlQuery = settings.MisDbSqlGetScheduleCallCenter;
+				MailTo = settings.MailToScheduleCallCenter;
+				TemplateFileName = settings.TemplateScheduleCallCenter;
 
 			} else
 				IsSettingsLoaded = false;

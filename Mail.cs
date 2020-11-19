@@ -4,6 +4,7 @@ using System.Reflection;
 using System.IO;
 using System.Collections.Generic;
 using System.Net.Mime;
+using System.Diagnostics;
 
 namespace MISReports {
 	public class SystemMail {
@@ -11,7 +12,7 @@ namespace MISReports {
 			Logging.ToLog("Отправка сообщения, тема: " + subject + ", текст: " + body);
 			Logging.ToLog("Получатели: " + receiver);
 
-			if (string.IsNullOrEmpty(receiver))
+			if (string.IsNullOrEmpty(receiver) || Debugger.IsAttached)
 				return;
 
 			try {

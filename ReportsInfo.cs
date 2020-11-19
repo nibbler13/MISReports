@@ -85,7 +85,11 @@ namespace MISReports {
 			FreeCellsToSite,
 			ScheduleExternalServices,
 			ServiceListByDoctorsToSite,
-			RecordCountFrontOffice
+			RecordCountFrontOffice,
+			RFNonResident,
+			Covid19Patients,
+			ScheduleCallCenter,
+			FreeCellsToSiteJSON
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -167,7 +171,11 @@ namespace MISReports {
 			{ Type.FreeCellsToSite, "Выгрузка отчета по свободным слотам на сайт" },
 			{ Type.ScheduleExternalServices, "Отчет по записям через сервисы" },
 			{ Type.ServiceListByDoctorsToSite, "Выгрузка списка оказываемых сотрудниками услуг на сайт" },
-			{ Type.RecordCountFrontOffice, "Отчет по количеству клиентов (фронт-офис)" }
+			{ Type.RecordCountFrontOffice, "Отчет по количеству клиентов (фронт-офис)" },
+			{ Type.RFNonResident, "Список нерезидентов РФ" },
+			{ Type.Covid19Patients, "Реестр пациентов с COVID-19 (МО и регионы)" },
+			{ Type.ScheduleCallCenter, "Отчет по записям - КЦ" },
+			{ Type.FreeCellsToSiteJSON, "Выгрузка отчета по свободным слотам на сайт (JSON)" },
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -247,9 +255,13 @@ namespace MISReports {
 			{ Type.FrontOfficeClients, "Каждый день в 7:30" },
 			{ Type.FrontOfficeScheduleRecords, "" },
 			{ Type.FreeCellsToSite, "" },
-			{ Type.ScheduleExternalServices, "Каждый понедельник за -1 неделю и за -2 недели, каждое 1 число месяца за -1 и за -2 месяца" },
+			{ Type.ScheduleExternalServices, "Каждый понедельник и каждое 1 число месяца" },
 			{ Type.ServiceListByDoctorsToSite, "" },
-			{ Type.RecordCountFrontOffice , "Каждый понедельник за предыдущую неделю"}
+			{ Type.RecordCountFrontOffice, "Каждый понедельник за предыдущую неделю" },
+			{ Type.RFNonResident, "Каждое 1 число месяца" },
+			{ Type.Covid19Patients, "3 раза в день в 9:00, в 12:00, в 15:00" },
+			{ Type.ScheduleCallCenter, "Каждый понедельник и каждое 1 число месяца" },
+			{ Type.FreeCellsToSiteJSON, "" }
 		};
 	}
 }
