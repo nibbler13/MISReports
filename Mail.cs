@@ -12,7 +12,7 @@ namespace MISReports {
 			Logging.ToLog("Отправка сообщения, тема: " + subject + ", текст: " + body);
 			Logging.ToLog("Получатели: " + receiver);
 
-			if (string.IsNullOrEmpty(receiver) || Debugger.IsAttached)
+			if (string.IsNullOrEmpty(receiver))
 				return;
 
 			try {

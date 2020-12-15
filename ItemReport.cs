@@ -519,6 +519,11 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSogazUfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSogazUfa;
 				JIDS = "991524671,991524697"; //2719RP055, ДС № 2719RP055-02  к дог. №2719RP055 (ГК «БАШНЕФТЬ»)
+
+			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSogazMed.ToString())) {
+				Type = ReportsInfo.Type.TreatmentsDetailsSogazMed;
+				JIDS = "991527569"; //20 QP 268/SM от 04.09.2020г.
+
 				#endregion TreatmentsDetails
 				//-----------------------------------------------------------------------------------------------------
 
@@ -630,8 +635,15 @@ namespace MISReports {
 
 			} else if (reportName.Equals(ReportsInfo.Type.ServiceListByDoctorsToSite.ToString())) {
 				Type = ReportsInfo.Type.ServiceListByDoctorsToSite;
-				SqlQuery = settings.MisDbSqlGetServiceListByDoctorsToSite;
+				SqlQuery = settings.VerticaDbSqlGetServiceListByDoctorsToSite;
 				TemplateFileName = settings.TemplateServiceListByDoctorsToSite;
+				MailTo = settings.MailToServiceListByDoctorsToSite;
+				UploadToServer = true;
+				UseVerticaDb = true;
+
+			} else if (reportName.Equals(ReportsInfo.Type.ServiceListByDoctorsToSiteJson.ToString())) {
+				Type = ReportsInfo.Type.ServiceListByDoctorsToSiteJson;
+				SqlQuery = settings.VerticaDbSqlGetServiceListByDoctorsToSite;
 				MailTo = settings.MailToServiceListByDoctorsToSite;
 				UploadToServer = true;
 				UseVerticaDb = true;
@@ -659,6 +671,24 @@ namespace MISReports {
 				SqlQuery = settings.MisDbSqlGetScheduleCallCenter;
 				MailTo = settings.MailToScheduleCallCenter;
 				TemplateFileName = settings.TemplateScheduleCallCenter;
+
+			} else if (reportName.Equals(ReportsInfo.Type.AverageCheckRegularMonth.ToString())) {
+				Type = ReportsInfo.Type.AverageCheckRegular;
+				SqlQuery = settings.MisDbSqlGetAverageCheck;
+				TemplateFileName = settings.TemplateAverageCheck;
+				MailTo = settings.MailToAverageCheckMonth;
+
+			} else if (reportName.Equals(ReportsInfo.Type.Covid19ByPatientsToGv.ToString())) {
+				Type = ReportsInfo.Type.Covid19ByPatientsToGv;
+				SqlQuery = settings.MisDbSqlGetCovid19ByPatientsToGv;
+				TemplateFileName = settings.TemplateCovid19ByPatientsToGv;
+				MailTo = settings.MailToCovid19ByPatientsToGv;
+
+			} else if (reportName.Equals(ReportsInfo.Type.EmployeesCovidTreat.ToString())) {
+				Type = ReportsInfo.Type.EmployeesCovidTreat;
+				SqlQuery = settings.MisDbSqlGetEmployeesCovidTreat;
+				TemplateFileName = settings.TemplateEmployeesCovidTreat;
+				MailTo = settings.MailToEmployeesCovidTreat;
 
 			} else
 				IsSettingsLoaded = false;

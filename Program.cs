@@ -20,7 +20,7 @@ namespace MISReports {
 	public class Program {
 		public static string AssemblyDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "\\";
 
-		private static ItemReport itemReport;
+		public static ItemReport itemReport;
 
 		private static DataTable dataTableMainData = null;
 		private static DataTable dataTableAverageCheckPreviousWeek = null;
@@ -51,7 +51,7 @@ namespace MISReports {
 		private static string subjectAverageCheckPreviousWeek = string.Empty;
 		private static string subjectAverageCheckPreviousYear = string.Empty;
 		private static string body = string.Empty;
-		private static bool hasError = false;
+		public static bool hasError = false;
 
 		private static string fileToUpload = string.Empty;
 		private static readonly string mailCopy = Properties.Settings.Default.MailCopy;
@@ -97,6 +97,7 @@ namespace MISReports {
 			ReportsInfo.Type.TreatmentsDetailsBestDoctorSpb,
 			ReportsInfo.Type.TreatmentsDetailsBestDoctorUfa,
 			ReportsInfo.Type.TreatmentsDetailsSogazUfa,
+			ReportsInfo.Type.TreatmentsDetailsSogazMed,
 			ReportsInfo.Type.TreatmentsDetailsOther
 		};
 
@@ -108,7 +109,7 @@ namespace MISReports {
 				 new Tuple<string, string, string>("172.16.225.2", "mskt", "06_Кутузовский"),
 				 //new Tuple<string, string, string>("172.16.210.203", "web", "Расписание для сайта"),
 				 new Tuple<string, string, string>("172.16.225.2", "msn", "02_Мясницкая"),
-				 new Tuple<string, string, string>("172.16.9.10", "central-report", "99_ЦБД (Отчеты}"),
+				 //new Tuple<string, string, string>("172.16.9.10", "central-report", "99_ЦБД (Отчеты}"),
 				 new Tuple<string, string, string>("172.16.190.6", "dentbase", "01_МДМ"),
 				 new Tuple<string, string, string>("172.16.203.2", "spb", "03_СП-Б"),
 				 new Tuple<string, string, string>("172.16.127.2", "sretenka", "05_Сретенка"),
@@ -341,6 +342,8 @@ namespace MISReports {
 
 
 		public static void CreateReport(ItemReport itemReportToCreate, bool? needToAskToSend = null) {
+			hasError = false;
+
 			if (Debugger.IsAttached)
 				workloadResultFiles = new Dictionary<string, string> { { "_Общий", string.Empty } };
 
@@ -365,8 +368,8 @@ namespace MISReports {
 				Properties.Settings.Default.MisDbName);
 
 			IDbClient dbClient = new FirebirdClient(
-				Properties.Settings.Default.MisDbAddress,
-				Properties.Settings.Default.MisDbName,
+				(itemReport.Type == ReportsInfo.Type.CompetitiveGroups ? "172.16.210.30" : Properties.Settings.Default.MisDbAddress),
+				(itemReport.Type == ReportsInfo.Type.CompetitiveGroups ? "central_repl" : Properties.Settings.Default.MisDbName),
 				Properties.Settings.Default.MisDbUser,
 				Properties.Settings.Default.MisDbPassword);
 
@@ -561,7 +564,9 @@ namespace MISReports {
 							Properties.Settings.Default.MisDbPassword);
 
 						DataTable dataTable = dbClient.GetDataTable(itemReport.SqlQuery, new Dictionary<string, object>());
-						dataTableMainData.Rows.Add(new object[] {dbName, DateTime.Now, dataTable.Rows[0][0] });
+
+						if (dataTable.Rows.Count > 0)
+							dataTableMainData.Rows.Add(new object[] {dbName, DateTime.Now, dataTable.Rows[0][0] });
 					} catch (Exception e) {
 						Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
 						dataTableMainData.Rows.Add(new object[] { dbName, DateTime.Now, -1 });
@@ -905,8 +910,8 @@ namespace MISReports {
 
 				dataTableMainData = dataTable;
 
-				if (itemReport.Type == ReportsInfo.Type.FreeCellsToSiteJSON)
-					fileToUpload = FreeCellsToSiteJSON.ParseDataTableToJsonAndWriteToFile(dataTableMainData);
+				//if (itemReport.Type == ReportsInfo.Type.FreeCellsToSiteJSON)
+				//	fileToUpload = FreeCellsToSiteJSON.ParseDataTableToJsonAndWriteToFile(dataTableMainData);
 			}
 		}
 
@@ -1081,6 +1086,10 @@ namespace MISReports {
 					itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData, subject, itemReport.TemplateFileName);
 					fileToUpload = itemReport.FileResult;
 
+				} else if (itemReport.Type == ReportsInfo.Type.ServiceListByDoctorsToSiteJson) {
+					itemReport.FileResult = ServiceListByDoctorsToSiteJson.ParseDataTableToJsonAndWriteToFile(dataTableMainData);
+					fileToUpload = itemReport.FileResult;
+
 				} else if (itemReport.Type == ReportsInfo.Type.UniqueServices ||
 					itemReport.Type == ReportsInfo.Type.UniqueServicesRegions) {
 					itemReport.FileResult = UniqueServices.Process(dataTableMainData,
@@ -1103,6 +1112,7 @@ namespace MISReports {
 							dataTableAverageCheckZabor,
 							dataTableAverageCheckZaborPreviousWeek,
 							itemReport.Type == ReportsInfo.Type.AverageCheckCash);
+
 					itemReport.FileResultAverageCheckPreviousYear =
 						AverageCheck.WriteAverageCheckToExcel(
 							itemAverageCheckPreviousYear,
@@ -1248,6 +1258,7 @@ namespace MISReports {
 						case ReportsInfo.Type.RFNonResident:
 						case ReportsInfo.Type.Covid19Patients:
 						case ReportsInfo.Type.ScheduleCallCenter:
+						case ReportsInfo.Type.Covid19ByPatientsToGv:
 							isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult);
 							break;
 
@@ -1313,6 +1324,10 @@ namespace MISReports {
 
 						case ReportsInfo.Type.RecordCountFrontOffice:
 							isPostProcessingOk = RecordsCountFrontOffice.Process(itemReport.FileResult);
+							break;
+
+						case ReportsInfo.Type.EmployeesCovidTreat:
+							isPostProcessingOk = EmployeesCovidTreat.Process(itemReport.FileResult);
 							break;
 
 						default:
@@ -1481,6 +1496,9 @@ namespace MISReports {
 			} else if (itemReport.Type == ReportsInfo.Type.ServiceListByDoctorsToSite) {
 				url = "https://klinikabudzdorov.ru/api/upload_doctor_service/";
 
+			} else if (itemReport.Type == ReportsInfo.Type.ServiceListByDoctorsToSiteJson) {
+				url = "https://klinikabudzdorov.ru/api/upload_doctor_service/json/ ";
+
 			} else {
 				Logging.ToLog("Не заданы параметры, возврат");
 				return;
@@ -1513,8 +1531,9 @@ namespace MISReports {
                 body += Environment.NewLine + msg;
             }
 
+			Logging.ToLog("Удаление загруженного файла: " + fileToUpload);
             try {
-				if (!Debugger.IsAttached)
+				//if (!Debugger.IsAttached)
 					File.Delete(fileToUpload);
             } catch (Exception e) {
                 Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);

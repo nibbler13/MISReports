@@ -22,7 +22,8 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -93,6 +94,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DataHandlers\EmployeesCovidTreat.cs" />
     <Compile Include="DataHandlers\FreeCellsToSiteJSON.cs" />
     <Compile Include="DataHandlers\FrontOfficeClients.cs" />
     <Compile Include="DataHandlers\FrontOfficeScheduleRecords.cs" />
@@ -100,6 +102,7 @@
     <Compile Include="DataHandlers\PatientsReferralsDetail.cs" />
     <Compile Include="DataHandlers\PatientsToSha1.cs" />
     <Compile Include="DataHandlers\RecordsCountFrontOffice.cs" />
+    <Compile Include="DataHandlers\ServiceListByDoctorsToSiteJson.cs" />
     <Compile Include="ItemTreatmentsDiscount.cs" />
     <Compile Include="DataHandlers\AverageCheck.cs" />
     <Compile Include="DataHandlers\CompetitiveGroups.cs" />

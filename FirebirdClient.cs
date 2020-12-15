@@ -57,11 +57,12 @@ namespace MISReports {
 						fbDataAdapter.Fill(dataTable);
 				}
 			} catch (Exception e) {
-				string subject = "Ошибка выполнения запроса к БД";
+				string subject = (Program.itemReport is null ? string.Empty : Program.itemReport.Type.ToString()) +  " Ошибка выполнения запроса к БД";
 				string body = e.Message + Environment.NewLine + e.StackTrace;
 				SystemMail.SendMail(subject, body, Properties.Settings.Default.MailCopy);
 				Logging.ToLog(subject + " " + body);
 				connection.Close();
+				Program.hasError = true;
 			}
 
 			return dataTable;
@@ -83,11 +84,12 @@ namespace MISReports {
 
 				updated = update.ExecuteNonQuery() > 0 ? true : false;
 			} catch (Exception e) {
-				string subject = "Ошибка выполнения запроса к БД";
+				string subject = (Program.itemReport is null ? string.Empty : Program.itemReport.Type.ToString()) + " Ошибка выполнения запроса к БД";
 				string body = e.Message + Environment.NewLine + e.StackTrace;
 				SystemMail.SendMail(subject, body, Properties.Settings.Default.MailCopy);
 				Logging.ToLog(subject + " " + body);
 				connection.Close();
+				Program.hasError = true;
 			}
 
 			return updated;

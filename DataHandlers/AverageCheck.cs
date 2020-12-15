@@ -10,7 +10,7 @@ using Excel = Microsoft.Office.Interop.Excel;
 
 namespace MISReports.ExcelHandlers {
 	class AverageCheck : ExcelGeneral {
-		private enum PrgTypes { Fact, Avans, Nal }
+		private enum PrgTypes { Fact, Avans, Nal, Lms0 }
 		private enum ValueTypes { SumServ, UniqPacient }
 
 		public static bool Process(string resultFile, Dictionary<string, object> periodCurrent, 
@@ -444,19 +444,23 @@ namespace MISReports.ExcelHandlers {
 						Logging.ToLog("Заборник: " + item);
 
 						List<object> values1 = new List<object> { null, null, null };
-						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Fact, ValueTypes.SumServ));
-						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Nal, ValueTypes.SumServ));
-						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Avans, ValueTypes.SumServ));
 						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Fact, ValueTypes.SumServ));
 						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Nal, ValueTypes.SumServ));
 						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Avans, ValueTypes.SumServ));
-						values1.AddRange(new List<object> { null, null, null });
-						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Fact, ValueTypes.UniqPacient));
-						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Nal, ValueTypes.UniqPacient));
-						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Avans, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Lms0, ValueTypes.SumServ));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Fact, ValueTypes.SumServ));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Nal, ValueTypes.SumServ));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Avans, ValueTypes.SumServ));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Lms0, ValueTypes.SumServ));
+						values1.AddRange(new List<object> { null, null, null, null });
 						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Fact, ValueTypes.UniqPacient));
 						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Nal, ValueTypes.UniqPacient));
 						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Avans, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborPrevious, item, PrgTypes.Lms0, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Fact, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Nal, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Avans, ValueTypes.UniqPacient));
+						values1.Add(FindValueInDataTable(dataTableZaborCurrent, item, PrgTypes.Lms0, ValueTypes.UniqPacient));
 
 						WriteOutValues(values1.ToArray(), sheet, ref rowToWrite);
 					}
@@ -488,6 +492,9 @@ namespace MISReports.ExcelHandlers {
 					break;
 				case PrgTypes.Nal:
 					prgName = "НАЛ";
+					break;
+				case PrgTypes.Lms0:
+					prgName = "ЛМС 0";
 					break;
 				default:
 					prgName = "unknown";
@@ -635,7 +642,7 @@ namespace MISReports.ExcelHandlers {
 				columnsToHide = "G:H";
 				scrollColumn = 2;
 			} else if (sheetName.Equals("Заборники")) {
-				rangesWithFormula = new string[] { "J7:L7", "S7:V7" };
+				rangesWithFormula = new string[] { "L7:O7", "X7:AE7" };
 				columnsToHide = string.Empty;
 				scrollColumn = 8;
 			}

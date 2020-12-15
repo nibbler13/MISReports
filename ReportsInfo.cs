@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace MISReports {
 	public class ReportsInfo {
+
+
+		// !!! ----------------------------------------------------------------------------
+		// !!! не добавлять новые значения в середину списка, смещаются права доступа в GUI
+		// !!! ----------------------------------------------------------------------------
 		public enum Type {
 			FreeCellsDay,
 			FreeCellsWeek,
@@ -67,6 +72,7 @@ namespace MISReports {
 			TreatmentsDetailsBestDoctorSpb,
 			TreatmentsDetailsBestDoctorUfa,
 			TreatmentsDetailsSogazUfa,
+			TreatmentsDetailsSogazMed,
 			TimetableToSite,
 			MicroSipContactsBook,
 			TasksForItilium,
@@ -89,7 +95,11 @@ namespace MISReports {
 			RFNonResident,
 			Covid19Patients,
 			ScheduleCallCenter,
-			FreeCellsToSiteJSON
+			FreeCellsToSiteJSON,
+			AverageCheckRegularMonth,
+			Covid19ByPatientsToGv,
+			ServiceListByDoctorsToSiteJson,
+			EmployeesCovidTreat
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -153,6 +163,7 @@ namespace MISReports {
 			{ Type.TreatmentsDetailsBestDoctorSpb, "Детальный отчет по приемам БестДоктор Санкт-Петербург" },
 			{ Type.TreatmentsDetailsBestDoctorUfa, "Детальный отчет по приемам БестДоктор Уфа" },
 			{ Type.TreatmentsDetailsSogazUfa, "Детальный отчет по приемам СОГАЗ Уфа" },
+			{ Type.TreatmentsDetailsSogazMed, "Детальный отчет по приемам СОГАЗ-мед" },
 			{ Type.TimetableToSite, "Выгрузка расписания на сайт" },
 			{ Type.MicroSipContactsBook, "Справочик контактов для MicroSip" },
 			{ Type.TasksForItilium, "Задачи на январь 2020" },
@@ -176,6 +187,10 @@ namespace MISReports {
 			{ Type.Covid19Patients, "Реестр пациентов с COVID-19 (МО и регионы)" },
 			{ Type.ScheduleCallCenter, "Отчет по записям - КЦ" },
 			{ Type.FreeCellsToSiteJSON, "Выгрузка отчета по свободным слотам на сайт (JSON)" },
+			{ Type.AverageCheckRegularMonth, "Отчет по среднему чеку" },
+			{ Type.Covid19ByPatientsToGv, "Отчет по Covid-19 по пациентам" },
+			{ Type.ServiceListByDoctorsToSiteJson, "Выгрузка списка оказываемых сотрудниками услуг на сайт (JSON)" },
+			{ Type.EmployeesCovidTreat, "Отчет по приемам сотрудников с подозрением на Covid" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -239,6 +254,7 @@ namespace MISReports {
 			{ Type.TreatmentsDetailsBestDoctorSpb, "" },
 			{ Type.TreatmentsDetailsBestDoctorUfa, "" },
 			{ Type.TreatmentsDetailsSogazUfa, "" },
+			{ Type.TreatmentsDetailsSogazMed, "" },
 			{ Type.TimetableToSite, "" },
 			{ Type.MicroSipContactsBook, "Каждый день в 1:00" },
 			{ Type.TasksForItilium, "Каждый день в 9:00" },
@@ -256,12 +272,16 @@ namespace MISReports {
 			{ Type.FrontOfficeScheduleRecords, "" },
 			{ Type.FreeCellsToSite, "" },
 			{ Type.ScheduleExternalServices, "Каждый понедельник и каждое 1 число месяца" },
-			{ Type.ServiceListByDoctorsToSite, "" },
+			{ Type.ServiceListByDoctorsToSite, "Каждый день в 2:20" },
 			{ Type.RecordCountFrontOffice, "Каждый понедельник за предыдущую неделю" },
 			{ Type.RFNonResident, "Каждое 1 число месяца" },
 			{ Type.Covid19Patients, "3 раза в день в 9:00, в 12:00, в 15:00" },
 			{ Type.ScheduleCallCenter, "Каждый понедельник и каждое 1 число месяца" },
-			{ Type.FreeCellsToSiteJSON, "" }
+			{ Type.FreeCellsToSiteJSON, "" },
+			{ Type.AverageCheckRegularMonth, "Каждый месяц 3 числа" },
+			{ Type.Covid19ByPatientsToGv, "Каждый день за предыдущий" },
+			{ Type.ServiceListByDoctorsToSiteJson, "Каждый день в 2:30" },
+			{ Type.EmployeesCovidTreat, "Каждый день" }
 		};
 	}
 }
