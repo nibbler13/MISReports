@@ -33,6 +33,7 @@ namespace MISReports {
 		private static DataTable dataTableUniqueServiceTotal = null;
 		private static DataTable dataTableUniqueServiceLab = null;
 		private static DataTable dataTableUniqueServiceLabTotal = null;
+		private static DataTable dataTablePndProvidersKids = null;
 
 		private static DateTime? dateBeginOriginal = null;
 
@@ -720,6 +721,7 @@ namespace MISReports {
 			if (itemReport.Type == ReportsInfo.Type.AverageCheckRegular ||
 				itemReport.Type == ReportsInfo.Type.AverageCheckMSK ||
 				itemReport.Type == ReportsInfo.Type.AverageCheckCash) {
+
 				if (itemReport.DateBegin.Day == 1 &&
 					itemReport.DateEnd.Day == DateTime.DaysInMonth(itemReport.DateBegin.Year, itemReport.DateBegin.Month) &&
 					itemReport.DateBegin.Month == itemReport.DateEnd.Month &&
@@ -788,6 +790,9 @@ namespace MISReports {
 					#endregion
 
 					#region previousYear
+					if (dateBeginOriginal.Value.Year == 2021)
+						reportWeekNumber++;
+
 					DateTime previousYearWeekFirstDay = FirstDateOfWeekISO8601(dateBeginOriginal.Value.AddYears(-1).Year, reportWeekNumber);
 
 					parametersAverageCheckPreviousYear = new Dictionary<string, object> {
@@ -912,6 +917,13 @@ namespace MISReports {
 
 				//if (itemReport.Type == ReportsInfo.Type.FreeCellsToSiteJSON)
 				//	fileToUpload = FreeCellsToSiteJSON.ParseDataTableToJsonAndWriteToFile(dataTableMainData);
+			}
+
+			if (itemReport.Type == ReportsInfo.Type.PndProviders) {
+				Logging.ToLog("Получение информации по детским отделениям");
+				string queryKids = Properties.Settings.Default.MisDbSqlGetPndProvidersKids;
+				dataTablePndProvidersKids = dbClient.GetDataTable(queryKids, parameters);
+				Logging.ToLog("Получено строк: " + dataTablePndProvidersKids.Rows.Count);
 			}
 		}
 
@@ -1107,8 +1119,8 @@ namespace MISReports {
 					itemReport.FileResult =
 						AverageCheck.WriteAverageCheckToExcel(
 							itemAverageCheckPreviousWeek,
-							subjectAverageCheckPreviousWeek, 
-							itemReport.TemplateFileName, 
+							subjectAverageCheckPreviousWeek,
+							itemReport.TemplateFileName,
 							dataTableAverageCheckZabor,
 							dataTableAverageCheckZaborPreviousWeek,
 							itemReport.Type == ReportsInfo.Type.AverageCheckCash);
@@ -1117,15 +1129,15 @@ namespace MISReports {
 						AverageCheck.WriteAverageCheckToExcel(
 							itemAverageCheckPreviousYear,
 							subjectAverageCheckPreviousYear,
-							itemReport.TemplateFileName, 
+							itemReport.TemplateFileName,
 							dataTableAverageCheckZabor,
 							dataTableAverageCheckZaborPreviousYear,
 							itemReport.Type == ReportsInfo.Type.AverageCheckCash);
 
 				} else if (itemReport.Type == ReportsInfo.Type.AverageCheckIGS) {
 					itemReport.FileResult = AverageCheck.WriteAverageCheckToExcel(
-						itemAverageCheckIGS, 
-						subject, 
+						itemAverageCheckIGS,
+						subject,
 						itemReport.TemplateFileName,
 						dataTableAverageCheckZabor,
 						dataTableAverageCheckZaborPreviousWeek);
@@ -1172,6 +1184,10 @@ namespace MISReports {
 
 				} else if (itemReport.Type == ReportsInfo.Type.PatientsReferralsDetail) {
 					itemReport.FileResult = PatientsReferralsDetail.WriteToExcel(dataTableMainData, subject, itemReport.TemplateFileName);
+
+				} else if (itemReport.Type == ReportsInfo.Type.PndProviders) {
+					itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData, subject, itemReport.TemplateFileName, "Взрослые");
+					ExcelGeneral.WriteDataTableToExcel(dataTablePndProvidersKids, subject, itemReport.FileResult, "Дети", false);
 
 				} else {
 					itemReport.FileResult = ExcelGeneral.WriteDataTableToExcel(dataTableMainData,
@@ -1328,6 +1344,14 @@ namespace MISReports {
 
 						case ReportsInfo.Type.EmployeesCovidTreat:
 							isPostProcessingOk = EmployeesCovidTreat.Process(itemReport.FileResult);
+							break;
+
+						case ReportsInfo.Type.PndProviders:
+							isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult, "Взрослые");
+
+							if (isPostProcessingOk)
+								isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult, "Дети");
+
 							break;
 
 						default:

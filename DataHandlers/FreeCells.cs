@@ -169,6 +169,12 @@ namespace MISReports.ExcelHandlers {
 
 			wsPivote.Range["A1"].Select();
 			wb.ShowPivotTableFieldList = false;
+
+			wsPivote.Range["C1"].Select();
+
+			try {
+				xlApp.Selection.Ungroup();
+			} catch (Exception) {}
 		}
 	}
 }

@@ -690,15 +690,21 @@ namespace MISReports {
 				TemplateFileName = settings.TemplateEmployeesCovidTreat;
 				MailTo = settings.MailToEmployeesCovidTreat;
 
+			} else if (reportName.Equals(ReportsInfo.Type.PndProviders.ToString())) {
+				Type = ReportsInfo.Type.PndProviders;
+				SqlQuery = settings.MisDbSqlGetPndProvidersAdult;
+				TemplateFileName = settings.TemplatePndProviders;
+				MailTo = settings.MailToPndProviders;
+
 			} else
 				IsSettingsLoaded = false;
 
 			if (Type.ToString().Contains("TreatmentsDetails")) {
-				SqlQuery = settings.VerticaDbSqlGetTreatmentsDetails; //settings.MisDbSqlGetTreatmentsDetails; //
+				SqlQuery = settings.MisDbSqlGetTreatmentsDetails; //settings.VerticaDbSqlGetTreatmentsDetails; //
 				TemplateFileName = settings.TemplateTreatmentsDetails;
 				MailTo = settings.MailToTreatmentsDetails;
 				FolderToSave = settings.FolderToSaveTreatmentsDetails;
-				UseVerticaDb = true;
+				UseVerticaDb = false;
 
 				if (Type.ToString().Equals(ReportsInfo.Type.TreatmentsDetailsOther.ToString())) { //Нужно актуализировать запрос к вертике
 					UseVerticaDb = false;

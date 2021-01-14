@@ -12,7 +12,7 @@ namespace MISReports.ExcelHandlers {
 		public static DataTable PerformData(DataTable main, DataTable exclusions, DataTable grouping, DataTable priorities, out string emptyFields) {
 			DataTable dataTableResult = main.Clone();
 
-            emptyFields = string.Empty;
+			emptyFields = string.Empty;
 
 			foreach (DataRow dataRow in main.Rows) {
 				if (IsPriceTooLow(dataRow))
@@ -27,7 +27,13 @@ namespace MISReports.ExcelHandlers {
 				dataRow["TOP_LEVEL"] = topLevel;
 				dataRow["SITE_SERVICE"] = siteService;
 
-				if (topLevel.Equals("Детские специалисты")) {
+				string serviceHeaders = dataRow["TOP_LEVEL"].ToString() + " " + dataRow["GROUP_NAME"].ToString() + " " + dataRow["SUBGROUP"].ToString();
+				serviceHeaders = serviceHeaders.ToLower();
+
+				if (serviceHeaders.Contains("детск") ||
+					serviceHeaders.Contains("дети") ||
+					serviceHeaders.Contains("детей") ||
+					serviceHeaders.Contains("детям")) {
 					try {
 						dataRow["KID_MSSU_NAL"] = dataRow["ADULT_MSSU_NAL"];
 						dataRow["ADULT_MSSU_NAL"] = DBNull.Value;

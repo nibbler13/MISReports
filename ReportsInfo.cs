@@ -99,7 +99,8 @@ namespace MISReports {
 			AverageCheckRegularMonth,
 			Covid19ByPatientsToGv,
 			ServiceListByDoctorsToSiteJson,
-			EmployeesCovidTreat
+			EmployeesCovidTreat,
+			PndProviders
 		};
 
 		public static Dictionary<Type, string> AcceptedParameters = new Dictionary<Type, string> {
@@ -190,7 +191,8 @@ namespace MISReports {
 			{ Type.AverageCheckRegularMonth, "Отчет по среднему чеку" },
 			{ Type.Covid19ByPatientsToGv, "Отчет по Covid-19 по пациентам" },
 			{ Type.ServiceListByDoctorsToSiteJson, "Выгрузка списка оказываемых сотрудниками услуг на сайт (JSON)" },
-			{ Type.EmployeesCovidTreat, "Отчет по приемам сотрудников с подозрением на Covid" }
+			{ Type.EmployeesCovidTreat, "Отчет по приемам сотрудников с подозрением на Covid" },
+			{ Type.PndProviders, "Отчет по провайдерам ПНД" }
 		};
 
 		public static Dictionary<Type, string> Periodicity = new Dictionary<Type, string> {
@@ -281,7 +283,8 @@ namespace MISReports {
 			{ Type.AverageCheckRegularMonth, "Каждый месяц 3 числа" },
 			{ Type.Covid19ByPatientsToGv, "Каждый день за предыдущий" },
 			{ Type.ServiceListByDoctorsToSiteJson, "Каждый день в 2:30" },
-			{ Type.EmployeesCovidTreat, "Каждый день" }
+			{ Type.EmployeesCovidTreat, "Каждый день" },
+			{ Type.PndProviders, "Раз в месяц за предыдущий" }
 		};
 	}
 }
