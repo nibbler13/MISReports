@@ -1275,6 +1275,7 @@ namespace MISReports {
 						case ReportsInfo.Type.Covid19Patients:
 						case ReportsInfo.Type.ScheduleCallCenter:
 						case ReportsInfo.Type.Covid19ByPatientsToGv:
+						case ReportsInfo.Type.ResponsibleForKtKazan:
 							isPostProcessingOk = ExcelGeneral.CopyFormatting(itemReport.FileResult);
 							break;
 

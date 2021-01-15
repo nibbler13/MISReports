@@ -816,9 +816,9 @@ namespace MISReports.ExcelHandlers {
 					string prg = dataRow["PRG"].ToString().ToLower();
 					if (motivationExcludeKodopers.Contains(kodoper))
 						isExcludedFromMotivation = true;
-					else if (prg.StartsWith("а-00/") || prg.Contains("аванс"))
+					else if (prg.StartsWith("а-00/") || prg.StartsWith("а-00д/") || prg.Contains("аванс"))
 						isExcludedFromMotivation = true;
-					else if (prg.Contains("ранняя диагностика") || prg.Contains("медо"))
+					else if (prg.Contains("ранняя диагностика") || prg.Contains("медо") || prg.Contains("предстраховое обследование") || prg.Contains("групповое страхование"))
 						isExcludedFromMotivation = true;
 
 					dataRow["MOTIVATION_USE"] = isExcludedFromMotivation ? "Нет" : "Да";

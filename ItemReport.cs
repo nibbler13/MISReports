@@ -270,7 +270,7 @@ namespace MISReports {
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAlliance.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAlliance;
-				JIDS = "991511535,991520499,991519440,991521374,991511568";
+				JIDS = "991511535,991520499,991519440,991521374,991511568,991511568";
 
 				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
@@ -292,7 +292,7 @@ namespace MISReports {
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsBestdoctor.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsBestdoctor;
-				JIDS = "991520964, 991526106";
+				JIDS = "991520964, 991526106, 991520964";
 
 				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(300000, 700000), 5);
@@ -368,7 +368,21 @@ namespace MISReports {
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsOther.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsOther;
-				JIDS = "";
+				JIDS = "991515382,991519409,991519865,991523030,100005," +
+					"991520911,991514852.990424275,991511535,991520499," +
+					"991519440,991521374,991511568.991520964,991526106," +
+					"991523453,991517214,991520348,991522348,991522924," +
+					"991525955,991522442,991522386,991517912,991517927," +
+					"991523451,991519436,991523042,991523280,991523170," +
+					"991518370,991521272,991523038,991526075,991519595," +
+					"991511705,1990097479,991516698,991521960,991524638," +
+					"991520913,991518470,991519761,991523028,991516556," +
+					"991520387,991523215,991519361,991525970,991515797," +
+					"991520427,991512906 ,991357338,991370062,990389345," +
+					"991379370,991523486,991523489,991524671,991524697," +
+					"991527569,991520964,991511568," + // ТОП-17 СК
+					"10021349,991521572,100006," + //ЛМС_0 + ЛМС_6
+					"991511059,991511056,991511054,991511055,991511052,991511057"; //ОМС К-Урал
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsRenessans.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsRenessans;
@@ -696,6 +710,12 @@ namespace MISReports {
 				TemplateFileName = settings.TemplatePndProviders;
 				MailTo = settings.MailToPndProviders;
 
+			} else if (reportName.Equals(ReportsInfo.Type.ResponsibleForKtKazan.ToString())) {
+				Type = ReportsInfo.Type.ResponsibleForKtKazan;
+				SqlQuery = settings.MisDbSqlGetResponsibleForKtKazan;
+				TemplateFileName = settings.TemplateResponsibleForKtKazan;
+				MailTo = settings.MailToResponsibleForKtKazan;
+
 			} else
 				IsSettingsLoaded = false;
 
@@ -708,7 +728,7 @@ namespace MISReports {
 
 				if (Type.ToString().Equals(ReportsInfo.Type.TreatmentsDetailsOther.ToString())) { //Нужно актуализировать запрос к вертике
 					UseVerticaDb = false;
-					SqlQuery = settings.MisDbSqlGetTreatmentsDetailsOtherIC; //settings.VerticaDbSqlGetTreatmentsDetailsOtherIC; //
+					SqlQuery = settings.MisDbSqlGetTreatmentsDetailsOtherIC2; //settings.VerticaDbSqlGetTreatmentsDetailsOtherIC; //
 				}
 			}
 
