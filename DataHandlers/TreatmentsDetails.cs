@@ -822,9 +822,26 @@ namespace MISReports.ExcelHandlers {
 								if (!itemDiscount.ServiceListToApply.Contains(kodoper.ToLower()))
 									isDiscountNotAvailable = true;
 
-							if (!string.IsNullOrEmpty(itemDiscount.ApplyToContract)) 
-								if (!dataRow["AGR"].ToString().Equals(itemDiscount.ApplyToContract))
+							if (!string.IsNullOrEmpty(itemDiscount.ApplyToContract)) {
+								string agr = dataRow["AGR"].ToString();
+								string prg = dataRow["PRG"].ToString();
+								if (!agr.Equals(itemDiscount.ApplyToContract))
 									isDiscountNotAvailable = true;
+
+								if (agr.Contains("СПАО \"ИНГОССТРАХ\" (Москва) 6694237-19/19/Москва")) {
+									if (prg.Contains("Ф-00/«Ведение беременности «ВИП» на базе клиники «Будь Здоров» I-III триместр»") ||
+										prg.Contains("Ф-00/«Ведение беременности «ВИП» на базе клиники «Будь Здоров» I-III триместр» Версия 2.0") ||
+										prg.Contains("Ф-00/«Ведение беременности «СТАНДАРТ» на базе клиники «Будь Здоров» I-III триместр» Версия 2.0") ||
+										prg.Contains("Ф-00/«Ранняя диагностика заболеваний» (для ТОП-менеджеров СПАО «Ингосстрах»)") ||
+										prg.Contains("Ф-00/«Ранняя диагностика заболеваний» (для сотрудников СПАО «Ингосстрах»)"))
+										isDiscountNotAvailable = true;
+
+								} else if (agr.Contains("СПАО \"ИНГОССТРАХ\" (Москва) 376859-19/10") ||
+									agr.Contains("СПАО \"ИНГОССТРАХ\" (Москва) 6187236-19/18 от 01.10.2018")) {
+									if (prg.StartsWith("А-00/") || prg.StartsWith("А-00/Д"))
+										isDiscountNotAvailable = true;
+								}
+							}
 							
 							if (dateTreat.Date >= itemDiscount.DateStart.Date && 
 								(!itemDiscount.DateEnd.HasValue || dateTreat.Date <= itemDiscount.DateEnd.Value.Date))
@@ -837,12 +854,19 @@ namespace MISReports.ExcelHandlers {
 					dataRow["DISCOUNT"] = discount;
 
 					bool isExcludedFromMotivation = false;
-					string prg = dataRow["PRG"].ToString().ToLower();
+					string program = dataRow["PRG"].ToString().ToLower();
 					if (motivationExcludeKodopers.Contains(kodoper))
 						isExcludedFromMotivation = true;
-					else if (prg.StartsWith("а-00/") || prg.StartsWith("а-00д/") || prg.Contains("аванс"))
+
+					else if (program.StartsWith("а-00/") || 
+						program.StartsWith("а-00д/") || 
+						program.Contains("аванс"))
 						isExcludedFromMotivation = true;
-					else if (prg.Contains("ранняя диагностика") || prg.Contains("медо") || prg.Contains("предстраховое обследование") || prg.Contains("групповое страхование"))
+
+					else if (program.Contains("ранняя диагностика") || 
+						program.Contains("медо") || 
+						program.Contains("предстраховое обследование") || 
+						program.Contains("групповое страхование"))
 						isExcludedFromMotivation = true;
 
 					dataRow["MOTIVATION_USE"] = isExcludedFromMotivation ? "Нет" : "Да";

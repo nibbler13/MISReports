@@ -384,7 +384,12 @@ namespace MISReports {
 				discount3.DynamicDiscount.Add(new Tuple<int, int>(120000001, 150000000), 10);
 				discount3.DynamicDiscount.Add(new Tuple<int, int>(150000001, 200000000), 15);
 				discount3.DynamicDiscount.Add(new Tuple<int, int>(200000001, -1), 20);
+				discount3.ExcludeKodopers.Add("101944");
 				TreatmentsDiscounts.Add(discount3);
+
+				ItemTreatmentsDiscount discount4 = new ItemTreatmentsDiscount(new DateTime(2020, 12, 10), new DateTime(2021, 06, 30), 20, true);
+				discount4.ServiceListToApply.Add("101944");
+				TreatmentsDiscounts.Add(discount4);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhKid.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKid;
@@ -524,6 +529,16 @@ namespace MISReports {
 					true, "СПАО \"ИНГОССТРАХ\" (Москва) ДС №39 к Дог.№6187095-19/18 (COVID-выезд.тест)");
 				discount9.ServiceListToApply.Add("101898");
 				TreatmentsDiscounts.Add(discount9);
+
+				ItemTreatmentsDiscount discount10 = new ItemTreatmentsDiscount(new DateTime(2020, 6, 1), new DateTime(2021, 6, 30), 48,
+					true, "СПАО \"ИНГОССТРАХ\" (Москва) ДС №35 к Дог.№6187095-19/18 (COVID_группа компаний)");
+				discount10.ServiceListToApply.Add("101898");
+				TreatmentsDiscounts.Add(discount10);
+
+				ItemTreatmentsDiscount discount11 = new ItemTreatmentsDiscount(new DateTime(2020, 12, 10), new DateTime(2021, 6, 30), 20,
+					true, "СПАО \"ИНГОССТРАХ\" (Москва) ДС №35 к Дог.№6187095-19/18 (COVID_группа компаний)");
+				discount11.ServiceListToApply.Add("101944");
+				TreatmentsDiscounts.Add(discount11);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsRenessans.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsRenessans;
