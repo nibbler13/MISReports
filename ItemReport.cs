@@ -238,6 +238,10 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAbsolut.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAbsolut;
 				JIDS = "991515382,991519409,991519865,991523030";
+				//991515382   990000581   ООО "Абсолют Страхование"(Москва) Страховая компания  158 - М / 2016								ООО "Абсолют Страхование" - факт / аванс - Москва
+				//991519409   990000581   ООО "Абсолют Страхование"(Москва) Страховая компания  ДС № 8 к Дог. № 158 - М / 2016(ВАКЦИНАЦИЯ)	ООО "Абсолют Страхование" - факт - Москва
+				//991519865   990000581   ООО "Абсолют Страхование"(Москва) Страховая компания  ДС №10 к Дог.№158 - М / 2016(ВАКЦИНАЦИЯ)	ООО "Абсолют Страхование" - факт - Ступино
+				//991523030   990000581   ООО "Абсолют Страхование"(Москва) Страховая компания  ДС №19 к Дог.№158 - М / 2016(ВАКЦИНАЦИЯ)	ООО "Абсолют Страхование" - факт / аванс - Москва
 
 				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
@@ -253,12 +257,26 @@ namespace MISReports {
 				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
 				TreatmentsDiscounts.Add(discount2);
 
+				ItemTreatmentsDiscount discount3 = new ItemTreatmentsDiscount(new DateTime(2021, 1, 1), new DateTime(2021, 6, 30), -1);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
+				discount3.AddSmpDeptToExclude();
+				discount3.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount3.AddCovidInfoToExclude();
+				TreatmentsDiscounts.Add(discount3);
+
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAlfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAlfa;
 				JIDS = "100005,991520911,991514852";
+				//100005		5   АО "АльфаСтрахование"(Москва)  Страховая компания  492									АО "АльфаСтрахование" - факт / аванс - Москва
+				//991514852		5   АО "АльфаСтрахование"(Москва)  Страховая компания  ДС №31 / 2016 к Дог.№492(ВАКЦИНАЦИЯ) На оказание медицинских услуг
+				//991520911		5   АО "АльфаСтрахование"(Москва)  Страховая компания  492(ВИП ОТДЕЛЕНИЕ)					АО "АльфаСтрахование" - факт - Москва
 
 				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2018, 6, 1), null, 20);
 				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount.AddCovidInfoToExclude();
 				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 6, 1), new DateTime(2020, 6, 30), 2.9f);
@@ -267,18 +285,25 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAlfaSpb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAlfaSpb;
 				JIDS = "990424275"; //80/10-09
+				//990424275   990000485   АО АльфаСтрахование(Спб)    Страховая компания  80 / 10 - 09    АО "АльфаСтрахование" - факт - Спб
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAlliance.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAlliance;
 				JIDS = "991511535,991520499,991519440,991521374,991511568,991511568";
+				//991511535   990000332   ООО СК "Альянс Жизнь"(Москва)  Страховая компания  Д - 796205 / 31 - 03 - 30								ООО СК "Альянс Жизнь" - факт / аванс - Москва
+				//991511568   990000332   ООО СК "Альянс Жизнь"(Москва)  Страховая компания  ДС №87 к дог.№Д - 796205 / 31 - 03 - 30(ДЕТИ)			ООО СК "Альянс Жизнь" - факт - Москва
+				//991520499   990000332   ООО СК "Альянс Жизнь"(Москва)  Страховая компания  Д - 796205 / 31 - 03 - 30(ВИП ОТДЕЛЕНИЕ)				ООО СК "Альянс Жизнь" - факт - Москва
+				//991521374   990000332   ООО СК "Альянс Жизнь"(Москва)  Страховая компания  ДС №140 к Дог №Д - 796205 / 31 - 03 - 30(Сheck - up)	ООО СК "Альянс Жизнь" - факт - Москва
+				//991519440   990000332   ООО СК "Альянс Жизнь"(Москва)  Страховая компания  ДС №127 к дог. Д - 796205 / 31 - 03 - 30(ВАКЦИНАЦИЯ)   ООО СК "Альянс Жизнь" - факт - Москва
 
-				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2021, 12, 31), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
 				discount.AddSmpDeptToExclude();
 				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount.AddCovidInfoToExclude();
 				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 2, 1), new DateTime(2020, 3, 31), 20);
@@ -292,7 +317,9 @@ namespace MISReports {
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsBestdoctor.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsBestdoctor;
-				JIDS = "991520964, 991526106, 991520964";
+				JIDS = "991520964, 991526106";
+				//991520964   990002501   ООО "Бестдоктор"(Москва)   Страховая компания  206 - 77 - 2017									ООО "Бестдоктор" - факт - Москва
+				//991526106   990002501   ООО "Бестдоктор"(Москва)   Страховая компания  ДС №12 к дог.№ 206 - 77 - 2017(Вакцинация 2019)    ООО "Бестдоктор" - факт - Москва
 
 				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(300000, 700000), 5);
@@ -308,13 +335,37 @@ namespace MISReports {
 				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
 				TreatmentsDiscounts.Add(discount2);
 
+				ItemTreatmentsDiscount discount3 = new ItemTreatmentsDiscount(new DateTime(2021, 1, 1), new DateTime(2021, 12, 31), -1);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(300000, 700000), 5);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(700001, 1500000), 10);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(1500001, 3000000), 15);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(3000001, 5000000), 20);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(5000001, 10000000), 25);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(10000001, -1), 27);
+				discount3.AddSmpDeptToExclude();
+				discount3.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount3.AddCovidInfoToExclude();
+				discount3.ExcludeKodopers.Add("101944");
+				TreatmentsDiscounts.Add(discount3);
+
+				ItemTreatmentsDiscount discount4 = new ItemTreatmentsDiscount(new DateTime(2020, 12, 10), new DateTime(2021, 6, 30), 20, true);
+				discount4.ServiceListToApply.Add("101944");
+				TreatmentsDiscounts.Add(discount4);
+
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsEnergogarant.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsEnergogarant;
 				JIDS = "991523453,991517214,991520348";
+				//991517214   990000008   ПАО "САК "ЭНЕРГОГАРАНТ" (Москва)	Страховая компания	М-370								ПАО "САК "ЭНЕРГОГАРАНТ" - факт / аванс - Москва
+				//991520348   990000008   ПАО "САК "ЭНЕРГОГАРАНТ" (Москва)	Страховая компания	М-370 (ВИП ОТДЕЛЕНИЕ)				ПАО "САК "ЭНЕРГОГАРАНТ" - факт - Москва
+				//991523453   990000008   ПАО "САК "ЭНЕРГОГАРАНТ" (Москва)	Страховая компания	ДС №14 к Дог.№М-370 (ВАКЦИНАЦИЯ)	ПАО "САК "ЭНЕРГОГАРАНТ" - факт - Москва
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhAdult.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhAdult;
 				JIDS = "991522348,991522924,991525955,991522442";
+				//991522348   4   СПАО "ИНГОССТРАХ"(Москва)  Страховая компания  6187095 - 19 / 18										СПАО "Ингосстрах" - факт - Москва
+				//991522442   4   СПАО "ИНГОССТРАХ"(Москва)  Страховая компания  ДС №5 к Дог.№6187095 - 19 / 18(Проверь себя)			СПАО "Ингосстрах" - факт - Москва
+				//991522924   4   СПАО "ИНГОССТРАХ"(Москва)  Страховая компания  ДС №10 к дог. 6187095 - 19 / 18(Вакцинация грипп 2018) СПАО "Ингосстрах" - факт - Москва
+				//991525955   4   СПАО "ИНГОССТРАХ"(Москва)  Страховая компания  ДС №23 к Дог.6187095 - 19 / 18(Вакцинация 2019)		СПАО "Ингосстрах" - факт - Москва
 
 				//=====================
 				//Управленческая скидка
@@ -327,10 +378,18 @@ namespace MISReports {
 				discount2.AddKtMrtPndSmpDeptToExclude();
 				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
 				TreatmentsDiscounts.Add(discount2);
+
+				ItemTreatmentsDiscount discount3 = new ItemTreatmentsDiscount(new DateTime(2021, 1, 1), new DateTime(2021, 12, 31), -1);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(100000000, 120000000), 5);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(120000001, 150000000), 10);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(150000001, 200000000), 15);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(200000001, -1), 20);
+				TreatmentsDiscounts.Add(discount3);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhKid.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKid;
 				JIDS = "991522386";
+				//991522386   4   СПАО "ИНГОССТРАХ"(Москва)  Страховая компания  6187136 - 19 / 18   СПАО "Ингосстрах" - факт - Москва
 
 				//=====================
 				//Управленческая скидка
@@ -344,21 +403,43 @@ namespace MISReports {
 				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
 				TreatmentsDiscounts.Add(discount2);
 
+				ItemTreatmentsDiscount discount3 = new ItemTreatmentsDiscount(new DateTime(2021, 1, 1), new DateTime(2021, 12, 31), -1);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(35000001, 45000000), 5);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(45000001, 55000000), 10);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(55000001, 65000000), 15);
+				discount3.DynamicDiscount.Add(new Tuple<int, int>(65000001, -1), 20);
+				TreatmentsDiscounts.Add(discount3);
+
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsLiberty.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsLiberty;
 				JIDS = "991517912";
+				//991517912   990000512   АО Совкомбанк страхование(Москва)(Ранее Либерти страхование)  Страховая компания  0044 / 17 АО "Совкомбанк страхование" - факт - Москва
+
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2021, 1, 1), new DateTime(2021, 6, 30), -1);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(1000000, 2000000), 5);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 10);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, 4000000), 15);
+				discount.DynamicDiscount.Add(new Tuple<int, int>(4000001, -1), 20);
+				discount.AddSmpDeptToExclude();
+				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount.AddCovidInfoToExclude();
+				TreatmentsDiscounts.Add(discount);
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsMetlife.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsMetlife;
 				JIDS = "991517927,991523451,991519436";
+				//991517927   13  АО "МетЛайф"(Москва)   Страховая компания  GMD - 03164 / 05 - 17								АО "МетЛайф" - факт / аванс - Москва
+				//991519436   13  АО "МетЛайф"(Москва)   Страховая компания  ДС №7 к Дог.№GMD - 03164 / 05 - 17(ВАКЦИНАЦИЯ)		АО "МетЛайф" - факт - Москва
+				//991523451   13  АО "МетЛайф"(Москва)   Страховая компания  ДС №17 к Дог.№GMD - 03164 / 05 - 17(Вакцинация)	АО "МетЛайф" - факт - Москва
 
-				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2021, 6, 30), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
 				discount.AddSmpDeptToExclude();
 				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount.AddCovidInfoToExclude();
 				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 5);
@@ -387,14 +468,19 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsRenessans.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsRenessans;
 				JIDS = "991523042,991523280,991523170";
+				//991523042   990032407   АО "Группа Ренессанс Страхование"(Москва)  Страховая компания  29 / 17 от 23.05.2017						АО "Группа Ренессанс Страхование" - факт / аванс - Москва
+				//991523170   990032407   АО "Группа Ренессанс Страхование"(Москва)  Страховая компания  ДС №13 / 14 к дог. № 29 / 17(Chekc - Up)	АО "Группа Ренессанс Страхование" - факт - Москва
+				//991523280   990032407   АО "Группа Ренессанс Страхование"(Москва)  Страховая компания  ДС № 20 к дог 29 / 17(ВАКЦИНАЦИЯ)			АО "Группа Ренессанс Страхование" - факт - Москва
 
-				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2021, 6, 30), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
 				discount.AddSmpDeptToExclude();
 				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount.AddCovidInfoToExclude();
+				discount.ExcludeKodopers.Add("101944");
 				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
@@ -402,17 +488,27 @@ namespace MISReports {
 				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
 				TreatmentsDiscounts.Add(discount2);
 
+				ItemTreatmentsDiscount discount3 = new ItemTreatmentsDiscount(new DateTime(2021, 1, 1), new DateTime(2021, 6, 30), 20, true);
+				discount3.ServiceListToApply.Add("101944");
+				TreatmentsDiscounts.Add(discount3);
+
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsReso.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsReso;
 				JIDS = "991518370,991521272,991523038,991526075,991519595";
+				//991518370   12  САО "РЕСО-Гарантия"(Москва)    Страховая компания  17 / 29									САО "РЕСО-Гарантия" - факт - Москва
+				//991521272   12  САО "РЕСО-Гарантия"(Москва)    Страховая компания  17 / 29(ВИП ОТДЕЛЕНИЕ)						САО "РЕСО-Гарантия" - факт - Москва
+				//991519595   12  САО "РЕСО-Гарантия"(Москва)    Страховая компания  ДС №3 к дог. № 17 / 29(ВАКЦИНАЦИЯ)			СПАО "РЕСО-Гарантия" - факт - Москва
+				//991523038   12  САО "РЕСО-Гарантия"(Москва)    Страховая компания  ДС №15 к Дог.№17 / 29(ВАКЦИНАЦИЯ)			СПАО "РЕСО-Гарантия" - факт - Москва
+				//991526075   12  САО "РЕСО-Гарантия"(Москва)    Страховая компания  ДС №21 к дог.№17 / 29(Вакцинация_2019)		СПАО "РЕСО-Гарантия" - факт - Москва
 
-				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2021, 6, 30), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
 				discount.AddSmpDeptToExclude();
 				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount.AddCovidInfoToExclude();
 				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
@@ -423,14 +519,18 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsRosgosstrakh.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsRosgosstrakh;
 				JIDS = "991511705,1990097479";
+				//1990097479  19			ООО "Росгосстрах"(Москва)		Страховая компания  М - 77 - Н - ПС - А - 2014 / 260_ст				На оказание медицинских услуг
+				//991511705   990001956		ПАО СК "Росгосстрах"(Москва)	Страховая компания  М - 77 - Н - ПС - А - 2014 / 260 от 21.08.2014  ПАО СК "Росгосстрах" - факт - Москва
 
-				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2021, 6, 30), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
 				discount.AddSmpDeptToExclude();
 				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount.AddCovidInfoToExclude();
+				discount.ExcludeKodopers.Add("101944");
 				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 10);
@@ -438,21 +538,30 @@ namespace MISReports {
 				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
 				TreatmentsDiscounts.Add(discount2);
 
+				ItemTreatmentsDiscount discount3 = new ItemTreatmentsDiscount(new DateTime(2021, 1, 1), new DateTime(2021, 6, 30), 20, true);
+				discount3.ServiceListToApply.Add("101944");
+				TreatmentsDiscounts.Add(discount3);
+
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSmp.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSmp;
 				JIDS = "991516698,991521960";
+				//991516698   990002381   ООО «СМП - Страхование» (Москва)Страховая компания  4 - 0019										ООО «СМП - Страхование»-факт - аванс - Москва
+				//991521960   990002381   ООО «СМП - Страхование» (Москва)Страховая компания ДС №12,11 к дог к Дог № 4 - 0019(Chekc - Up)   ООО «СМП - Страхование»-факт - Москва
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSogaz.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSogaz;
 				JIDS = "991524638";
+				//991524638   21  АО "СОГАЗ"(Москва)    Страховая компания  18 QP 2124 от 26.02.19  АО "СОГАЗ" - факт - Москва
 
-				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2021, 6, 30), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
 				discount.AddSmpDeptToExclude();
 				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount.AddCovidInfoToExclude();
+				discount.ExcludeKodopers.Add("101944");
 				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 2, 1), new DateTime(2020, 12, 31), 10);
@@ -460,17 +569,26 @@ namespace MISReports {
 				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
 				TreatmentsDiscounts.Add(discount2);
 
+				ItemTreatmentsDiscount discount3 = new ItemTreatmentsDiscount(new DateTime(2021, 1, 1), new DateTime(2021, 6, 30), 20, true);
+				discount3.ServiceListToApply.Add("101944");
+				TreatmentsDiscounts.Add(discount3);
+
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSoglasie.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSoglasie;
 				JIDS = "991520913,991518470,991519761,991523028";
+				//991520913   138 ООО "СК Согласие"(Москва)  Страховая компания  331610 - 14314(ВИП ОТДЕЛЕНИЕ)    ООО "СК Согласие" - факт - Москва
+				//991518470   138 ООО "СК Согласие"(Москва)  Страховая компания  331610 - 14314 от 01.06.2017  ООО "СК Согласие" - факт / аванс - Москва
+				//991519761   138 ООО "СК Согласие"(Москва)  Страховая компания  ДС №7 к Дог.№331610 - 14314(ВАКЦИНАЦИЯ)  ООО "СК Согласие" - факт - Москва
+				//991523028   138 ООО "СК Согласие"(Москва)  Страховая компания  ДС№21 к дог.№331610 - 14314(ВАКЦИНАЦИЯ)  ООО "СК Согласие" - факт - Москва
 
-				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2021, 6, 30), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(500000, 1000000), 5);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(1000001, 2000000), 10);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(2000001, 3000000), 15);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(3000001, -1), 20);
 				discount.AddSmpDeptToExclude();
 				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount.AddCovidInfoToExclude();
 				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 5);
@@ -481,13 +599,19 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsVsk.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsVsk;
 				JIDS = "991516556,991520387,991523215,991519361,991525970";
+				//991516556   107 САО "ВСК"(Москва)  Страховая компания  17000SMM00019									САО "ВСК" - факт / аванс - Москва
+				//991520387   107 САО "ВСК"(Москва)  Страховая компания  17000SMM00019(ВИП ОТДЕЛЕНИЕ)					САО "ВСК" - факт - Москва
+				//991519361   107 САО "ВСК"(Москва)  Страховая компания  ДС №12 к Дог.№17000SMM00019(ВАКЦИНАЦИЯ)		САО "ВСК" - факт - Москва
+				//991523215   107 САО "ВСК"(Москва)  Страховая компания  ДС № 26 к дог.17000SMM00019(ВАКЦИНАЦИЯ)		САО "ВСК" - факт - Москва
+				//991525970   107 САО "ВСК"(Москва)  Страховая компания  ДС №№ 41 к дог 17000SMM00019(Вакцинация 2019)  САО "ВСК" - факт - Москва
 
-				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), -1);
+				ItemTreatmentsDiscount discount = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2021, 6, 30), -1);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(4000000, 5000000), 10);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(5000001, 10000000), 15);
 				discount.DynamicDiscount.Add(new Tuple<int, int>(10000001, -1), 20);
 				discount.AddSmpDeptToExclude();
 				discount.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount.AddCovidInfoToExclude();
 				TreatmentsDiscounts.Add(discount);
 
 				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), new DateTime(2020, 12, 31), 5);
@@ -498,45 +622,57 @@ namespace MISReports {
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsVtb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsVtb;
 				JIDS = "991515797,991520427";
+				//991515797   91  ООО СК "ВТБ-Страхование"(Москва)   Страховая компания  77МП16 - 2908						ООО СК "ВТБ-Страхование" - факт / аванс - Москва
+				//991520427   91  ООО СК "ВТБ-Страхование"(Москва)   Страховая компания  77МП16 - 2908(ВИП ОТДЕЛЕНИЕ)		ООО СК "ВТБ-Страхование" - факт - Москва
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsAll.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsAll;
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhSochi.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhSochi;
-				JIDS = "991512906"; //4986881-19/16
+				JIDS = "991512906"; 
+				//991512906	990002076	СПАО "ИНГОССТРАХ" (Сочи)	Страховая компания	4986881-19/16	СПАО "ИНГОССТРАХ"-факт-Сочи
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhKrasnodar.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKrasnodar;
-				JIDS = "991357338"; //№ 567751-19/11
+				JIDS = "991357338"; 
+				//991357338   990000625   СПАО "ИНГОССТРАХ"(Краснодар)   Страховая компания	№ 567751 - 19 / 11  СПАО "ИНГОССТРАХ" факт - Краснодар
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhUfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhUfa;
-				JIDS = "991370062"; //№ 681187-19/11
+				JIDS = "991370062"; 
+				//991370062   990000664   СПАО "ИНГОССТРАХ"(Уфа) Страховая компания	№ 681187 - 19 / 11  СПАО "ИНГОССТРАХ" - факт - Уфа
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhSpb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhSpb;
-				JIDS = "990389345"; //267673-19/09
+				JIDS = "990389345";
+				//990389345   990000416   СПАО "Ингосстрах"(Спб) Страховая компания  267673 - 19 / 09    СПАО "Ингосстрах" - факт - Спб
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsIngosstrakhKazan.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsIngosstrakhKazan;
-				JIDS = "991379370"; //№ 714760-19/11
+				JIDS = "991379370";
+				//991379370   990000708   СПАО «ИНГОССТРАХ» (Казань)Страховая компания  № 714760 - 19 / 11  СПАО «ИНГОССТРАХ» -факт - Казань
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsBestDoctorSpb.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsBestDoctorSpb;
-				JIDS = "991523486"; //522-78-2018
+				JIDS = "991523486";
+				//991523486   990035160   ООО «Бестдоктор» (СПБ)Юридические лица    522 - 78 - 2018 ООО «Бестдоктор»-факт - СПБ
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsBestDoctorUfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsBestDoctorUfa;
 				JIDS = "991523489"; //535-02-18
+				//991523489   990035162   ООО «Бестдоктор» (Уфа)Юридические лица    535 - 02 - 18   ООО «Бестдоктор»-факт - Уфа
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSogazUfa.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSogazUfa;
-				JIDS = "991524671,991524697"; //2719RP055, ДС № 2719RP055-02  к дог. №2719RP055 (ГК «БАШНЕФТЬ»)
+				JIDS = "991524671,991524697";
+				//991524671   990001465   АО "СОГАЗ"(Уфа)    Страховая компания  2719RP055													АО "СОГАЗ" - факт - Уфа
+				//991524697   990001465   АО "СОГАЗ"(Уфа)    Страховая компания  ДС № 2719RP055 - 02  к дог. №2719RP055(ГК «БАШНЕФТЬ»)		АО "СОГАЗ" - факт - Уфа
 
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsSogazMed.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsSogazMed;
-				JIDS = "991527569"; //20 QP 268/SM от 04.09.2020г.
+				JIDS = "991527569";
+				//991527569   990001868   АО СК «СОГАЗ - МЕД» (Москва)Страховая компания  20 QP 268 / SM от 04.09.2020г.АО СК «СОГАЗ - МЕД»-факт - Москва
 
 				#endregion TreatmentsDetails
 				//-----------------------------------------------------------------------------------------------------

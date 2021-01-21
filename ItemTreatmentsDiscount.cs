@@ -12,11 +12,14 @@ namespace MISReports {
 		public List<string> ExcludeDepartments { get; private set; } = new List<string>();
         public List<string> ExcludeKodopers { get; private set; } = new List<string>();
         public Dictionary<Tuple<int, int>, float> DynamicDiscount { get; private set; } = new Dictionary<Tuple<int, int>, float>();
+		public bool IsApplyOnlyToServiceList { get; private set; }
+		public List<string> ServiceListToApply { get; private set; } = new List<string>();
 
-		public ItemTreatmentsDiscount(DateTime dateStart, DateTime? dateEnd, float mainDiscount) {
+		public ItemTreatmentsDiscount(DateTime dateStart, DateTime? dateEnd, float mainDiscount, bool isApplyOnlyToServiceList = false) {
 			DateStart = dateStart;
 			DateEnd = dateEnd;
 			MainDiscount = mainDiscount;
+			IsApplyOnlyToServiceList = isApplyOnlyToServiceList;
         }
 
 		public void UpdateMainDiscount(float value) {
@@ -102,5 +105,9 @@ namespace MISReports {
 		public void AddTelemedKodoperToExclude() {
 			ExcludeKodopers.Add("900200");
         }
+
+		public void AddCovidInfoToExclude() {
+			ExcludeKodopers.Add("900103"); //Информационная поддержка Covid-19)
+		}
     }
 }

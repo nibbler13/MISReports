@@ -759,6 +759,8 @@ namespace MISReports.ExcelHandlers {
 					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
                 }
 
+
+			//Расчет итоговой скидки для динамических скидок, зависящих от суммы оказанных услуг
             foreach (ItemTreatmentsDiscount item in itemReport.TreatmentsDiscounts)
 				if (item.MainDiscount == -1) {
 					foreach (KeyValuePair<Tuple<int, int>, float> pair in item.DynamicDiscount) {
@@ -769,6 +771,7 @@ namespace MISReports.ExcelHandlers {
 						}
 					}
 
+					//Если компания не набрала суммы до минимальной скидки, то делаем скидку 0
 					if (item.MainDiscount == -1)
 						item.UpdateMainDiscount(0);
 				}
@@ -801,11 +804,14 @@ namespace MISReports.ExcelHandlers {
 									break;
 								}
 
+							if (itemDiscount.IsApplyOnlyToServiceList)
+								if (!itemDiscount.ServiceListToApply.Contains(kodoper.ToLower()))
+									isDiscountNotAvailable = true;
+
 							if (dateTreat.Date >= itemDiscount.DateStart.Date && 
 								(!itemDiscount.DateEnd.HasValue || dateTreat.Date <= itemDiscount.DateEnd.Value.Date))
 								if (!isDiscountNotAvailable)
 									discount += itemDiscount.MainDiscount;
-
 						}
 					}
 

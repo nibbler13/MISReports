@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -18,14 +19,20 @@ namespace MISReports.ExcelHandlers {
 				if (IsPriceTooLow(dataRow))
 					continue;
 
-				if (IsNeedToExclude(dataRow, exclusions))
-					continue;
-
 				dataRow["PRIORITY"] = GetPriority(dataRow, priorities);
 				dataRow["TYPE_NAME"] = GetType(dataRow);
 				GetTopLevelAndSiteService(dataRow, grouping, out string topLevel, out string siteService);
 				dataRow["TOP_LEVEL"] = topLevel;
 				dataRow["SITE_SERVICE"] = siteService;
+
+				if (Debugger.IsAttached)
+					if (dataRow["SUBGROUP"].ToString().Equals("ТЕСТЫ ДЛЯ ПРОФОСМОТРОВ, ВЫПОЛНЯЕМЫЕ В МОСКВЕ И РЕГИОНАХ ПО ДОГОВОРАМ"))
+						Console.WriteLine("");
+
+				if (IsNeedToExclude(dataRow, exclusions)) {
+					Console.WriteLine("Пропуск строки: " + string.Join("; ", dataRow.ItemArray));
+					continue;
+				}
 
 				string serviceHeaders = dataRow["TOP_LEVEL"].ToString() + " " + dataRow["GROUP_NAME"].ToString() + " " + dataRow["SUBGROUP"].ToString();
 				serviceHeaders = serviceHeaders.ToLower();

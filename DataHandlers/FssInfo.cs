@@ -48,16 +48,25 @@ namespace MISReports.ExcelHandlers {
                 { new string[] { "тургенева", "96" }, "г.Краснодар, ул. Тургенева, д.96" },
                 { new string[] { "октября", "6" }, "г.Уфа, проспект Октября, д.6/1" },
                 { new string[] { "нариманова", "65" }, "г.Казань, ул. Нариманова, д.65" },
-                { new string[] { "бажова", "3" }, "г.Каменск-Уральский, ул.Бажова, д.3" },
+                { new string[] { "бажова", "3" }, "г.Каменск-Уральский, ул.Бажова, д.3" }
             };
 
             for (int r = 0; r < dataTable.Rows.Count; r++) {
                 if (DateTime.TryParse(dataTable.Rows[r][0].ToString(), out DateTime date)) {
-                    dataTable.Rows[r][1] = date.Year;
-                    dataTable.Rows[r][2] = "Кв. " + GetQuarter(date);
-                    dataTable.Rows[r][3] = date.ToString("MMM", CultureInfo.CreateSpecificCulture("ru"));
-                    int weekNumber = GetIso8601WeekOfYear(date);
-                    dataTable.Rows[r][4] = "Нед. " + (weekNumber.ToString().Length < 2 ? "0" + weekNumber : weekNumber.ToString());
+                    if (date.ToShortDateString().Equals("01.01.2021") ||
+                        date.ToShortDateString().Equals("02.01.2021") ||
+                        date.ToShortDateString().Equals("03.01.2021")) {
+                        dataTable.Rows[r][1] = "2020";
+                        dataTable.Rows[r][2] = "Кв. 4";
+                        dataTable.Rows[r][3] = "дек";
+                        dataTable.Rows[r][4] = "Нед. 53";
+                    } else {
+                        dataTable.Rows[r][1] = date.Year;
+                        dataTable.Rows[r][2] = "Кв. " + GetQuarter(date);
+                        dataTable.Rows[r][3] = date.ToString("MMM", CultureInfo.CreateSpecificCulture("ru"));
+                        int weekNumber = GetIso8601WeekOfYear(date);
+                        dataTable.Rows[r][4] = "Нед. " + (weekNumber.ToString().Length < 2 ? "0" + weekNumber : weekNumber.ToString());
+                    }
                 }
 
                 string address = dataTable.Rows[r][17].ToString().ToLower();
@@ -148,9 +157,9 @@ namespace MISReports.ExcelHandlers {
             pivotTable.PivotFields("Месяц").Subtotals = new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
             pivotTable.PivotFields("Квартал").Subtotals = new bool[] { false, false, false, false, false, false, false, false, false, false, false, false };
 
-            pivotTable.PivotFields("Год").PivotItems("2017").Visible = false;
-            pivotTable.PivotFields("Год").PivotItems("2018").Visible = false;
-            pivotTable.PivotFields("Адрес").PivotItems("г.Москва, Вадковский переулок, д.18").Visible = false;
+            //pivotTable.PivotFields("Год").PivotItems("2017").Visible = false;
+            //pivotTable.PivotFields("Год").PivotItems("2018").Visible = false;
+            //pivotTable.PivotFields("Адрес").PivotItems("г.Москва, Вадковский переулок, д.18").Visible = false;
 
             pivotTable.DisplayFieldCaptions = false;
             wb.ShowPivotTableFieldList = false;
