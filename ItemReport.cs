@@ -465,6 +465,66 @@ namespace MISReports {
 					"10021349,991521572,100006," + //ЛМС_0 + ЛМС_6
 					"991511059,991511056,991511054,991511055,991511052,991511057"; //ОМС К-Урал
 
+				ItemTreatmentsDiscount discount1 = new ItemTreatmentsDiscount(new DateTime(2017, 7, 1), null, -1,
+					applyToContract: "Московский филиал ПАО \"САК \"ЭНЕРГОГАРАНТ\" (Здоровье и жизнь)  (Москва) 122/17-Ф ");
+				discount1.DynamicDiscount.Add(new Tuple<int, int>(300000, 700000), 5);
+				discount1.DynamicDiscount.Add(new Tuple<int, int>(700001, 1000000), 10);
+				discount1.DynamicDiscount.Add(new Tuple<int, int>(1000001, 200000), 15);
+				discount1.DynamicDiscount.Add(new Tuple<int, int>(2000001, 700000), 20);
+				TreatmentsDiscounts.Add(discount1);
+
+				ItemTreatmentsDiscount discount2 = new ItemTreatmentsDiscount(new DateTime(2019, 1, 1), null, 20,
+					applyToContract: "СПАО \"ИНГОССТРАХ\" (Москва) 376859-19/10");
+				discount2.AddSmpDeptToExclude();
+				discount2.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount2.AddCovidInfoToExclude();
+				TreatmentsDiscounts.Add(discount2);
+
+				ItemTreatmentsDiscount discount3 = new ItemTreatmentsDiscount(new DateTime(2019, 1, 1), null, 20,
+					applyToContract: "СПАО \"ИНГОССТРАХ\"- ФРАНШИЗА (г. Москва) 5002862-19/16");
+				discount3.AddSmpDeptToExclude();
+				discount3.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount3.AddCovidInfoToExclude();
+				TreatmentsDiscounts.Add(discount3);
+
+				ItemTreatmentsDiscount discount4 = new ItemTreatmentsDiscount(new DateTime(2018, 11, 1), null, 20,
+					applyToContract: "СПАО \"ИНГОССТРАХ\" (Москва) 6187236-19/18 от 01.10.2018");
+				discount4.AddSmpDeptToExclude();
+				discount4.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount4.AddCovidInfoToExclude();
+				//Добавить вакцинацию против гриппа
+				TreatmentsDiscounts.Add(discount4);
+
+				ItemTreatmentsDiscount discount5 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), null, 30,
+					applyToContract: "СПАО \"ИНГОССТРАХ\" (Москва) 6694237-19/19/Москва");
+				discount5.AddSmpDeptToExclude();
+				discount5.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount5.AddCovidInfoToExclude();
+				//Добавить вакцинацию против гриппа
+				TreatmentsDiscounts.Add(discount5);
+
+				ItemTreatmentsDiscount discount6 = new ItemTreatmentsDiscount(new DateTime(2020, 1, 1), null, 30,
+					applyToContract: "СПАО \"ИНГОССТРАХ\" (Москва) 6694237-19/19/ВИП");
+				discount6.AddSmpDeptToExclude();
+				discount6.AddDocOnlineTelemedCovidKodoperToExclude();
+				discount6.AddCovidInfoToExclude();
+				//Добавить вакцинацию против гриппа
+				TreatmentsDiscounts.Add(discount6);
+
+				ItemTreatmentsDiscount discount7 = new ItemTreatmentsDiscount(new DateTime(2020, 8, 7), new DateTime(2021, 6, 30), 20,
+					true, "СПАО \"ИНГОССТРАХ\" (Москва) ДС №24 от 01.12.20 к Дог.№6694237-19/19 (Выезд. тест COVID)");
+				discount7.ServiceListToApply.Add("101898");
+				TreatmentsDiscounts.Add(discount7);
+
+				ItemTreatmentsDiscount discount8 = new ItemTreatmentsDiscount(new DateTime(2018, 2, 1), null, 10,
+					applyToContract: "ООО \"Океан\" (Москва) 01-01/17 ЮЛ");
+				TreatmentsDiscounts.Add(discount8);
+
+				ItemTreatmentsDiscount discount9 = new ItemTreatmentsDiscount(new DateTime(2020, 8, 7), new DateTime(2021, 6, 30), 20,
+					true, "СПАО \"ИНГОССТРАХ\" (Москва) ДС №39 к Дог.№6187095-19/18 (COVID-выезд.тест)");
+				discount9.ServiceListToApply.Add("101898");
+				TreatmentsDiscounts.Add(discount9);
+
 			} else if (reportName.Equals(ReportsInfo.Type.TreatmentsDetailsRenessans.ToString())) {
 				Type = ReportsInfo.Type.TreatmentsDetailsRenessans;
 				JIDS = "991523042,991523280,991523170";

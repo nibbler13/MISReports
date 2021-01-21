@@ -14,12 +14,14 @@ namespace MISReports {
         public Dictionary<Tuple<int, int>, float> DynamicDiscount { get; private set; } = new Dictionary<Tuple<int, int>, float>();
 		public bool IsApplyOnlyToServiceList { get; private set; }
 		public List<string> ServiceListToApply { get; private set; } = new List<string>();
+		public string ApplyToContract { get; private set; }
 
-		public ItemTreatmentsDiscount(DateTime dateStart, DateTime? dateEnd, float mainDiscount, bool isApplyOnlyToServiceList = false) {
+		public ItemTreatmentsDiscount(DateTime dateStart, DateTime? dateEnd, float mainDiscount, bool isApplyOnlyToServiceList = false, string applyToContract = null) {
 			DateStart = dateStart;
 			DateEnd = dateEnd;
 			MainDiscount = mainDiscount;
 			IsApplyOnlyToServiceList = isApplyOnlyToServiceList;
+			ApplyToContract = applyToContract;
         }
 
 		public void UpdateMainDiscount(float value) {

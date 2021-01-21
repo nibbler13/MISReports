@@ -750,22 +750,35 @@ namespace MISReports.ExcelHandlers {
 			List<string> motivationExcludeKodopers = new List<string>();
 			ReadWorksheetColumn0(motivationExcludeFile, motivationExcludeFileSheetName, motivationExcludeKodopers);
 
+			Dictionary<string, double> totalAmountByContracts = new Dictionary<string, double>();
 			double totalAmount = 0;
 			foreach (DataRow dataRow in dataTable.Rows)
                 try {
-					if (double.TryParse(dataRow["AMOUNTRUB"].ToString(), out double value))
+					string contract = dataRow["AGR"].ToString();
+					if (!totalAmountByContracts.ContainsKey(contract))
+						totalAmountByContracts.Add(contract, 0);
+
+					if (double.TryParse(dataRow["AMOUNTRUB"].ToString(), out double value)) {
 						totalAmount += value;
+						totalAmountByContracts[contract] += value;
+					}
 				} catch (Exception e) {
 					Logging.ToLog(e.Message + Environment.NewLine + e.StackTrace);
                 }
-
 
 			//Расчет итоговой скидки для динамических скидок, зависящих от суммы оказанных услуг
             foreach (ItemTreatmentsDiscount item in itemReport.TreatmentsDiscounts)
 				if (item.MainDiscount == -1) {
 					foreach (KeyValuePair<Tuple<int, int>, float> pair in item.DynamicDiscount) {
 						Tuple<int, int> range = pair.Key;
-						if (totalAmount >= range.Item1 && (totalAmount <= range.Item2 || range.Item2 == -1)) {
+
+						double totalAmountToCheck = totalAmount;
+
+						if (!string.IsNullOrEmpty(item.ApplyToContract))
+							if (totalAmountByContracts.ContainsKey(item.ApplyToContract))
+								totalAmountToCheck = totalAmountByContracts[item.ApplyToContract];
+						
+						if (totalAmountToCheck >= range.Item1 && (totalAmount <= range.Item2 || range.Item2 == -1)) {
 							item.UpdateMainDiscount(pair.Value);
 							break;
 						}
@@ -791,6 +804,7 @@ namespace MISReports.ExcelHandlers {
 
 					if (DateTime.TryParse(treatdate, out DateTime dateTreat)) {
 						foreach (ItemTreatmentsDiscount itemDiscount in itemReport.TreatmentsDiscounts) {
+							//Console.WriteLine("itemDiscount.ApplyToContract: " + "'" + itemDiscount.ApplyToContract + "'");
 							bool isDiscountNotAvailable = false;
 							foreach (string dept in itemDiscount.ExcludeDepartments)
 								if (department.ToLower().Equals(dept.ToLower())) {
@@ -808,6 +822,10 @@ namespace MISReports.ExcelHandlers {
 								if (!itemDiscount.ServiceListToApply.Contains(kodoper.ToLower()))
 									isDiscountNotAvailable = true;
 
+							if (!string.IsNullOrEmpty(itemDiscount.ApplyToContract)) 
+								if (!dataRow["AGR"].ToString().Equals(itemDiscount.ApplyToContract))
+									isDiscountNotAvailable = true;
+							
 							if (dateTreat.Date >= itemDiscount.DateStart.Date && 
 								(!itemDiscount.DateEnd.HasValue || dateTreat.Date <= itemDiscount.DateEnd.Value.Date))
 								if (!isDiscountNotAvailable)
